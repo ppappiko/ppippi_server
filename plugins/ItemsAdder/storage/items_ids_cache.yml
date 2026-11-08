@@ -85,3 +85,24 @@ FROG_SPAWN_EGG:
   pipi_pets:frog: 48201
 CAT_SPAWN_EGG:
   pipi_pets:cat: 48202
+RABBIT_SPAWN_EGG:
+  pipi_pets:rabbit: 48203
+  pipi_pets:hornrabbit: 48209
+FOX_SPAWN_EGG:
+  pipi_pets:fox: 48204
+  pipi_pets:ferret: 48213
+PANDA_SPAWN_EGG:
+  pipi_pets:redpanda: 48205
+  pipi_pets:raccoon: 48208
+AXOLOTL_SPAWN_EGG:
+  pipi_pets:otter: 48206
+TURTLE_SPAWN_EGG:
+  pipi_pets:tortoise: 48207
+SILVERFISH_SPAWN_EGG:
+  pipi_pets:mole: 48210
+SHEEP_SPAWN_EGG:
+  pipi_pets:thundersheep: 48211
+POLAR_BEAR_SPAWN_EGG:
+  pipi_pets:moonbear: 48212
+PIG_SPAWN_EGG:
+  pipi_pets:angelpig: 48214

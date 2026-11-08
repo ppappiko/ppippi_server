@@ -37,12 +37,12 @@ plots:
         - 64
         - 46
       CRAFT:
-      - - -15
-        - 64
-        - 51
       - - 12
         - 64
         - 44
+      - - -14
+        - 64
+        - 52
       PET_STORAGE:
       - - 7
         - 64
@@ -55,14 +55,6 @@ plots:
       - - 6
         - 64
         - 55
-      FEEDER:
-      - - -2
-        - 64
-        - 45
-      GOLD_MINE:
-      - - 10
-        - 64
-        - 58
       DIAMOND_MINE:
       - - 11
         - 64
@@ -78,9 +70,19 @@ plots:
       - - -15
         - 64
         - 42
+      - - 10
+        - 64
+        - 59
+      FEEDER:
+      - - 1
+        - 64
+        - 51
     lumber:
       level: 2
       anchor: '0_64_38'
+      stations:
+        '13_64_49':
+          level: 3
     production:
       FARM:
         level: 2
@@ -93,8 +95,14 @@ plots:
         anchor: '-2_64_38'
       DIAMOND_MINE:
         anchor: '-4_64_38'
+        stations:
+          '11_64_54':
+            level: 2
       CARROT_FARM:
         anchor: '-5_64_38'
+        stations:
+          '3_64_56':
+            level: 2
   plot09:
     z: 36
     x: 28
@@ -157,10 +165,10 @@ players:
       aptitudes:
         CRAFT: 2
         FARM: 2
-      food: 100
+      food: 36
       stock: 0
-      since: 1794100844321
-      active: true
+      since: 1794106642162
+      active: false
       production-facility: CARROT_FARM
       production-anchor: '3_64_56'
       lumber-slot: 1
@@ -169,13 +177,118 @@ players:
       aptitudes:
         CRAFT: 3
         MINE: 1
+      food: 93
+      stock: 43
+      since: 1794112718796
+      active: false
+      production-facility: DIAMOND_MINE
+      production-anchor: '11_64_54'
+      lumber-slot: 1
+      facility-bound: true
+    redfox:
+      aptitudes:
+        PET_STORAGE: 1
+        LUMBER: 2
       food: 100
       stock: 0
-      since: 1794095178021
+      since: 1794112756988
+      active: true
+      production-facility: LUMBER
+      production-anchor: '13_64_49'
+      lumber-slot: 1
+      facility-bound: true
+    wizrabbit:
+      aptitudes:
+        FARM: 3
+        CRAFT: 2
+      food: 99
+      stock: 1
+      since: 1794112775752
+      active: true
+      production-facility: CARROT_FARM
+      production-anchor: '3_64_56'
+      lumber-slot: 1
+      facility-bound: true
+    redpanda:
+      aptitudes:
+        CRAFT: 3
+        MINE: 1
+      food: 100
+      stock: 0
+      since: 1794112721987
       active: true
       production-facility: DIAMOND_MINE
       production-anchor: '11_64_54'
       lumber-slot: 1
+      facility-bound: true
+    pirateotter:
+      aptitudes:
+        CRAFT: 1
+        PET_STORAGE: 2
+      food: 99
+      stock: 0
+      since: 1794117125381
+      active: false
+    hardtortoise:
+      aptitudes:
+        FARM: 1
+        MINE: 1
+      food: 100
+      stock: 0
+      since: 1794114397909
+      active: true
+      production-facility: MINE
+      production-anchor: '10_64_59'
+      lumber-slot: 1
+      facility-bound: true
+    fatraccoon:
+      aptitudes:
+        CRAFT: 3
+        PET_STORAGE: 1
+        LUMBER: 2
+      food: 100
+      stock: 0
+      since: 1794114442447
+      active: true
+      production-facility: LUMBER
+      production-anchor: '13_64_49'
+      lumber-slot: 2
+      facility-bound: true
+    thundersheep:
+      aptitudes:
+        CRAFT: 1
+        LUMBER: 2
+      food: 100
+      stock: 0
+      since: 1794115464571
+      active: true
+      production-facility: LUMBER
+      production-anchor: '13_64_49'
+      lumber-slot: 3
+      facility-bound: true
+    clawmole:
+      aptitudes:
+        CRAFT: 1
+        MINE: 1
+      food: 100
+      stock: 0
+      since: 1794115473569
+      active: true
+      production-facility: DIAMOND_MINE
+      production-anchor: '11_64_54'
+      lumber-slot: 2
+      facility-bound: true
+    hornrabbit:
+      aptitudes:
+        FARM: 1
+        PET_STORAGE: 1
+      food: 100
+      stock: 0
+      since: 1794115485571
+      active: true
+      production-facility: CARROT_FARM
+      production-anchor: '3_64_56'
+      lumber-slot: 2
       facility-bound: true
 typed-facilities-migrated: true
 sales:
@@ -232,6 +345,8 @@ town:
       '-1_64_49': {}
       '12_64_44':
         craft-worker: NIGHTCAT:07a764da-bcfb-4245-83a8-be07e053081b:CRAFT=3:MINE=2
+      '-14_64_52':
+        craft-worker: PIRATEOTTER
     shop:
       sell:
         raw_diamond:
@@ -371,33 +486,33 @@ pet-storage:
         production-anchor: '-6_64_48'
         lumber-slot: 1
         facility-bound: true
-        food: 100
-        stock: 26
-        since: 1794100987071
-        active: true
+        food: 98
+        stock: 64
+        since: 1794112793741
+        active: false
       44867329-bc34-4972-b522-6fa5361c88fa:
-        production-facility: FARM
-        production-anchor: '6_64_55'
+        production-facility: CARROT_FARM
+        production-anchor: '3_64_56'
         lumber-slot: 1
         facility-bound: true
-        food: 36
-        stock: 0
-        since: 1794101694152
+        food: 76
+        stock: 60
+        since: 1794112727391
         active: false
       07a764da-bcfb-4245-83a8-be07e053081b:
-        food: 96
+        food: 94
         stock: 0
-        since: 1794101147495
+        since: 1794111821908
         active: false
       96e69b91-f984-4c26-9e58-70be03f7edab:
         production-facility: LUMBER
         production-anchor: '13_64_49'
         lumber-slot: 1
         facility-bound: true
-        food: 100
-        stock: 0
-        since: 1794095890022
-        active: true
+        food: 76
+        stock: 60
+        since: 1794112755595
+        active: false
     level: 2
 facility-views:
   village:
@@ -407,57 +522,7 @@ facility-views:
       wide: true
     '13_64_49':
       wide: true
-    '10_64_58':
-      wide: true
     '11_64_54':
-      wide: true
-    '-2_64_45':
-      food:
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
-        amount: 64
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
-        amount: 64
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
-        amount: 64
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
-        amount: 64
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
-        amount: 64
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
-        amount: 64
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
-      - null
       wide: true
     '7_64_43':
       wide: true
@@ -471,10 +536,6 @@ facility-views:
       width: 2
       depth: 2
       wide: true
-    '-15_64_51':
-      width: 3
-      depth: 1
-      wide: true
     '-6_64_48':
       width: 2
       depth: 2
@@ -482,4 +543,62 @@ facility-views:
     '12_64_44':
       width: 3
       depth: 1
+      wide: true
+    '1_64_51':
+      width: 2
+      depth: 2
+      wide: true
+      food:
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 19
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+    '-14_64_52':
+      width: 3
+      depth: 1
+      wide: true
+    '10_64_59':
+      width: 2
+      depth: 2
       wide: true

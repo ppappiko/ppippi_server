@@ -1,6 +1,6 @@
 ItemsAdder resource-pack diagnostics
 
-## Missing model parents (22)
+## Missing model parents (34)
 
 Model '_iainternal:item/ia_auto/icon_arrow_chest' references missing parent 'minecraft:item/generated'.
 
@@ -40,11 +40,35 @@ Model 'pipi_materials:item/trap' references missing parent 'minecraft:item/gener
 
 Model 'pipi_materials:item/unlock' references missing parent 'minecraft:item/generated'.
 
+Model 'pipi_pets:item/angelpig' references missing parent 'minecraft:item/generated'.
+
 Model 'pipi_pets:item/cat' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/ferret' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/fox' references missing parent 'minecraft:item/generated'.
 
 Model 'pipi_pets:item/frog' references missing parent 'minecraft:item/generated'.
 
+Model 'pipi_pets:item/hornrabbit' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/mole' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/moonbear' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/otter' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/rabbit' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/raccoon' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/redpanda' references missing parent 'minecraft:item/generated'.
+
 Model 'pipi_pets:item/sparrow' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/thundersheep' references missing parent 'minecraft:item/generated'.
+
+Model 'pipi_pets:item/tortoise' references missing parent 'minecraft:item/generated'.
 
 ## Missing textures (1)
 
@@ -54,8 +78,29 @@ Texture 'minecraft:item/leather_horse_armor_overlay' not found; referenced by 1 
 
 ## Modern atlas (1)
 
-[Pack] Found 3 grouped resource-pack warning sections affecting 3 custom entries across 4 Vanilla asset versions.
+[Pack] Found 12 grouped resource-pack warning sections affecting 12 custom entries across 4 Vanilla asset versions.
   Unique missing models: 1
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/axolotl_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/axolotl_spawn_egg.json
+    Minecraft material: axolotl_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
 
   Missing model: minecraft:item/template_spawn_egg
     Used by (1):
@@ -101,12 +146,180 @@ Texture 'minecraft:item/leather_horse_armor_overlay' not found; referenced by 1 
 
   Missing model: minecraft:item/template_spawn_egg
     Used by (1):
+      - minecraft:item/fox_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/fox_spawn_egg.json
+    Minecraft material: fox_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
       - minecraft:item/frog_spawn_egg
         Reference chain:
           minecraft:item/template_spawn_egg
 
     Declared from: assets/minecraft/items/frog_spawn_egg.json
     Minecraft material: frog_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/panda_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/panda_spawn_egg.json
+    Minecraft material: panda_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/pig_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/pig_spawn_egg.json
+    Minecraft material: pig_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/polar_bear_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/polar_bear_spawn_egg.json
+    Minecraft material: polar_bear_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/rabbit_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/rabbit_spawn_egg.json
+    Minecraft material: rabbit_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/sheep_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/sheep_spawn_egg.json
+    Minecraft material: sheep_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/silverfish_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/silverfish_spawn_egg.json
+    Minecraft material: silverfish_spawn_egg
+    Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+
+    What this means:
+      The custom entries above eventually reference a model that was not found in the generated resource pack.
+
+    How to fix:
+      Check for a typo in 'minecraft:item/template_spawn_egg'.
+      Make sure 'assets/minecraft/models/item/template_spawn_egg.json' exists with the correct namespace and path.
+      If another plugin or pack event supplies it, verify that the integration adds the file.
+    Technical details:
+      Source classification: ORIGINAL_UNRESOLVED
+      Validation reason: original model reference is unresolved; no selected pack entry
+
+  Missing model: minecraft:item/template_spawn_egg
+    Used by (1):
+      - minecraft:item/turtle_spawn_egg
+        Reference chain:
+          minecraft:item/template_spawn_egg
+
+    Declared from: assets/minecraft/items/turtle_spawn_egg.json
+    Minecraft material: turtle_spawn_egg
     Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
 
     What this means:
