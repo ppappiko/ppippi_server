@@ -1,0 +1,90 @@
+#
+# Example Pet Cosmetics
+#
+# Pet Types:
+#   MYTHICMOB  - Spawns a MythicMob that follows the player around. Cannot die or despawn.
+#                If the MythicMob has a ModelEngine model, it will be used automatically.
+#   COMPANION  - Spawns a MythicMob that floats next to the player (attached style).
+#   MCPETS     - Legacy: delegates to MCPets plugin.
+#
+# Common Options:
+#   Type: MYTHICMOB|COMPANION|MCPETS
+#   MythicMob: <mythicmob id>          - The MythicMob to spawn
+#   EntityType: <vanilla entity type>  - Vanilla entity type (for COMPANION without MythicMob)
+#   FollowDistance: 3.0                - How close the pet stays before stopping (MYTHICMOB)
+#   TeleportDistance: 16.0             - Distance before the pet teleports to the player
+#   Speed: 1.0                         - Movement speed multiplier
+#   OffsetX: 1.5                       - Horizontal offset from the player
+#   OffsetY: 0.5                       - Vertical offset (mainly for COMPANION)
+#   OffsetZ: 0.0                       - Forward/back offset
+#
+
+pet_wolf:
+  Type: PET
+  PetType: MYTHICMOB
+  MythicMob: CosmeticWolf
+  Display: '<yellow>Loyal Wolf'
+  Description:
+    - '<white>A faithful wolf companion'
+    - '<white>Follows you everywhere!'
+  Material: BONE
+  Rarity: common
+  Price: 500
+  FollowDistance: 3.0
+  TeleportDistance: 16.0
+  Speed: 1.2
+
+pet_cat:
+  Type: PET
+  PetType: MYTHICMOB
+  MythicMob: CosmeticCat
+  Display: '<light_purple>Fluffy Cat'
+  Description:
+    - '<white>A cute cat that follows you'
+    - '<white>Purrs contentedly'
+  Material: STRING
+  Rarity: rare
+  FollowDistance: 2.5
+  TeleportDistance: 12.0
+  Speed: 1.0
+
+pet_allay:
+  Type: PET
+  PetType: COMPANION
+  MythicMob: CosmeticFairy
+  Display: '<aqua>Fairy Companion'
+  Description:
+    - '<white>A tiny fairy companion that'
+    - '<white>floats beside you'
+    - '<white>and glows softly'
+  Material: GLOWSTONE_DUST
+  Rarity: legendary
+  OffsetX: 1.0
+  OffsetY: 1.2
+  OffsetZ: 0.0
+
+pet_parrot:
+  Type: PET
+  PetType: COMPANION
+  MythicMob: CosmeticParrot
+  Display: '<green>Shoulder Parrot'
+  Description:
+    - '<white>A colorful shoulder parrot'
+    - '<white>perched beside you'
+  Material: FEATHER
+  Rarity: rare
+  OffsetX: 0.4
+  OffsetY: 1.5
+  OffsetZ: 0.0
+
+#
+# Legacy MCPets example (requires MCPets plugin):
+#
+# MCPETS_EXAMPLE:
+#  Type: PET
+#  PetType: MCPETS
+#   Id: my_mcpets_pet_id
+#   Display: '<green>MCPets Pet'
+#   Description:
+#     - '<white>A pet from MCPets'
+#   Material: EGG

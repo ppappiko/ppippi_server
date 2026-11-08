@@ -1,0 +1,27 @@
+Menu:
+  Display: "&f<fontimage.empty_character><fontimage.empty_character><fontimage.myc_sub_menu>"
+  Size: 36
+  UIElements:
+  - myc_sub_menu{char=\ue802;path=ui/cosmetic_gui_subcategories_small;height=256;ascent=18}
+  Schema:
+  - Q Q Q Q Q Q Q Q B
+  - Q Q Q Q M Q Q Q 0
+  Icons:
+    FANCY_BORDER:
+      Mapping: 1
+      Material: AIR
+      Display: ''
+    BACK:
+      Mapping: B
+      Material: PAPER
+      Model: 'mythic:ui/icon_exit'
+      Generation: item/ui/icon_exit
+      Display: '<gray><< <gold>Back to Categories'
+    BUTTON_EMOTES:
+      Mapping: M
+      Material: PAPER
+      Model: item/ui/icon_cosmetic_emotes
+      Generation: item/ui/icon_cosmetic_emotes
+      Display: '<gold><bold>Emotes'
+      Lore:
+      - '<white>Play an emote'

@@ -1,0 +1,57 @@
+{
+  "display": {
+    "firstperson_righthand": {
+      "scale": [
+        1.0,
+        0.9986928104575163,
+        1
+      ]
+    },
+    "thirdperson_righthand": {
+      "scale": [
+        1.0,
+        0.9986928104575163,
+        1
+      ]
+    },
+    "gui": {
+      "scale": [
+        1.0,
+        0.9986928104575163,
+        1
+      ]
+    },
+    "fixed": {
+      "scale": [
+        1.0,
+        0.9986928104575163,
+        1
+      ]
+    },
+    "firstperson_lefthand": {
+      "scale": [
+        1.0,
+        0.9986928104575163,
+        1
+      ]
+    },
+    "ground": {
+      "scale": [
+        1.0,
+        0.9986928104575163,
+        1
+      ]
+    },
+    "thirdperson_lefthand": {
+      "scale": [
+        1.0,
+        0.9986928104575163,
+        1
+      ]
+    }
+  },
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "pipi_materials:item/reinforced_plank"
+  }
+}

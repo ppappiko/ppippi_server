@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>beer.devs</groupId>
+  <artifactId>FastNbt-jar</artifactId>
+  <version>1.4.22</version>
+  <name>FastNbt-jar</name>
+  <description>Spigot library to edit items NBT very fast</description>
+  <url>https://github.com/LoneDev6/FastNBT</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <name>LoneDev</name>
+      <email>info@matteodev.it</email>
+      <url>https://github.com/LoneDev6/</url>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git:https://github.com/LoneDev6/FastNBT.git</connection>
+    <developerConnection>scm:git:https://github.com/LoneDev6/FastNBT.git</developerConnection>
+    <url>https://github.com/LoneDev6/FastNBT</url>
+  </scm>
+</project>

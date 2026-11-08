@@ -1,0 +1,7 @@
+christmas:
+  Display: "<red>Christmas"
+  Enabled: false
+
+halloween:
+  Display: "<gold>Halloween"
+  Enabled: true

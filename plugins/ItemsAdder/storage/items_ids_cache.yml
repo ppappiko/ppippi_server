@@ -1,0 +1,87 @@
+PAPER:
+  _iainternal:icon_left_blue: 10000
+  _iainternal:icon_right_blue: 10001
+  _iainternal:icon_search: 10002
+  _iainternal:icon_cancel: 10003
+  _iainternal:icon_arrow_chest: 10004
+  _iainternal:icon_back_orange: 10005
+  _iainternal:icon_next_orange: 10006
+  pipi_station:feeder_produce: 10007
+  pipi_station:craft: 10008
+  pipi_station:farm: 10009
+  pipi_station:carrot_farm: 10010
+  pipi_station:potato_farm: 10011
+  pipi_station:mine: 10012
+  pipi_station:gold_mine: 10013
+  pipi_station:diamond_mine: 10014
+  pipi_station:lumber: 10015
+  pipi_station:pet_storage: 10016
+  pipi_station:research: 10017
+  pipi_station:pet_market: 10018
+  pipi_gear:bow_0_asset: 10019
+  pipi_gear:bow_1_asset: 10020
+  pipi_gear:bow_2_asset: 10021
+  pipi_gear:fishing_rod_cast_asset: 10022
+PLAYER_HEAD:
+  __manually_handled:_iainternal__player_phead_0: 10000
+  __manually_handled:_iainternal__player_parm_left_3: 10001
+  __manually_handled:_iainternal__player_pbody_2: 10002
+  __manually_handled:_iainternal__player_pleg_left_1: 10003
+  __manually_handled:_iainternal__player_pleg_right_5: 10004
+  __manually_handled:_iainternal__player_parm_right_4: 10005
+  __manually_handled:_iainternal__player_dummy_0: 10006
+  __manually_handled:_iainternal__player_dummy_1: 10007
+  __manually_handled:_iainternal__player_dummy_2: 10008
+  __manually_handled:_iainternal__player_dummy_3: 10009
+  __manually_handled:_iainternal__player_dummy_4: 10010
+  __manually_handled:_iainternal__player_dummy_5: 10011
+IRON_SWORD:
+  pipi_gear:iron_sword: 10000
+  pipi_materials:iron_club: 48113
+DIAMOND_SWORD:
+  pipi_gear:diamond_sword: 10000
+  pipi_materials:diamond_club: 48114
+NETHERITE_SWORD:
+  pipi_gear:netherite_sword: 10000
+BOW:
+  pipi_gear:bow: 10000
+BLAZE_ROD:
+  pipi_gear:staff: 10000
+IRON_PICKAXE:
+  pipi_gear:iron_pickaxe: 10000
+DIAMOND_PICKAXE:
+  pipi_gear:diamond_pickaxe: 10000
+FISHING_ROD:
+  pipi_gear:fishing_rod: 10000
+FLINT:
+  pipi_materials:repair_kit: 48101
+IRON_INGOT:
+  pipi_materials:steel: 48102
+OAK_PLANKS:
+  pipi_materials:plank: 48103
+  pipi_materials:reinforced_plank: 48110
+  pipi_materials:coated_plank: 48111
+GOLD_INGOT:
+  pipi_materials:coin: 48104
+TRIPWIRE_HOOK:
+  pipi_materials:trap: 48105
+  pipi_materials:unlock: 48106
+  pipi_materials:trap_wood: 48116
+  pipi_materials:trap_iron: 48117
+  pipi_materials:trap_diamond: 48118
+IRON_NUGGET:
+  pipi_materials:plate: 48102
+GOLD_NUGGET:
+  pipi_materials:lock: 48107
+IRON_AXE:
+  pipi_materials:hammer: 48108
+DIAMOND:
+  pipi_materials:blue_diamond: 48109
+STICK:
+  pipi_materials:wood_club: 48112
+CHICKEN_SPAWN_EGG:
+  pipi_pets:sparrow: 48200
+FROG_SPAWN_EGG:
+  pipi_pets:frog: 48201
+CAT_SPAWN_EGG:
+  pipi_pets:cat: 48202

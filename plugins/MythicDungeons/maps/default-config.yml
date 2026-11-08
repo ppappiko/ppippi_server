@@ -1,0 +1,328 @@
+General:
+  # Reserved as a config version marker. Nothing reads it yet, so changing it has no effect.
+  Version: 1
+  DungeonType: CLASSIC
+  # The generator to use for chunks in this dungeon. These can also be provided by other plugins.
+  # natural = Default superflat.
+  # mythicdungeons:void = Classic void generator, provided by Mythic Dungeons.
+  # mythicdungeons:block.[BLOCKTYPE] = Generates entire chunks of a specific block. (For example, mythicdungeons:block.STONE would generate chunks at full height of all stone.)
+  ChunkGenerator: natural
+  # The pretty name of this dungeon that'll appear when it's finished and started.
+  DisplayName: "&bA Dungeon"
+  # Whether to show the display name above in a title message to the players when the dungeon begins.
+  ShowTitleOnStart: false
+  Lobby:
+    Enabled: false
+  # Where the player appears after leaving the dungeon via the "Finish Dungeon" function. (Use the /md setexit <dungeon> command.)
+  ExitLocation: null
+  # Whether to use the exit location for any time the player leaves instead of just when they finish the dungeon.
+  AlwaysUseExit: false
+  ExitToRespawnPoint: false
+  # What game mode the players will be in while in the dungeon.
+  Gamemode: SURVIVAL
+  # How many times the player can die before being unable to respawn. 0 will give the player infinite lives.
+  PlayerLives: 0
+  # Should players be shown minecraft's death screen when they die?
+  InstantRespawnPlayers: false
+  # Whether players who lose all their lives get put into spectator. If this is set to false, the player will instead be kicked from the dungeon.
+  # NOTE: Spectators cannot use the spectator menu to exit the dungeon.
+  DeadPlayersSpectate: true
+  # Whether to close the dungeon when all players are spectating. If this is set to false, the dungeon will remain open until all players have left.
+  # If set to false, players must use /md leave to exit the dungeon.
+  # NOTE: This option only works if DeadPlayersSpectate is set to true.
+  CloseDungeonWhenAllSpectating: true
+  # Whether players keep their inventory upon entering the dungeon.
+  KeepInventoryOnEnter: true
+  # Whether players keep their current health upon entering the dungeon.
+  # (Otherwise,they will be restored to full health upon entry, and set back to their previous health upon exit.)
+  KeepHealthOnEnter: false
+  # Whether players keep their current food level upon entering the dungeon.
+  # (Otherwise, they will be restored to full food upon entry, and set back to their previous food level upon exit.)
+  KeepFoodOnEnter: false
+  # Whether players keep their current potion effects upon entering the dungeon.
+  # (Otherwise, they will have all potion effects cleared upon entry.)
+  KeepPotionEffectsOnEnter: false
+  # Whether players keep their current EXP and level upon entering the dungeon.
+  KeepExpOnEnter: true
+  # Whether to kick players who disconnect during the dungeon.
+  KickOfflinePlayers: true
+  # How long to wait in seconds after a disconnect before kicking the player from the dungeon.
+  KickOfflinePlayersDelay: 300
+  # When a disconnected player rejoins, teleport them to their team's latest checkpoint so they
+  # aren't stranded behind doors the group already passed. Only applies once a checkpoint is reached.
+  ReturnToCheckpointOnRejoin: true
+  # Charge a life when a player disconnects shortly after taking damage, so logging out mid-fight
+  # isn't a free way to dodge a death. Only applies when PlayerLives is enabled.
+  CombatLogPenalty: false
+  # How many seconds after taking damage a disconnect still counts as combat-logging.
+  CombatLogSeconds: 10
+  # The maximum number of backups the plugin will save before deleting old backups.
+  MaxBackups: 7
+  # The maximum number of instances there can be of this dungeon at a time.
+  MaxInstances: 5
+  PreGenerateInstances: 0
+  # How long in minutes until the dungeon is automatically ended and the players are kicked out. 0 will disable the time limit.
+  TimeLimit: 0
+  # How long in ticks to wait before cleaning up a dungeon when all players have left it. 0 will clean up the dungeon instantly.
+  CleanupDelay: 0
+  # The maximum number of players that can be in this dungeon. Used by the CONTINUOUS dungeon type.
+  MaxPlayers: 0
+
+  # When set to 'true', when players take items from reward functions, they'll be put in a rewards list.
+  # Upon finishing the dungeon, the players will be given the rewards.
+  GiveLootAfterCompletion: false
+  GiveUntakenLoot: false
+  # Loot Cooldown makes it so that players can't loot chests they've already looted recently.
+  # Reward functions can be configured individually, or use the default values provided in this section.
+  LootCooldown:
+    Enabled: false
+    # When true, each reward function tracks its own cooldown (per-chest).
+    # When false, looting any reward starts a single dungeon-wide cooldown that blocks
+    # all reward functions in this dungeon until it resets.
+    PerReward: true
+    # Setting this to TIMER will make it so the player can't get loot again until their cooldown is up.
+    # Options like HOURLY, DAILY, WEEKLY, and MONTHLY will let you configure a set time for loot to be reset.
+    CooldownType: DAILY
+    # If type is set to TIMER, this is how many minutes until the player can acquire loot again.
+    # Otherwise, this is the time of day when the reset occurs in hours.
+    CooldownTime: 0
+    # If type is set to WEEKLY, ResetDay determines what numbered day of the week the reset occurs.
+    # "Sunday" would be 1, "Monday" is 2, "Tuesday" is 3, etc.
+    # If type is set to MONTHLY, ResetDay determines what day of the month the reset occurs.
+    # Doesn't do anything if CooldownType is set to "TIMER"
+    ResetDay: 1
+
+  # Access cooldown is used to limit how quickly a player can play this dungeon again after playing it.
+  # NOTE: Be wary using this, as this can result in players being unable to play with each other if one of them has already run the dungeon recently!
+  #    The "LootCooldown" section should be used instead to avoid this.
+  AccessCooldown:
+    Enabled: false
+    # Whether to apply the cooldown when the player finishes the dungeon (via a "Finish Dungeon" function.)
+    CooldownOnFinish: true
+    # Whether to apply the cooldown when the player leaves the dungeon by any means.
+    CooldownOnLeave: false
+    # Whether to apply the cooldown when the player loses all their lives.
+    CooldownOnLoseLives: false
+    # Whether to apply the cooldown when the player starts the dungeon. If you have a lobby enabled, it won't apply the cooldown until a Start Dungeon function is activated.
+    CooldownOnStart: false
+    # Setting this to TIMER will make it so the player can't get run this dungeon again until their cooldown is up.
+    # Options like HOURLY, DAILY, WEEKLY, and MONTHLY will let you configure a set time for access to be reset.
+    CooldownType: DAILY
+    # If type is set to TIMER, this is how many minutes until the player can player the dungeon again.
+    # Otherwise, this is the time of day when the reset occurs in hours.
+    CooldownTime: 0
+    # If type is set to WEEKLY, ResetDay determines what numbered day of the week the reset occurs.
+    # "Sunday" would be 1, "Monday" is 2, "Tuesday" is 3, etc.
+    # If type is set to MONTHLY, ResetDay determines what day of the month the reset occurs.
+    ResetDay: 1
+
+Requirements:
+  # A list of permissions the player must have.
+  Permissions: []
+  MinPartySize: 1
+  MaxPartySize: 4
+  # The maximum distance (in blocks) a party member may be from the party leader to be pulled
+  # into the dungeon when the party enters. 0 disables the check. Members who are farther than
+  # this (or in another world) are left behind in the lobby instead of entering.
+  MaxPartyDistance: 0
+  # When a member is left behind by MaxPartyDistance, whether to also remove them from the party
+  # (true) or keep them in the party (false).
+  KickDistantMembers: true
+  # A list of dungeons the player must have completed. Note: "Finished" means the "Finish Dungeon" function was used in the required dungeon.
+  DungeonsComplete: []
+  # The minimum level needed to play this dungeon.
+  # 0 disables the check.
+  PlayerLevel: 0
+  # What PlayerLevel measures: VANILLA (Minecraft experience level) or MYTHICRPG (active archetype level in MythicRPGGroup).
+  # If MythicRPG is not installed, the check reads level 0 and everyone fails it.
+  PlayerLevelType: VANILLA
+  # The MythicRPG archetype group read when PlayerLevelType is MYTHICRPG.
+  MythicRPGGroup: class
+  # If a Vault-based economy is installed, it costs this much to play the dungeon.
+  Cost: 0
+  # Set to "true" if you only want to consume the above cost from the party leader.
+  LeaderOnlyCost: false
+  # A Mythic skill cast at the joining player to gate dungeon entry.
+  # The skill controls its own conditions, messages, sounds, etc. To block
+  # entry, the skill must call the 'denyjoin' mechanic. Cast per player, so
+  # every party member is checked individually.
+  #
+  # Example skill (define in your MythicMobs/Skills/*.yml):
+  #   Dungeon1_Gate:
+  #     Conditions:
+  #     - archetype{group=Class;equals=Warrior} false
+  #     - archetypelevel{group=Class;min=20} false
+  #     Skills:
+  #     - message{m="<red>Warrior level 20+ only."} @Self
+  #     - denyjoin @Self
+  #
+  # Then set:
+  #JoinSkill: Dungeon1_Gate
+  # Optional fallback message shown when the skill calls denyjoin without
+  # sending its own message. Leave unset to use the default
+  # 'instance.requirements.join-denied' lang entry. Supports color codes.
+  #JoinDenyMessage: "&cYou don't meet this dungeon's entry requirements."
+AccessKeys:
+  # Whether to consume keys when players enter the dungeon using the key.
+  Consume: true
+  # Set to "true" if you only want to consume the key from the party leader.
+  LeaderOnly: false
+  # A list of itemstacks that are valid key items. NOTE: It is not recommended adding keys from here. Use the `/md addkey <dungeon>` command instead.
+  # Mythic items are supported and will default to the latest version of the Mythic item (based on its namespace).
+  KeyItems: []
+
+Difficulty:
+  # Whether or not to enable difficulty levels for dungeons.
+  EnableDifficultyLevels: false
+  # Whether or not to show a difficulty selection menu to the player when playing. Requires the above to ALSO be true.
+  EnableDifficultyMenu: false
+  # A list of difficulty options and how they affect the dungeon. You can name them whatever you want and have as many as you like!
+  # Useful in combination with the "Dungeon Difficulty" condition.
+  Levels:
+    HARD: # EXAMPLE
+      # An icon item that will represent this difficulty in the difficulty menu
+      Icon:
+        Material: DIAMOND
+        #CustomModelData: 1
+        Display: "&cHard"
+        Lore:
+          - "&cOnly for the truest gamers."
+      # How much to increase the mobs health by (1.2 would be +20%)
+      MobHealth: 1.5
+      # How much to increase the amount of mobs coming from spawner functions (1.2 would be +20%)
+      MobAmounts: 1.5
+      # How much to increase the amount of damage mobs do by (1.2 would be +20%)
+      MobDamage: 1.25
+      # How much to increase all Mythic Mobs' levels by
+      BonusMythicLevels: 1
+      # A range of how much bonus loot to add to loot table and random rewards functions.
+      # WARNING: Only works on Mythic Dungeons loot tables and 'random rewards' functions!
+      # Mythic Mobs drop tables do not get bonus drops. Instead, use the `dungeondifficulty` mythic condition in your mythic drop table!
+      BonusLoot: 1-3
+      # Optional per-difficulty overrides for selected General settings. Any key omitted falls
+      # back to the dungeon's base value above. Supported keys:
+      #   TimeLimit, PlayerLives, MaxPlayers, KeepInventoryOnEnter, InstantRespawnPlayers
+      #Overrides:
+      #  TimeLimit: 15
+      #  PlayerLives: 1
+      #  KeepInventoryOnEnter: false
+      # Optional per-mob overrides. Keys match the spawner's Mob field (MythicMob ID or
+      # vanilla EntityType name). Any sub-key omitted falls back to the difficulty defaults
+      # above (MobAmounts / MobHealth / MobDamage / BonusMythicLevels). Mobs not listed here
+      # are scaled by those defaults as before.
+      #   Count           - absolute spawn count (wins over CountMultiplier and MobAmounts)
+      #   CountMultiplier - per-mob count multiplier (replaces MobAmounts for this mob)
+      #   Health          - HP multiplier (replaces MobHealth for this mob)
+      #   Damage          - damage multiplier (replaces MobDamage for this mob)
+      #   BonusLevel      - additive level bonus (replaces BonusMythicLevels for this mob)
+      #MobOverrides:
+      #  BigBoss:
+      #    Count: 1
+      #    Health: 2.0
+      #    Damage: 1.5
+      #    BonusLevel: 5
+      #  TrashMob:
+      #    CountMultiplier: 2.5
+      #    Health: 1.0
+      #  zombie:
+      #    CountMultiplier: 3.0
+
+# Allows configuring a "map" item the players can get that displays the surrounding dungeon area.
+Map:
+  # Gives the players the map when they join. Effectively enables use of the map.
+  GiveOnJoin: false
+  # How fast the blocks on the map should fade out as the player rises higher.
+  MaxRenderDepth: 10
+  # Displays a floor label in the corner of the map based on the Y value the player is at. Useful for procedural dungeons.
+  DisplayFloors: false
+  # How many blocks along the Y axis the player must travel before we consider the player to be on a different floor.
+  FloorDepth: 3
+  # Whether to show icons for other players on the map instead of just the player holding the map.
+  ShowAllPlayers: true
+
+Rules:
+  SpawnMobs: false
+  SpawnAnimals: false
+  SpawnMonsters: false
+  AllowBreakBlocks: false
+  AllowPlaceBlocks: false
+  AllowSpawnEggs: true
+  AllowEnderpearl: false
+  AllowChorusFruit: false
+  AllowBucket: false
+  # Limits placing things that don't count as blocks like boats.
+  AllowPlaceEntities: false
+  # Whether players can drop items on the ground while playing the dungeon.
+  # Key and dungeon items can never be dropped either way.
+  AllowDropItems: true
+  # Effectively sets RandomTickSpeed to 0 inside the dungeon, preventing blocks from spreading, plants from growing, ice from melting, etc.
+  DisableRandomTick: true
+  PreventPlantGrowth: true
+  PreventExplosionBlockDamage: false
+  PvP: false
+  HideDeathMessages: false
+  # Prevents players outside the dungeon from teleporting in. Admins can bypass with the `dungeons.bypassjoin` permission. (Or `dungeons.bypassjoin.[dungeon_name]`)
+  PreventTeleportIn: false
+  # Whether to allow all commands in the dungeon.
+  AllowCommands: false
+  # A list of commands that can still be used, even when "AllowCommands" is set to false.
+  AllowedCommands:
+    - party
+    - dparty
+    - p
+    - dungeon leave
+    - md leave
+    - leave
+  # A list of commands that CAN'T be used, even when "AllowCommands" is set to true.
+  DisallowedCommands: []
+  # Vanilla Minecraft item materials to ban. (Must be a valid Spigot material.)
+  BannedItems: []
+  # A list of more detailed items to ban from the dungeon. (Recommended to use the /md banitem command instead of modifying this directly.)
+  CustomBannedItems: []
+  # Toggles whether banned items can be picked up if they are on the ground in the dungeon.
+  AllowPickupBannedItems: false
+  # Toggles whether banned items can be crafted while inside the dungeon.
+  AllowCraftBannedItems: false
+  # Toggles whether banned items can be placed in or removed from storage in the dungeon.
+  AllowStorageBannedItems: false
+  # A list of blocks that are allowed to be PLACED in this dungeon, regardless of the "AllowPlaceBlocks" rule.
+  # Remove the [] and add the blocks like a list as show in the comments.
+  BlockPlaceWhitelist: []
+  # - DIAMOND_ORE
+  # - GOLD_ORE
+  # A list of blocks that are allowed to be BROKEN in this dungeon, regardless of the "AllowBreakBlocks" rule.
+  BlockBreakWhitelist: []
+  # A list of blocks that are NOT allowed to be PLACED in this dungeon, regardless of the "AllowPlaceBlocks" rule.
+  BlockPlaceBlacklist: []
+  # A list of blocks that are NOT allowed to be BROKEN in this dungeon, regardless of the "AllowBreakBlocks" rule.
+  BlockBreakBlacklist: []
+  # Whether to let players break any blocks they've placed in this dungeon. Useful when "AllowPlaceBlocks" is true, but "AllowBreakBlocks" is false.
+  # OVERRIDES THE ABOVE RULES!!
+  AllowBreakPlacedBlocks: false
+  # A list of Spigot entities that cannot be damaged.
+  DamageProtectedEntities: []
+  # A list of Spigot entities that cannot be interacted with. Useful for protecting Item Frames and Armor Stands.
+  InteractProtectedEntities: []
+  # A list of block-interaction categories to disable in this dungeon.
+  # Available categories: DOORS, TRAPDOORS, BUTTONS, LEVERS, PRESSURE_PLATES, FENCE_GATES
+  DisabledInteractions: []
+  # When set to true, prevents armor, weapons and/or tools from losing durability while in the dungeon
+  PreventDurabilityLoss:
+    Armor: false
+    Weapons: false
+    Tools: false
+
+# Per-dungeon overrides for the global queue/ready-check toggles in config.yml.
+# Uncomment any key to override the global value for this dungeon only. Omit a key to inherit the global.
+# These are read from the top level of this file, so they must stay unindented.
+#LeaderOnlyQueue: true
+#ReadyCheckOnCommand: true
+#ReadyCheckInQueue: true
+#ReadyCheckTime: 45
+#StartWithoutUnreadyPlayers: false
+#ReadyCheckRequireLeader: true
+# When 'true', this dungeon ignores the party system entirely on entry: a partied
+# player enters alone (no group queue, no leader-only gating, no MinPartySize check
+# against the party, no party-members-added-to-instance). Useful for CONTINUOUS
+# dungeons where each player should enter independently.
+#IgnoreParties: false

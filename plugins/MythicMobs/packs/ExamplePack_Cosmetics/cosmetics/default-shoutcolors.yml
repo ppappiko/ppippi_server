@@ -1,0 +1,45 @@
+shoutcolor_rainbow:
+  Type: SHOUTCOLOR
+  Display: 'Rainbow Power'
+  Description:
+  - "<white>The power of friendship"
+  ColorHex: '#FFFFFF'
+  ColorMarkdown: '<rainbow>'
+  Rarity: LEGENDARY
+
+shoutcolor_50shades: 
+  Type: SHOUTCOLOR
+  Display: '50 Shades of Gray'
+  Description:
+    - "<white>Is this supposed to be here?"
+  ColorHex: '#2c3e50'
+  ColorMarkdown: '<gradient:#bdc3c7:#2c3e50>'
+  Rarity: RARE
+  Hidden: UNCOMMON
+
+shoutcolor_overgrown:
+  Type: SHOUTCOLOR
+  Display: 'Overgrown'
+  Description:
+    - "<white>Feels like a lush forest."
+  ColorHex: '#56ab2f'
+  ColorMarkdown: '<gradient:#56ab2f:#a8e063>'
+  Rarity: UNCOMMON
+
+shoutcolor_frosty:
+  Type: SHOUTCOLOR
+  Display: 'Frosty'
+  Description:
+  - '<white>Brrrrrrrrrr'
+  ColorHex: '#004e92'
+  ColorMarkdown: '<gradient:#000428:#004e92>'
+  Rarity: RARE
+
+shoutcolor_candycane:
+  Type: SHOUTCOLOR
+  Display: 'Red Candy Cane'
+  Description:
+  - '<white>A minty red candy cane!'
+  ColorHex: '#cc2626'
+  ColorMarkdown: '<gradient:#cc2626:#FFFFFF:#cc2626:#FFFFFF>'
+  Rarity: RARE

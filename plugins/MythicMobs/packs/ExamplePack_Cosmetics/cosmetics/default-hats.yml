@@ -1,0 +1,67 @@
+basic_hat:
+  Type: HAT
+  Model: 'mythic:cosmetics/hats/basic_hat'
+  Generation: item/cosmetics/hats/basic_hat
+  Display: 'Basic Hat'
+  Rarity: COMMON
+  Price: 200
+  Description:
+  - "<white>A simple brimmed hat"
+  - "<white>for everyday style."
+  
+# Created by QueenOfAnts
+# https://mcmodels.net/vendors/151/queens-garden
+blob_hat:
+  Type: HAT
+  Model: 'mythic:cosmetics/hats/blob_hat'
+  Generation: item/cosmetics/hats/blob_hat
+  Display: 'Blob Hat'
+  Rarity: COMMON
+  Description:
+  - "<white>There's a blob on your head!"
+
+# Created by QueenOfAnts
+# https://mcmodels.net/vendors/151/queens-garden
+bear_ears:
+  Type: HAT
+  Model: 'mythic:cosmetics/hats/bear_ears'
+  Generation: item/cosmetics/hats/bear_ears
+  Display: 'Bear Ears'
+  Rarity: COMMON
+  Description:
+  - "<white>Rounded bear ears with"
+  - "<white>cozy woodland style."
+
+# Created by QueenOfAnts
+# https://mcmodels.net/vendors/151/queens-garden
+disguise_glasses:
+  Type: HAT
+  Model: 'mythic:cosmetics/hats/disguise_glasses'
+  Generation: item/cosmetics/hats/disguise_glasses
+  Display: 'Disguise Glasses'
+  Rarity: COMMON
+  Description:
+  - "<white>An inconspicuous way to"
+  - "<white>become someone else"
+
+# Created by QueenOfAnts
+# https://mcmodels.net/vendors/151/queens-garden
+mouse_ears:
+  Type: HAT
+  Model: 'mythic:cosmetics/hats/mouse_ears'
+  Generation: item/cosmetics/hats/mouse_ears
+  Display: 'Mouse Ears'
+  Rarity: COMMON
+  Description:
+  - "<white>Cute mouse ears"
+
+# Created by Nocsy
+# https://mcmodels.net/vendors/66/nocsy
+pirate_hat:
+  Type: HAT
+  Model: 'mythic:item/cosmetics/hats/nocsy_pirate_hat'
+  Generation: item/cosmetics/hats/nocsy_pirate_hat
+  Display: 'Pirate Hat'
+  Description:
+  - "<white>A skull-marked hat"
+  - "<white>for bold captains."

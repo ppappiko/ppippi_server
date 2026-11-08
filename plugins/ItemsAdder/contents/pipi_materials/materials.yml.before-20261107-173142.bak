@@ -1,0 +1,51 @@
+info:
+  namespace: pipi_materials
+items:
+  repair_kit:
+    display_name: 수리키트
+    resource:
+      material: FLINT
+      generate: true
+      model_id: 48101
+      textures:
+      - item/repair_kit
+  steel:
+    display_name: 강철
+    resource:
+      material: IRON_INGOT
+      generate: true
+      model_id: 48102
+      textures:
+      - item/steel
+  plank:
+    display_name: 판자
+    resource:
+      material: OAK_PLANKS
+      generate: true
+      model_id: 48103
+      textures:
+      - item/plank
+  coin:
+    display_name: 돈
+    resource:
+      material: GOLD_INGOT
+      generate: true
+      model_id: 48104
+      textures:
+      - item/coin
+  trap:
+    display_name: 포획틀
+    resource:
+      material: TRIPWIRE_HOOK
+      generate: true
+      model_id: 48105
+      textures:
+      - item/trap
+  plate:
+    display_name: 강철
+    resource:
+      material: IRON_NUGGET
+      generate: true
+      model_id: 48102
+      textures:
+      - item/plate

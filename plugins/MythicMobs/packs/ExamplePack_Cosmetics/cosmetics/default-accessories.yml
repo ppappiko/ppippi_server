@@ -1,0 +1,42 @@
+  
+# Created by Samus2002
+# https://mcmodels.net/vendors/27/
+angel_wings:
+  Type: ACCESSORY
+  Display: "Angel Wings"
+  Description:
+  - "<white>A pair of angelic wings"
+  ModelId: "angel_wings"
+  State: "idle"
+  Offset: 0, 0.5, -0.15, 0, 0
+  Anchor: BODY
+  Attached: true
+
+# Created by Lcorp
+balloon:
+  Type: ACCESSORY
+  Display: 'Balloon'
+  Description:
+  - "<white>A festive balloon!"
+  Rarity: common
+  Price: 250
+  ModelId: balloon
+  State: idle
+  LeashBone: leash
+  Offset: -1, 1, 1, 0, 0
+  Anchor: BODY
+  Attached: false
+  
+# Created by Samus2002
+# https://mcmodels.net/vendors/27/
+paladin_wings:
+  Type: ACCESSORY
+  Display: "Paladin Wings"
+  Description:
+    - "<white>Broad holy wings trimmed"
+    - "<white>for champions."
+  ModelId: "paladin_wings"
+  State: "idle"
+  Offset: 0, 0.5, -0.15, 0, 0
+  Anchor: BODY
+  Attached: true

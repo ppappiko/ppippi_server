@@ -1,0 +1,49 @@
+
+# Created by Toffy
+# https://mcmodels.net/vendors/74/toffy
+backpack:
+  Type: BACK
+  Model: 'mythic:cosmetics/backs/backpack'
+  Generation: item/cosmetics/backs/backpack
+  Display: "Backpack"
+  Price: 750
+  Renderer: DISPLAY
+  AlignmentOffset: LEGACY
+  Description:
+  - "<white>A sturdy travel pack for"
+  - "<white>adventure essentials."
+
+# Created by Yungwilder
+# https://mcmodels.net/vendors/58/yungwilder
+colorful_backpack:
+  Type: BACK
+  Model: 'mythic:cosmetics/backs/colorful_backpack'
+  Generation: item/cosmetics/backs/colorful_backpack
+  Display: "&aColorful Backpack"
+  Description:
+    - "<white>A bright backpack packed"
+    - "<white>with colorful gear."
+
+# Created by Nocsy
+# https://mcmodels.net/vendors/66/nocsy
+fruit_basket:
+  Type: BACK
+  Model: 'mythic:cosmetics/backs/fruit_basket'
+  Generation: item/cosmetics/backs/fruit_basket
+  Display: "&aFruit Basket"
+  Renderer: DISPLAY
+  Description:
+    - "<white>A picnic basket filled"
+    - "<white>with fresh fruit."
+
+# Created by Nocsy
+# https://mcmodels.net/vendors/66/nocsy
+warriors_belt:
+  Type: BACK
+  Model: 'mythic:cosmetics/backs/warrior_belt'
+  Generation: item/cosmetics/backs/warrior_belt
+  Display: "&aWarrior's Belt"
+  Description:
+    - "<white>A rugged battle-ready belt"
+    - "<white>for adventurers."
+

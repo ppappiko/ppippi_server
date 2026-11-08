@@ -1,0 +1,54 @@
+
+# Created by EnderIzzy
+laugh:
+  Type: SPRAY
+  Model: 'mythic:cosmetics/sprays/laugh'
+  Generation: item/cosmetics/sprays/laugh
+  MapImage: item/cosmetics/sprays/laugh
+  Display: "<green>Laugh"
+  Description:
+  - "<white>A quick laugh spray for"
+  - "<white>playful moments."
+
+# Created by EnderIzzy
+skull:
+  Type: SPRAY
+  Model: 'mythic:cosmetics/sprays/skull'
+  Generation: item/cosmetics/sprays/skull
+  MapImage: item/cosmetics/sprays/skull
+  Display: "<green>Skull"
+  Description:
+  - "<white>A skull mark for bold"
+  - "<white>warnings."
+
+# Created by Toffy
+# https://mcmodels.net/vendors/74/toffy
+flame:
+  Type: SPRAY
+  Model: 'mythic:cosmetics/sprays/flame'
+  Generation: item/cosmetics/sprays/flame
+  MapImage: item/cosmetics/sprays/flame
+  Display: "<green>Flame"
+  Description:
+  - "<white>A fiery tag that burns"
+  - "<white>bright."
+
+# Created by EnderIzzy
+hearts:
+  Type: SPRAY
+  Model: 'mythic:cosmetics/sprays/hearts'
+  Generation: item/cosmetics/sprays/hearts
+  MapImage: item/cosmetics/sprays/hearts
+  Display: "<green>Hearts"
+  Description:
+  - "<white>A sweet spray covered"
+  - "<white>in hearts."
+
+pog:
+  Type: SPRAY
+  Text: "<rainbow>POGGERS"
+  DisplayScale: 5
+  Display: "<rainbow>POGGERS"
+  Description:
+  - "<white>A loud rainbow spray"
+  - "<white>for big reactions."

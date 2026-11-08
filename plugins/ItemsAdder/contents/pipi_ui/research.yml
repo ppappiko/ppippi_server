@@ -1,0 +1,7 @@
+info:
+  namespace: pipi_ui
+font_images:
+  research:
+    path: gui/research.png
+    scale_ratio: 222
+    y_position: 13

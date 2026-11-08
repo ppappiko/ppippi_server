@@ -1,0 +1,45 @@
+Menu:
+  Display: "&f<fontimage.empty_character><fontimage.empty_character><fontimage.myc_sub_menu>"
+  Size: 36
+  UIElements:
+  - myc_sub_menu{char=\ue802;path=ui/cosmetic_gui_subcategories_small;height=256;ascent=18}
+  Schema:
+  - Q Q Q Q Q Q Q Q B
+  - Q Q C Q S Q T Q 0
+  - Q Q Q Q Q Q Q Q 0
+  Icons:
+    FANCY_BORDER:
+      Mapping: 1
+      Material: AIR
+      Display: ''
+    BACK:
+      Mapping: B
+      Material: PAPER
+      Model: 'mythic:ui/icon_exit'
+      Generation: item/ui/icon_exit
+      Display: '<gray><< <gold>Back to Categories'
+    BUTTON_CHATCOLORS:
+      Mapping: C
+      Material: PAPER
+      Model: item/ui/icon_cosmetic_chatcolor
+      Generation: item/ui/icon_cosmetic_chatcolor
+      Display: '<gold><bold>Chat Colors'
+      Lore:
+      - '<white>Customize your chat color'
+    BUTTON_SHOUTCOLORS:
+      Mapping: S
+      Material: PAPER
+      Model: item/ui/icon_cosmetic_shoutcolor
+      Generation: item/ui/icon_cosmetic_shoutcolor
+      Display: '<gold><bold>Shout Colors'
+      Lore:
+      - '<white>Customize your shout color'
+    BUTTON_STICKERS:
+      Mapping: T
+      Material: PAPER
+      Model: item/ui/icon_cosmetic_stickerbook
+      Generation: item/ui/icon_cosmetic_stickerbook
+      Display: '<gold><bold>Stickers'
+      Lore:
+      - '<white>Collect stickers you can use as'
+      - '<white>chat tags, emojis, and sprays!'

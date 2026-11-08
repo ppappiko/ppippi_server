@@ -1,0 +1,260 @@
+# ─────────────────────────────────────────────────────────────
+# GENERAL ERRORS & PERMISSIONS
+# ─────────────────────────────────────────────────────────────
+cannot-break-with-this-tool: <red>✘</red> <gray>You cannot break this block with your current tool.</gray>
+cannot-repair: <red>✘</red> <gray>This item cannot be repaired.</gray>
+cannot-set-durability: <red>✘</red> <gray>The item durability could not be changed.</gray>
+set-durability-successfully: <green>✔</green> <gray>Item durability updated.</gray>
+repaired-successfully: <green>✔</green> <gray>Item repaired.</gray>
+crafting-no-recipe: <yellow>!</yellow> <gray>No recipe is available for this item.</gray>
+
+no-craft-permission: <red>✘</red> <gray>You do not have permission to craft this item.</gray>
+no-permission: <red>✘</red> <gray>You do not have permission to use this command.</gray>
+no-permission-detail: '<red>✘</red> <gray>Missing permission: <yellow>{permission}</yellow>.</gray>'
+no-permission-short: <red>✘</red> <gray>No permission.</gray>
+wrong-command-usage: <red>✘</red> <gray>Incorrect command usage.</gray>
+command-ingame-only: <red>✘</red> <gray>This command can only be used in-game.</gray>
+player-offline: <yellow>!</yellow> <gray>That player is offline.</gray>
+player-full-inventory: <red>✘</red> <gray>The player's inventory is full.</gray>
+player-not-found: <red>✘</red> <gray>Player <aqua>{player}</aqua> was not found.</gray>
+confirm-command: <yellow>!</yellow> <gray>Run <aqua>{command}</aqua> again to confirm.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# ITEM ACTIONS & INFORMATION
+# ─────────────────────────────────────────────────────────────
+given-item: <green>✔</green> <gray>Gave <yellow>{item}</yellow> to <aqua>{player}</aqua>.</gray>
+removed-item: <green>✔</green> <gray>Removed <yellow>{item}</yellow> from <aqua>{player}</aqua>.</gray>
+lost-item: <yellow>!</yellow> <gray>You lost <yellow>{item}</yellow>.</gray>
+obtained-item: <green>✔</green> <gray>You obtained <yellow>{item}</yellow>.</gray>
+item-not-found: <red>✘</red> <gray>Item <yellow>{item}</yellow> does not exist.</gray>
+
+items-count: '<gray>Total items: <white>{count}</white></gray>'
+lore-usages: '<gray>Remaining uses: <white>{value}</white></gray>'
+lore-durability: '<gray>Durability: <white>{value}</white> / <white>{max}</white></gray>'
+custom-model-data: '<gray>Custom model data: <white>{value}</white></gray>'
+name-config: <gray>Configuration name:</gray>
+
+# ─────────────────────────────────────────────────────────────
+# RESOURCE PACK
+# ─────────────────────────────────────────────────────────────
+resourcepack-error: <red>✘</red> <gray>The resource pack could not be enabled. Contact a server administrator.</gray>
+resourcepack-error-failed-download: <red>✘</red> <gray>The resource pack download failed. Check your client log for details.</gray>
+resourcepack-error-failed-reload: <red>✘</red> <gray>The resource pack could not be applied. It may be incompatible or corrupted.</gray>
+resourcepack-error-discarded: <red>✘</red> <gray>Your client rejected the resource pack.</gray>
+resourcepack-error-invalid-url: <red>✘</red> <gray>The resource pack URL is invalid. Contact a server administrator.</gray>
+resourcepack-kick-declined: <red>✘</red> <gray>You must accept the server resource pack to join.</gray>
+
+resourcepack-apply-title: <gradient:#b967ff:#55d6ff><bold>Applying Resource Pack</bold></gradient>
+resourcepack-apply-subtitle: <gray>Please wait a moment…</gray>
+resourcepack-popup-message: |
+  <gradient:#b967ff:#55d6ff><bold>Welcome, {player}!</bold></gradient>
+  <gray>Accept the server resource pack to unlock all features.</gray>
+  <dark_gray>You only need to download it once.</dark_gray>
+resourcepack-not-ready: <yellow>!</yellow> <gray>The resource pack is not ready yet.</gray>
+compressing-resourcepack: <yellow>!</yellow> <gray>Compressing the resource pack…</gray>
+resourcepack-uploaded-successfully: '<green>✔</green> <gray>Resource pack uploaded: <aqua>{url}</aqua></gray>'
+
+# ─────────────────────────────────────────────────────────────
+# COOLDOWNS & TIMERS
+# ─────────────────────────────────────────────────────────────
+please-wait-events-cooldown: <yellow>⌛</yellow> <gray>Wait <aqua>{interval}</aqua> before using this item again.</gray>
+please-wait-command-cooldown: <yellow>⌛</yellow> <gray>Wait <aqua>{interval}</aqua> before using this command again.</gray>
+cooldown-bossbar-title: <gradient:#ffb347:#ff5f45><bold>⌛ Cooldown</bold></gradient>
+interact-too-fast: <red>✘</red> <gray>You are interacting too quickly. Slow down.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# UI TITLES & BUTTONS
+# ─────────────────────────────────────────────────────────────
+prefix: '<gradient:#b967ff:#55d6ff><bold>ItemsAdder</bold></gradient> <dark_gray>»</dark_gray> '
+
+emoji-gui-title: <gradient:#b967ff:#55d6ff><bold>Emoji List</bold></gradient>
+ia-title-menu-categories: <gradient:#b967ff:#55d6ff><bold>Categories</bold></gradient>
+ia-title-crafting-view: <gradient:#b967ff:#55d6ff><bold>Main Menu</bold></gradient>
+ia-search-results: <white>Search Results</white>
+ia-smelting: <white>Smelting</white>
+ia-edit-item: <white>Edit Item</white>
+
+ia-button-search: <gray>Search…</gray>
+ia-button-back: <white>← Back</white>
+ia-button-next-page: <white>Next Page »</white>
+ia-button-previous-page: <white>« Previous Page</white>
+ia-button-next-recipe: <white>Next Recipe »</white>
+ia-button-previous-recipe: <white>« Previous Recipe</white>
+ia-button-get-item: <white>Get Item</white>
+ia-button-loot-blocks: <white>Drop from Block</white>
+ia-button-loot-mobs: <white>Drop from Mob</white>
+ia-button-loot-fishing: <white>Drop from Fishing</white>
+ia-button-vehicle-fuel-items: <yellow>Fuel Items</yellow>
+ia-button-seed-result: <white>Grow from Seeds</white>
+ia-button-blocks-populators: <white>Block Spawn Information</white>
+ia-button-surface-decorators: <white>Surface Spawn Information</white>
+ia-button-trees-populators: <white>Tree Spawn Information</white>
+
+# ─────────────────────────────────────────────────────────────
+# RECIPES & ANVILS
+# ─────────────────────────────────────────────────────────────
+iarecipe-wrong-usage: <red>✘</red> <gray>Use <yellow>/iarecipe \<item\></yellow> or hold an item in your hand.</gray>
+iarecipe-no-custom-item: <red>✘</red> <gray>Hold a custom item or use <yellow>/iarecipe \<item\></yellow>.</gray>
+anvil-repair-info: <white>Anvil Repair Material</white>
+
+# ─────────────────────────────────────────────────────────────
+# VALUES & STATISTICS
+# ─────────────────────────────────────────────────────────────
+player-stat-value-read: '<gray>Value: <aqua>{value}</aqua></gray>'
+player-stat-value-write: <green>✔</green> <gray>Value updated.</gray>
+player-stat-value-write-bypass: <red>✘</red> <gray>Bypass detected. The value was not changed.</gray>
+player-stat-value-write-bypass-self: <yellow>!</yellow> <gray>Bypass active. The value was changed because you targeted yourself.</gray>
+player-stat-value-not-found: <red>✘</red> <gray>Statistic <aqua>{value}</aqua> was not found.</gray>
+player-stat-value-insufficient: '<red>✘</red> <gray>Insufficient <aqua>{stat}</aqua>. Required: <yellow>{rule}</yellow>.</gray>'
+
+# ─────────────────────────────────────────────────────────────
+# WORLD & BLOCK INTERACTIONS
+# ─────────────────────────────────────────────────────────────
+rightclick-a-block: <yellow>!</yellow> <gray>Right-click the surface where you want to spawn the tree.</gray>
+spawned-tree: <green>✔</green> <gray>Tree spawned.</gray>
+spawned-tree-error: <red>✘</red> <gray>The tree cannot be spawned here.</gray>
+tree-not-found: <red>✘</red> <gray>Tree <yellow>{item}</yellow> does not exist.</gray>
+
+max-furnitures-vehicles-reached: <red>✘</red> <gray>This chunk reached its furniture and vehicle limit (<aqua>{value}</aqua>). Remove some entities first.</gray>
+tripwires-disabled: <red>✘</red> <gray>Tripwires are disabled on this server.</gray>
+
+max-crops-reached-no-directions: <red>✘</red> <gray>This area reached its crop limit. Remove some crops or choose another location.</gray>
+max-crops-reached-directions: <red>✘</red> <gray>This area reached its crop limit. The nearest available location is <yellow>{distance}</yellow> blocks <aqua>{direction}</aqua>.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# LIQUIDS & ANALYZER
+# ─────────────────────────────────────────────────────────────
+liquid-analyzer-low-level: <yellow>!</yellow> <gray>The liquid level is too low. Check the source block.</gray>
+liquid-analyzer-no-liquid: <red>✘</red> <gray>No liquid detected.</gray>
+liquid-bucket-place-near-error: <red>✘</red> <gray>Another custom liquid is too close. Choose a different location.</gray>
+liquid-not-completely-registered: <red>✘</red> <gray>Liquid <aqua>{liquid}</aqua> is not fully registered. Ask an administrator to restart the server.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# MUSIC & SOUNDS
+# ─────────────────────────────────────────────────────────────
+now-playing: '<gray>♪ Now playing: <gradient:#b967ff:#55d6ff>{value}</gradient></gray>'
+played-totem-animation: <green>✔</green> <gray>Played totem animation <yellow>{totem}</yellow> for <aqua>{player}</aqua>.</gray>
+played-sound: <green>✔</green> <gray>Played sound <yellow>{sound}</yellow> for <aqua>{player}</aqua>, if available.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# TEXT, RENAMING & COLORS
+# ─────────────────────────────────────────────────────────────
+renamed-successfully: <green>✔</green> <gray>Item renamed.</gray>
+cannot-rename: <red>✘</red> <gray>This item cannot be renamed.</gray>
+colored-successfully: <green>✔</green> <gray>Color applied.</gray>
+invalid-hex-color: '<red>✘</red> <gray>Invalid hexadecimal color: <aqua>{color}</aqua>.</gray>'
+
+# ─────────────────────────────────────────────────────────────
+# ENTITIES & DISGUISES
+# ─────────────────────────────────────────────────────────────
+unknown-entity: '<red>✘</red> <gray>Unknown entity: <aqua>{entity}</aqua>.</gray>'
+unknown-emote: '<red>✘</red> <gray>Unknown emote: <aqua>{emote}</aqua>.</gray>'
+disguise-failed: <red>✘</red> <gray>Could not disguise as <aqua>{entity}</aqua>.</gray>
+undisguise-failed-player-not-disguised: <red>✘</red> <gray>Player <aqua>{player}</aqua> is not disguised.</gray>
+undisguised: <green>✔</green> <gray>You are no longer disguised.</gray>
+not-disguised: <yellow>!</yellow> <gray>You are not disguised.</gray>
+custom-entities-disabled: <red>✘</red> <gray>Custom entities are disabled in <white>config.yml</white>.</gray>
+custom-entity-cannot-spawn-peaceful: '<red>✘</red> <gray>Cannot spawn <aqua>{entity}</aqua>: its <aqua>{type}</aqua> base entity is not allowed in Peaceful difficulty.</gray>'
+emotes-disabled: <red>✘</red> <gray>Emotes are disabled in <white>config.yml</white>.</gray>
+this-animation-cannot-be-used-as-emote: <red>✘</red> <gray>This animation cannot be used as an emote.</gray>
+no-emote-specified: <red>✘</red> <gray>No emote was specified.</gray>
+no-npc-selected: <red>✘</red> <gray>Select an NPC before using this command.</gray>
+
+custom-entity-summon: <green>✔</green> <gray>Spawned <yellow>{entity}</yellow> at <aqua>{coords}</aqua>.</gray>
+custom-entity-kill: <green>✔</green> <gray>Removed <aqua>{amount}</aqua> <yellow>{entity}</yellow> entities from loaded chunks.</gray>
+custom-entity-kill-all: <green>✔</green> <gray>Removed <aqua>{amount}</aqua> custom entities from loaded chunks.</gray>
+custom-entity-not-found: <red>✘</red> <gray>Custom entity <aqua>{entity}</aqua> was not found.</gray>
+
+all-mounts-occupied: <red>✘</red> <gray>All mounts are currently occupied.</gray>
+no-near-entity-found: <red>✘</red> <gray>No nearby entity was found.</gray>
+
+disabled-furniture-hitboxes: <red>✘</red> <gray>Furniture hitboxes disabled.</gray>
+enabled-furniture-hitboxes: <green>✔</green> <gray>Furniture hitboxes enabled.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# SHA-1 & INTERNAL OPERATIONS
+# ─────────────────────────────────────────────────────────────
+sha1-wait-previous-execution: <yellow>!</yellow> <gray>A SHA-1 calculation is already in progress. Please wait.</gray>
+sha1-loading: <yellow>!</yellow> <gray>Calculating the resource pack SHA-1…</gray>
+plugin-reloaded-successfully: <green>✔</green> <gray>Plugin reloaded successfully.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# SERVER CONTENT & CACHE
+# ─────────────────────────────────────────────────────────────
+server-content-changed-join-again: <yellow>!</yellow> <gray>Server content changed. Rejoin the server to update it.</gray>
+ia-cleancache-regenerate-pack: '<green>✔</green> <gray>Cache cleared. Regenerate the resource pack: <aqua>{url}</aqua></gray>'
+ia-cleancache-removed-blocks: <green>✔</green> <gray>Removed <aqua>{count}</aqua> blocks from the cache. See the console for details.</gray>
+
+# ─────────────────────────────────────────────────────────────
+# HOSTING & PRIVACY POLICY
+# ─────────────────────────────────────────────────────────────
+hosting-privacy-policy-accepted: <green>✔</green> <gray>Privacy policy accepted.</gray>
+hosting-privacy-policy-declined: |
+  <red>✘</red> <gray>You declined the privacy policy.</gray>
+  <dark_gray>Select another hosting method in <white>config.yml</white>.</dark_gray>
+hosting-privacy-policy-ask: |
+  <gradient:#b967ff:#55d6ff><bold>Privacy Policy</bold></gradient>
+  <gray>Read the policy: <aqua>{url}</aqua></gray>
+  <gray>Accept it with <white>/acceptprivacy</white>.</gray>
+  <dark_gray>To decline, disable <white>{provider}</white> in <white>config.yml</white> and run <white>/iareload</white>.</dark_gray>
+hosting-privacy-policy-title: <gradient:#b967ff:#55d6ff><bold>Privacy Policy</bold></gradient>
+hosting-privacy-policy-content: <gray>Accept the policy to enable automatic resource pack uploads.</gray>
+
+no-host-apply-selected: |
+  <red>✘</red> <gray>The <yellow>no-host</yellow> method is selected.</gray>
+  <dark_gray>Upload and apply the resource pack manually, or enable another hosting method in <white>config.yml</white>.</dark_gray>
+# ─────────────────────────────────────────────────────────────
+# MISCELLANEOUS
+# ─────────────────────────────────────────────────────────────
+fuel-indicator: <yellow><bold>Fuel:</bold></yellow> <white>{value}</white><gray>/</gray><white>{max}</white>
+get-from-trade-machine: <white>Obtainable from trade machines</white>
+
+worlds: <aqua>Worlds:</aqua>
+info: <aqua>Information:</aqua>
+chance: '<gray>Chance: <white>{value}%</white></gray>'
+amount: '<gray>Amount: <white>{value}</white></gray>'
+min-height: '<gray>Minimum height: <white>{value}</white></gray>'
+max-height: '<gray>Maximum height: <white>{value}</white></gray>'
+biome: <gray>Biome:</gray>
+drops-itself: <yellow>Drops itself</yellow>
+fuel-item: '    <aqua>{type}</aqua> <gray>+{amount}</gray>'
+
+nbt-rule: '<gray>{rule}: <white>{value}</white></gray>'
+
+warning-crafter-broken-hopper: <red>✘</red> <gray>The Crafter was removed because a hopper attempted to move a custom item into it.</gray>
+
+font-image-chat-hover: |
+  <gradient:#b967ff:#55d6ff><bold>Emoji Information</bold></gradient>
+  <gray>Emoji: <white>{font_image}</white></gray>
+  <gray>Placeholder: <white>{placeholder}</white></gray>
+
+  <yellow><bold>Tip</bold></yellow>
+  <gray>Use <white>/e</white> to write messages or commands with emoji suggestions.</gray>
+  <dark_gray>Type an emoji name, then press <white>Tab</white>.</dark_gray>
+
+  <yellow>/e Hello smile</yellow>
+  <dark_gray>Prints:</dark_gray> <white>Hello {placeholder}</white>
+
+  <yellow>/e /tell Notch Hello smile</yellow>
+  <dark_gray>Sends:</dark_gray> <white>/tell Notch Hello {placeholder}</white>
+model-id: '<gray>Model ID: <white>{value}</white></gray>'
+external-pack-host-guide: |
+  <gradient:#b967ff:#55d6ff><bold>External Resource Pack Hosting</bold></gradient>
+  <gray>Guide: <aqua>http://a.devs.beer/ia-dropbox-guide</aqua></gray>
+
+  <yellow>1.</yellow> <gray>Upload <white>{file}</white> to Dropbox.</gray>
+  <yellow>2.</yellow> <gray>Update the URL in <white>config.yml</white> if it changed.</gray>
+  <yellow>3.</yellow> <gray>Run <white>/iareload</white>.</gray>
+  <yellow>4.</yellow> <gray>Run <white>/iatexture all</white> to refresh the pack for every player.</gray>
+dropped-item-coords: <green>✔</green> <gray>Dropped <yellow>{item}</yellow> at <aqua>{coords}</aqua>.</gray>
+dropped-item-player: <green>✔</green> <gray>Dropped <yellow>{item}</yellow> for <aqua>{player}</aqua>.</gray>
+ia-model-id: <gray>Model ID</gray>
+ia-vanilla-type: <gray>Vanilla Type</gray>
+
+send-again-to-confirm: <yellow>!</yellow> <gray>Run <white>/{alias}</white> again within 5 seconds to confirm.</gray>
+skin-changed: <green>✔</green> <gray>Skin updated.</gray>
+unknown-category: '<red>✘</red> <gray>Unknown category: <aqua>{name}</aqua>.</gray>'
+world-not-found: <red>✘</red> <gray>World <aqua>{world}</aqua> was not found.</gray>
+custom-blocks-type-disabled: <red>✘</red> <gray>Custom blocks of type <yellow>{type}</yellow> are disabled in <white>config.yml</white>.</gray>
+crops-view-enabled: <green>✔</green> <gray>Crop view enabled.</gray>
+crops-view-disabled: <red>✘</red> <gray>Crop view disabled.</gray>

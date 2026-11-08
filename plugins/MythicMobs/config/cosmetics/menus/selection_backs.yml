@@ -1,0 +1,61 @@
+Menu:
+  Display: "<white><fontimage.empty_character><fontimage.empty_character><fontimage.myc_menu_backs>"
+  Size: 54
+  UIElements:
+  - myc_menu_backs{char=\ue80f;path=ui/cosmetic_gui_backwear;height=256;ascent=36}
+  Schema:
+  - 'Q Q Q Q Q Q Q Q B'
+  - 'Q $ $ $ $ $ $ $ Q'
+  - 'P $ $ $ $ $ $ $ N'
+  - 'Q $ $ $ $ $ $ $ Q'
+  - 'Q Q Q Q Q Q Q Q Q'
+  - 'Q F Q Q Z X Q S R'
+  Icons:
+    BACK:
+      Mapping: B
+      Material: PAPER
+      Model: 'mythic:ui/icon_exit'
+      Display: '<white>Back to Main Menu <dark_gray>>>'
+    NEXT_PAGE:
+      Mapping: N
+      Material: PAPER
+      Model: 'mythic:ui/icon_next'
+      Display: '<green>Next Page <gray>>>'
+    PREVIOUS_PAGE:
+      Mapping: P
+      Material: PAPER
+      Model: 'mythic:ui/icon_before'
+      Display: '<gray><< <green>Previous Page'
+    REMOVE_COSMETIC:
+      Mapping: X
+      Material: PAPER
+      Model: 'mythic:ui/icon_remove_cosmetic'
+      Display: '<green>REMOVE'
+    FILTER:
+      Mapping: F
+    FILTER_COLLECTED:
+      Material: PAPER
+      Model: 'mythic:ui/icon_filter'
+      Display: '<green>Showing Collected'
+    FILTER_ALL:
+      Material: PAPER
+      Model: 'mythic:ui/icon_filter_all'
+      Display: '<green>Showing All'
+    FILTER_FAVORITE:
+      Material: PAPER
+      Model: 'mythic:ui/icon_filter_pref'
+      Display: '<green>Showing Favorites'
+    SEARCH:
+      Mapping: S
+      Material: PAPER
+      Model: 'mythic:ui/icon_search'
+      Display: '<white>Search'
+      Lore:
+      - '<gray>Click to search collection'
+    SEARCH_RESET:
+      Model: 'mythic:ui/icon_remove_search'
+      Display: '<white>Reset Search'
+      Lore:
+      - '<gray>Click to reset search'
+    EQUIPPED:
+      Mapping: Z

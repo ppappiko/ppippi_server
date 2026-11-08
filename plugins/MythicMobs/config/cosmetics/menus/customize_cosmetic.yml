@@ -1,0 +1,43 @@
+Menu:
+  Display: "<white><fontimage.empty_character><fontimage.empty_character><fontimage.myc_customize>"
+  Size: 18
+  UIElements:
+    - myc_customize{char=\ue851;path=ui/cosmetic_gui_customize;height=256;ascent=18}
+  Schema:
+    - 'Q Q Q Q Q Q Q Q B'
+    - 'Q Q S Q C Q T Q Q'
+    - 'Q Q Q Q Q Q Q Q Q'
+  Icons:
+    BACK:
+      Mapping: B
+      Material: PAPER
+      Model: 'mythic:ui/icon_exit'
+      Display: '<white>Go Back<dark_gray>>>'
+    COSMETIC:
+      Mapping: C
+      Material: PAPER
+      Display: '&fPreview'
+    SELECT_COLOR:
+      Mapping: S
+      Material: PAPER
+      Model: 'mythic:ui/icon_recolor'
+      Generation: item/ui/icon_recolor
+      Display: '&bChoose Color'
+      Lore:
+        - '&7Pick the color used on equip'
+    TOGGLE_FAVORITE:
+      Mapping: T
+    TOGGLE_FAVORITE_TRUE:
+      Material: PAPER
+      Display: '&eFavorite: &aEnabled'
+      Model: 'mythic:ui/icon_favorite_true'
+      Generation: item/ui/icon_favorite_true
+      Lore:
+        - '<gray>Click to remove from favorites'
+    TOGGLE_FAVORITE_FALSE:
+      Material: PAPER
+      Display: '&eFavorite: &cDisabled'
+      Model: 'mythic:ui/icon_favorite'
+      Generation: item/ui/icon_favorite
+      Lore:
+        - '&7Click to add to favorites'

@@ -1,0 +1,134 @@
+# ========================================
+#  Example Dialog Definitions
+# ========================================
+#
+#  Dialogs use the Paper Dialog API (1.21.6+).
+#  Show dialogs to players using the showDialog mechanic:
+#    - showDialog{dialog=WelcomeNotice} @trigger
+#
+#  All text fields support MiniMessage formatting and MythicMobs placeholders.
+#  Every body, input, and button element supports optional Conditions
+#  for per-player visibility filtering.
+#
+# ========================================
+
+# A simple notice dialog with a single button.
+WelcomeNotice:
+  Title: "<gold>Welcome!"
+  Body:
+    - Type: text
+      Message: "<gray>Welcome to the server, <target.name>!"
+    - Type: text
+      Message: "<yellow>Enjoy your stay."
+  Buttons:
+    - Label: "<green>Got it!"
+      Width: 150
+
+# A confirmation dialog that triggers different skills
+# depending on which button the player clicks.
+QuestOffer:
+  Title: "<gold>New Quest Available"
+  CanClose: true
+  Pause: false
+  AfterAction: CLOSE
+  Body:
+    - Type: text
+      Message: "<gray>A mysterious stranger needs your help."
+    - Type: text
+      Message: "<yellow>Reward: <green>50 Gold"
+  Buttons:
+    - Label: "<green>Accept"
+      Tooltip: "Accept this quest"
+      Width: 150
+      Skills:
+        - message{m="<green>Quest accepted!"}
+    - Label: "<red>Decline"
+      Tooltip: "Decline this quest"
+      Width: 150
+      Skills:
+        - message{m="<gray>Maybe next time."}
+
+# A multi-action dialog with inputs and conditional buttons.
+# Demonstrates all input types and condition-based visibility.
+CharacterSetup:
+  Title: "<blue>Character Setup"
+  ExternalTitle: "Setup"
+  CanClose: false
+  Pause: false
+  AfterAction: WAIT_FOR_RESPONSE
+  Body:
+    - Type: text
+      Message: "<gray>Configure your character settings."
+      Width: 300
+  Inputs:
+    - Type: text
+      Key: nickname
+      Label: "Display Name"
+      MaxLength: 16
+    - Type: bool
+      Key: pvpEnabled
+      Label: "Enable PvP?"
+    - Type: range
+      Key: difficulty
+      Label: "Difficulty"
+      Start: 1
+      End: 10
+      Initial: 5
+      Step: 1
+    - Type: option
+      Key: classChoice
+      Label: "Choose a Class"
+      Options:
+        warrior: "Warrior"
+        mage: "Mage"
+        ranger: "Ranger"
+  Buttons:
+    - Label: "<green>Confirm"
+      Tooltip: "Save your settings"
+      Width: 150
+      Skills:
+        - message{m="<green>Saved <dialog.nickname> as <dialog.classChoice>"}
+        - closeDialog
+    - Label: "<red>Cancel"
+      Width: 150
+  ExitButton:
+    Label: "Close"
+    Width: 100
+  Columns: 2
+
+PlayerPicker:
+  Title: "<gold>Players <gray>(<dialog.page>/<dialog.pages>)"
+  AfterAction: WAIT_FOR_RESPONSE
+  Columns: 2
+  Buttons:
+    - ForEach: "@PlayersOnServer{targetself=true}"
+      PageSize: 6
+      Label: "<skill.value>"
+      Skills:
+        - setvariable{var=skill.dialog.target;type=STRING;value="<skill.value>"}
+        - showDialog{dialog=PlayerProfile}
+    - Label: "<gray>Previous"
+      Conditions:
+        - compareValues{v1=<dialog.page>;op=>;v2=1}
+      Skills:
+        - variableSubtract{var=skill.dialog.page;amount=1}
+        - showDialog{dialog=PlayerPicker}
+    - Label: "<gray>Next"
+      Conditions:
+        - compareValues{v1=<dialog.page>;op=<;v2=<dialog.pages>}
+      Skills:
+        - variableAdd{var=skill.dialog.page;amount=1}
+        - showDialog{dialog=PlayerPicker}
+  ExitButton:
+    Label: "Close"
+
+PlayerProfile:
+  Title: "<gold><dialog.target>"
+  AfterAction: WAIT_FOR_RESPONSE
+  Body:
+    - Type: text
+      Message: "<gray>Back keeps the page you were on."
+  Buttons:
+    - Label: "<gray>Back"
+      Skills:
+        - showDialog{dialog=PlayerPicker}

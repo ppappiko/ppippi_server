@@ -1,0 +1,24 @@
+
+# Created by Jeqo
+# https://mcmodels.net/vendors/98/jeqo
+flame_fist:
+  Type: OFFHAND
+  Model: 'mythic:cosmetics/offhands/flame_fist'
+  Generation: item/cosmetics/offhands/flame_fist
+  Display: 'Flaming Fist'
+  Rarity: COMMON
+  Description:
+  - "<white>A blazing gauntlet with"
+  - "<white>heat close at hand."
+
+# Created by Jeqo
+# https://mcmodels.net/vendors/98/jeqo
+golden_anvil_staff:
+  Type: OFFHAND
+  Model: 'mythic:cosmetics/offhands/golden_anvil_staff'
+  Generation: item/cosmetics/offhands/golden_anvil_staff
+  Display: "Golden Anvil Staff"
+  Rarity: UNCOMMON
+  Description:
+  - "<white>A golden smithing staff"
+  - "<white>with workshop style."

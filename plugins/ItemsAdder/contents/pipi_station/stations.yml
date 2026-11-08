@@ -1,0 +1,76 @@
+info:
+  namespace: pipi_station
+items:
+  feeder_produce:
+    display_name: 식량 저장소 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/feeder_produce
+  craft:
+    display_name: 기본 제작대 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/craft
+  farm:
+    display_name: 밀 농장 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/farm
+  carrot_farm:
+    display_name: 당근 농장 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/carrot_farm
+  potato_farm:
+    display_name: 감자 농장 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/potato_farm
+  mine:
+    display_name: 철광석 채석장 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/mine
+  gold_mine:
+    display_name: 금광석 채석장 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/gold_mine
+  diamond_mine:
+    display_name: 다이아 채석장 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/diamond_mine
+  lumber:
+    display_name: 벌목장 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/lumber
+  pet_storage:
+    display_name: 펫 창고 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/pet_storage
+  research:
+    display_name: 연구소 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/research
+
+  pet_market:
+    display_name: 펫 가판대 외형
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/pet_market

@@ -1,0 +1,69 @@
+color_red:
+  Type: CHATCOLOR
+  Display: 'Light Red'
+  Description:
+    - "<white>Reddy Freddy."
+  ColorHex: '#FFCCCB'
+  ColorMarkdown: '<#FFCCCB>'
+  Rarity: COMMON
+  Hidden: false
+
+color_orange:
+  Type: CHATCOLOR
+  Display: 'Light Orange'
+  Description:
+    - "<white>What rhymes with orange?"
+  ColorHex: '#fed8b1'
+  ColorMarkdown: '<#fed8b1>'
+  Rarity: COMMON
+  Hidden: false
+
+color_yellow:
+  Type: CHATCOLOR
+  Display: 'Light Yellow'
+  Description:
+    - "<white>Yellow Fellow."
+  ColorHex: '#FFFF55'
+  ColorMarkdown: '<#FFFF55>'
+  Rarity: COMMON
+  Hidden: false
+
+color_green:
+  Type: CHATCOLOR
+  Display: 'Light Green'
+  Description:
+    - "<white>Mean Green."
+  ColorHex: '#d2e9af'
+  ColorMarkdown: '<#d2e9af>'
+  Rarity: COMMON
+  Hidden: false
+
+color_blue:
+  Type: CHATCOLOR
+  Display: 'Light Blue'
+  Description:
+    - "<white>Da ba dee da ba daa."
+  ColorHex: '#c3e4e8'
+  ColorMarkdown: '<#c3e4e8>'
+  Rarity: COMMON
+  Hidden: false
+
+color_purple:
+  Type: CHATCOLOR
+  Display: 'Light Purple'
+  Description:
+    - "<white>Prof. Plumb did it."
+  ColorHex: '#c1aec5'
+  ColorMarkdown: '<#c1aec5>'
+  Rarity: COMMON
+  Hidden: false
+
+color_pink:
+  Type: CHATCOLOR
+  Display: 'Light Pink'
+  Description:
+    - "<white>Real players wear pink."
+  ColorHex: '#f2dbde'
+  ColorMarkdown: '<#f2dbde>'
+  Rarity: COMMON
+  Hidden: false

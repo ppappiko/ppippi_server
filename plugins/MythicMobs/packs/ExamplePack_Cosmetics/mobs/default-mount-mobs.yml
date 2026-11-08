@@ -1,0 +1,10 @@
+
+CosmeticHorse:
+  Type: HORSE
+  Options:
+    Saddled: true
+
+CosmeticDragon:
+  Type: PHANTOM
+  Options:
+    Silent: true

@@ -1,0 +1,8 @@
+
+CosmeticWolf:
+  Type: WOLF
+  Display: '<gold>Loyal Wolf'
+
+CosmeticFairy:
+  Type: ALLAY
+  Display: '<gold>Fairy'

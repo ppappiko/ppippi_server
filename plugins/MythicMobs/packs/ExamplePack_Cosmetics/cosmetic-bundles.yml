@@ -1,0 +1,10 @@
+winter_bundle:
+  Display: "<red>Winter Bundle"
+  Rarity: rare
+  Weight: 8
+  Price: 1200
+  Categories:
+    - christmas
+  Contents:
+    HAT:
+      - BASIC_HAT

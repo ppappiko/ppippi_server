@@ -1,0 +1,6 @@
+# This is a world configuration file for Paper.
+# This file may start empty but can be filled with settings to override ones in the paper-config/paper-world-defaults.yml
+# 
+# World: pipi_tutorial (minecraft:pipi_tutorial)
+
+_version: 31

@@ -1,0 +1,75 @@
+info:
+  namespace: pipi_gear
+items:
+  iron_sword:
+    display_name: iron_sword
+    resource:
+      material: IRON_SWORD
+      generate: false
+      model_path: item/iron_sword
+  diamond_sword:
+    display_name: diamond_sword
+    resource:
+      material: DIAMOND_SWORD
+      generate: false
+      model_path: item/diamond_sword
+  netherite_sword:
+    display_name: netherite_sword
+    resource:
+      material: NETHERITE_SWORD
+      generate: false
+      model_path: item/netherite_sword
+  bow:
+    display_name: bow
+    resource:
+      material: BOW
+      generate: false
+      model_path: item/bow
+  staff:
+    display_name: staff
+    resource:
+      material: BLAZE_ROD
+      generate: false
+      model_path: item/staff
+  iron_pickaxe:
+    display_name: iron_pickaxe
+    resource:
+      material: IRON_PICKAXE
+      generate: false
+      model_path: item/iron_pickaxe
+  diamond_pickaxe:
+    display_name: diamond_pickaxe
+    resource:
+      material: DIAMOND_PICKAXE
+      generate: false
+      model_path: item/diamond_pickaxe
+  fishing_rod:
+    display_name: fishing_rod
+    resource:
+      material: FISHING_ROD
+      generate: false
+      model_path: item/fishing_rod
+  bow_0_asset:
+    display_name: bow_0
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/bow_0
+  bow_1_asset:
+    display_name: bow_1
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/bow_1
+  bow_2_asset:
+    display_name: bow_2
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/bow_2
+  fishing_rod_cast_asset:
+    display_name: fishing_rod_cast
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/fishing_rod_cast

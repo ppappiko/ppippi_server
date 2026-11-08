@@ -1,0 +1,18 @@
+dab:
+  Type: EMOTE
+  Material: PAPER
+  Model: 'mythic:ui/icon_cosmetic_emotes'
+  Display: '<gold>Dab'
+  Description:
+  - '<white>Strike a sharp dab pose'
+  - '<white>with your player skin.'
+  Price: 250
+  ModelId: dab
+  Animation: dab
+  CanMove: false
+  CanLook: false
+  QuitControl: SNEAK
+  Loop: false
+  LerpIn: 0.1
+  LerpOut: 0.1
+  Speed: 1.0

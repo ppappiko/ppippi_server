@@ -1,0 +1,31 @@
+hourly-sale-limit-per-pet: 16
+food-cleared-floor-objective: pipi_cleared_floor
+combat:
+  item-level:
+    base: 100
+    per-tier: 100
+    per-upgrade: 5
+  difference-slope: 0.25
+  dungeons:
+    tower_01:
+      item-level: 100
+    tower_02:
+      item-level: 150
+    tower_03:
+      item-level: 200
+    tower_04:
+      item-level: 250
+    tower_05:
+      item-level: 300
+    tower_06:
+      item-level: 350
+    tower_07:
+      item-level: 400
+    tower_08:
+      item-level: 450
+    tower_09:
+      item-level: 500
+    tower_10:
+      item-level: 550
+wild-world: world
+village-world: village

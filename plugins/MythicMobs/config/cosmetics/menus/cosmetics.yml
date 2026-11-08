@@ -1,0 +1,105 @@
+Menu:
+  Display: "&f<fontimage.empty_character><fontimage.empty_character><fontimage.myc_main_menu>"
+  Size: 36
+  UIElements:
+  - myc_main_menu{char=\ue801;path=ui/cosmetic_gui_categories;height=256;ascent=18}
+  - empty_character{char=\ue800;path=ui/empty_character;height=-6;ascent=-32768}
+  Schema:
+  - Q Q Q Q Q Q Q Q 0
+  - H Q X Q A Q O Q C
+  - Q Q Q Q Q Q Q Q 0
+  - G Q S Q M Q P Q E
+  Icons:
+    FANCY_BORDER:
+      Mapping: 1
+      Material: AIR
+      Display: ''
+    SUBMENU_ANIMATIONS:
+      Mapping: G
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_emotes'
+      Generation: item/ui/icon_cosmetic_emotes
+      Display: '<gold><bold>Animations'
+      Lore:
+      - '<white>Emotes and animated cosmetics'
+    #SUBMENU_APPEARANCE:
+    #  Mapping: P
+    #  Material: PAPER
+    #  Model: 'minecraft:air'
+    #  Display: '<gold><bold>Appearance'
+    #  Lore:
+    #  - '<white>Wearables, items, and effects'
+    SUBMENU_CHAT:
+      Mapping: C
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_chat'
+      Generation: item/ui/icon_cosmetic_chat
+      Display: '<gold><bold>Chat'
+      Lore:
+      - '<white>Chat-related cosmetics'
+
+    BUTTON_HATS:
+      Mapping: H
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_hats'
+      Generation: item/ui/icon_cosmetic_hats
+      Display: '<gold><bold>Hats'
+      Lore:
+      - '<white>Equip a dapper hat'
+    BUTTON_BACKS:
+      Mapping: X
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_backpacks'
+      Generation: item/ui/icon_cosmetic_backpacks
+      Display: '<gold><bold>Backwear'
+      Lore:
+      - '<white>Equip backwear'
+    BUTTON_ACCESSORIES:
+      Mapping: A
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_accessories'
+      Generation: item/ui/icon_cosmetic_accessories
+      Display: '&6&lAccessories'
+      Lore:
+      - '<white>Fancy animated accessories'
+    BUTTON_OFFHANDS:
+      Mapping: O
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_offhand'
+      Generation: item/ui/icon_cosmetic_offhand
+      Display: '<gold><bold>Offhand'
+      Lore:
+      - '<white>Equip a cosmetic offhand'
+    BUTTON_EFFECTS:
+      Mapping: E
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_effects'
+      Generation: item/ui/icon_cosmetic_effects
+      Display: '<gold><bold>Effects'
+      Lore:
+      - '<white>Become sparkly'
+
+    BUTTON_PETS:
+      Mapping: P
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_mounts'
+      Generation: item/ui/icon_cosmetic_mounts
+      Display: '<gold><bold>Pets'
+      Lore:
+      - '<white>Summon a cute companion!'
+    BUTTON_MOUNTS:
+      Mapping: M
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_pets'
+      Generation: item/ui/icon_cosmetic_pets
+      Display: '<gold><bold>Mounts'
+      Lore:
+      - '<white>Summon your mighty steed'
+    BUTTON_SPRAYS:
+      Mapping: S
+      Material: PAPER
+      Model: 'mythic:ui/icon_cosmetic_sprays'
+      Generation: item/ui/icon_cosmetic_sprays
+      Display: '<gold><bold>Sprays'
+      Lore:
+      - '<white>Change your selected spray'

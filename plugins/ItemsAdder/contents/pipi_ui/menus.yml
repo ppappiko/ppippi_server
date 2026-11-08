@@ -1,0 +1,15 @@
+info:
+  namespace: pipi_ui
+font_images:
+  craft:
+    path: gui/craft.png
+    scale_ratio: 222
+    y_position: 13
+  smith:
+    path: gui/smith.png
+    scale_ratio: 168
+    y_position: 13
+  shop:
+    path: gui/shop.png
+    scale_ratio: 168
+    y_position: 13

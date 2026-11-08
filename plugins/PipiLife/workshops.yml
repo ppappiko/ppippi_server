@@ -1,0 +1,485 @@
+plots:
+  plot01:
+    z: -79
+    x: -122
+  plot02:
+    z: -79
+    x: -72
+  plot03:
+    z: -79
+    x: -22
+  plot04:
+    z: -79
+    x: 28
+  plot05:
+    z: -79
+    x: 78
+  plot06:
+    z: 36
+    x: -122
+  plot07:
+    z: 36
+    x: -72
+  plot08:
+    z: 36
+    x: -22
+    owner: 8fe0b940-3078-41c9-a3cc-f8c700b6651b
+    station:
+    - 1
+    - 64
+    - 38
+    facilities:
+      LUMBER:
+      - - 13
+        - 64
+        - 49
+      - - -15
+        - 64
+        - 46
+      CRAFT:
+      - - -15
+        - 64
+        - 51
+      - - 12
+        - 64
+        - 44
+      PET_STORAGE:
+      - - 7
+        - 64
+        - 43
+      RESEARCH:
+      - - 3
+        - 64
+        - 45
+      FARM:
+      - - 6
+        - 64
+        - 55
+      FEEDER:
+      - - -2
+        - 64
+        - 45
+      GOLD_MINE:
+      - - 10
+        - 64
+        - 58
+      DIAMOND_MINE:
+      - - 11
+        - 64
+        - 54
+      CARROT_FARM:
+      - - 3
+        - 64
+        - 56
+      - - -6
+        - 64
+        - 48
+      MINE:
+      - - -15
+        - 64
+        - 42
+    lumber:
+      level: 2
+      anchor: '0_64_38'
+    production:
+      FARM:
+        level: 2
+        paused: 1793964964488
+        anchor: '-1_64_38'
+      GOLD_MINE:
+        paused: 1793958560037
+        anchor: '-3_64_38'
+      MINE:
+        anchor: '-2_64_38'
+      DIAMOND_MINE:
+        anchor: '-4_64_38'
+      CARROT_FARM:
+        anchor: '-5_64_38'
+  plot09:
+    z: 36
+    x: 28
+  plot10:
+    z: 36
+    x: 78
+maps-ready: true
+tutorial:
+  8fe0b940-3078-41c9-a3cc-f8c700b6651b:
+    class: mage
+    done: true
+    starter-kit: true
+    installable-starter-kit: true
+players:
+  8fe0b940-3078-41c9-a3cc-f8c700b6651b:
+    fox:
+      food: 36
+      stock: 0
+      active: false
+      since: 1794096697906
+      facility-bound: true
+      lumber-slot: 1
+    wolf:
+      aptitudes:
+        CRAFT: 2
+        MINE: 3
+      food: 79
+      stock: 0
+      since: 1794043487574
+      active: false
+      facility-bound: true
+      lumber-slot: 1
+    rabbit:
+      aptitudes:
+        FARM: 1
+      food: 81
+      stock: 0
+      since: 1794043248095
+      active: false
+      facility-bound: true
+      production-facility: CARROT_FARM
+      production-anchor: '-5_64_38'
+      lumber-slot: 1
+    allay:
+      aptitudes:
+        CRAFT: 1
+      food: 12
+      stock: 0
+      since: 1794040672978
+      active: false
+    sparrow:
+      aptitudes:
+        FARM: 2
+        PET_STORAGE: 2
+      food: 0
+      stock: 0
+      since: 1794092381689
+      active: false
+    frog:
+      aptitudes:
+        CRAFT: 2
+        FARM: 2
+      food: 100
+      stock: 0
+      since: 1794100844321
+      active: true
+      production-facility: CARROT_FARM
+      production-anchor: '3_64_56'
+      lumber-slot: 1
+      facility-bound: true
+    nightcat:
+      aptitudes:
+        CRAFT: 3
+        MINE: 1
+      food: 100
+      stock: 0
+      since: 1794095178021
+      active: true
+      production-facility: DIAMOND_MINE
+      production-anchor: '11_64_54'
+      lumber-slot: 1
+      facility-bound: true
+typed-facilities-migrated: true
+sales:
+  8fe0b940-3078-41c9-a3cc-f8c700b6651b:
+    wood:
+    - 498318
+    - 16
+    iron:
+    - 498318
+    - 16
+    carrot:
+    - 498318
+    - 16
+    plank:
+    - 498318
+    - 16
+town:
+  8fe0b940-3078-41c9-a3cc-f8c700b6651b:
+    research:
+      feed: true
+      farm: true
+      lumber: true
+      plank: true
+      ingot: true
+      plate: true
+      mine: true
+      craft: true
+      diamond: true
+      feeder: true
+      goldmine: true
+      diamondmine: true
+      gear_diamond_leggings: true
+      smith_tier_2: true
+      smith_tier_4: true
+      irontrap: true
+      smith_tier_5: true
+      smith_tier_3: true
+      smith_tier_1: true
+      smith_tier_0: true
+      research_desk: true
+      pet_storage: true
+      hammer: true
+      ironclub: true
+      reinforced_plank: true
+      pet_market: true
+      diamondclub: true
+      coated_plank: true
+      blue_diamond: true
+      diamondtrap: true
+    research-stage: 3
+    craft-stations:
+      '4_64_38': {}
+      '5_64_38': {}
+      '-1_64_49': {}
+      '12_64_44':
+        craft-worker: NIGHTCAT:07a764da-bcfb-4245-83a8-be07e053081b:CRAFT=3:MINE=2
+    shop:
+      sell:
+        raw_diamond:
+        - 498321
+        - 56
+        plank:
+        - 498345
+        - 100
+        iron_ingot:
+        - 498345
+        - 100
+      buy:
+        plank:
+        - 498345
+        - 1
+    craft-anchor:
+    - 1
+    - 64
+    - 38
+pet-storage:
+  8fe0b940-3078-41c9-a3cc-f8c700b6651b:
+    slots:
+    - FOX
+    - WOLF
+    - RABBIT
+    - ALLAY
+    - WOLF:1a3ff9ee-07d4-40b0-948f-5753461f1375:CRAFT=2:MINE=3
+    - WOLF:1e59d1f3-62c8-4073-aa46-bfb9b93f2eb0:CRAFT=2:MINE=1
+    - WOLF:d6b25593-da14-4d8f-b4e4-628dda2cab51:CRAFT=2:MINE=2
+    - WOLF:30efd9a5-0fc9-46b8-b9d3-df427b59dafb:CRAFT=2:MINE=2
+    - ALLAY:830e8825-e988-4e43-8c3b-961a468c832f:CRAFT=3:PET_STORAGE=1
+    - FOX:96e69b91-f984-4c26-9e58-70be03f7edab:LUMBER=3
+    - WOLF:49026895-e9ff-417b-8010-ce017d9edcb0:CRAFT=2:MINE=1
+    - SPARROW
+    - FROG
+    - NIGHTCAT
+    - FROG:44867329-bc34-4972-b522-6fa5361c88fa:FARM=3:CRAFT=1
+    - SPARROW:7a9c0767-929c-44dc-a7ba-583a02143014:FARM=2:PET_STORAGE=1
+    - NIGHTCAT:07a764da-bcfb-4245-83a8-be07e053081b:CRAFT=3:MINE=2
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    - ''
+    workers:
+      1e59d1f3-62c8-4073-aa46-bfb9b93f2eb0:
+        food: 35
+        stock: 0
+        since: 1793959677654
+        active: false
+      1a3ff9ee-07d4-40b0-948f-5753461f1375:
+        production-facility: GOLD_MINE
+        lumber-slot: 1
+        facility-bound: true
+        food: 24
+        stock: 0
+        since: 1794043106592
+        active: false
+      d6b25593-da14-4d8f-b4e4-628dda2cab51:
+        production-facility: DIAMOND_MINE
+        lumber-slot: 1
+        facility-bound: true
+        food: 100
+        stock: 0
+        since: 1794043241893
+        active: false
+      7a9c0767-929c-44dc-a7ba-583a02143014:
+        production-facility: CARROT_FARM
+        production-anchor: '-6_64_48'
+        lumber-slot: 1
+        facility-bound: true
+        food: 100
+        stock: 26
+        since: 1794100987071
+        active: true
+      44867329-bc34-4972-b522-6fa5361c88fa:
+        production-facility: FARM
+        production-anchor: '6_64_55'
+        lumber-slot: 1
+        facility-bound: true
+        food: 36
+        stock: 0
+        since: 1794101694152
+        active: false
+      07a764da-bcfb-4245-83a8-be07e053081b:
+        food: 96
+        stock: 0
+        since: 1794101147495
+        active: false
+      96e69b91-f984-4c26-9e58-70be03f7edab:
+        production-facility: LUMBER
+        production-anchor: '13_64_49'
+        lumber-slot: 1
+        facility-bound: true
+        food: 100
+        stock: 0
+        since: 1794095890022
+        active: true
+    level: 2
+facility-views:
+  village:
+    '6_64_55':
+      wide: true
+    '3_64_56':
+      wide: true
+    '13_64_49':
+      wide: true
+    '10_64_58':
+      wide: true
+    '11_64_54':
+      wide: true
+    '-2_64_45':
+      food:
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: CARROT
+        amount: 64
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      wide: true
+    '7_64_43':
+      wide: true
+    '3_64_45':
+      wide: true
+    '-15_64_42':
+      width: 2
+      depth: 2
+      wide: true
+    '-15_64_46':
+      width: 2
+      depth: 2
+      wide: true
+    '-15_64_51':
+      width: 3
+      depth: 1
+      wide: true
+    '-6_64_48':
+      width: 2
+      depth: 2
+      wide: true
+    '12_64_44':
+      width: 3
+      depth: 1
+      wide: true

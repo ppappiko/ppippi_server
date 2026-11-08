@@ -1,0 +1,12 @@
+path_of_flames:
+  Type: EFFECT
+  Material: PAPER
+  Model: 'mythic:cosmetics/effects/flame_effect_icon'
+  Generation: item/cosmetics/effects/flame_effect_icon
+  Display: "<red>Path of Flames"
+  Description:
+  - "<white>Leave flames in your wake"
+  Price: 500
+  Interval: 1
+  Skills:
+  - particles{p=flame;a=1;hs=0.25} 0.1

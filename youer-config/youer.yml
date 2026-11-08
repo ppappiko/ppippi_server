@@ -1,0 +1,180 @@
+# This is the main configuration file for Youer.
+# As you can see, there's tons to configure. Some options may impact gameplay, so use
+# with caution, and make sure you know what each option does before configuring.
+# For a reference for any variable inside this file, check out the Youer wiki at
+# https://wiki.mohistmc.com/
+#
+# If you need help with the configuration or have any questions related to Spigot,
+# join us at the Discord or drop by our forums and leave a post.
+#
+# Discord: https://discord.gg/mohistmc
+# Forums: https://mohistmc.com/
+# Forums (CN): https://www.mohistmc.cn/
+
+server_modlist_whitelist:
+  enable: false
+  list: '[minecraft, pipitravel, neoforge]'
+threadpriority:
+  server_thread: 8
+ban:
+  item:
+    enable: false
+    list: []
+  entity:
+    enable: false
+    list: []
+  enchantment:
+    enable: false
+    list: []
+forge:
+  bukkitpermissionshandler: true
+worldmanage: true
+tpa:
+  enable: false
+  permissions: true
+back:
+  enable: false
+  permissions: true
+anvilfix:
+  maximumrepaircost: 40
+  enchantment_fix: false
+  max_enchantment_level: 32767
+max-bees-in-hive: 3
+enchantment-table-book-animation-tick: false
+networkmanager:
+  debug: false
+  intercept: []
+keepinventory:
+  global:
+    enable: false
+    inventory: true
+    exp: true
+  permission:
+    enable: false
+    inventory: youer.keepinventory.inventory
+    exp: youer.keepinventory.exp
+  world:
+    inventory: false
+    exp: false
+entity:
+  clear:
+    item:
+      msg: '[Server] Cleaned up %size% drop item'
+      enable: false
+      whitelist: []
+      time: 1800
+      mode: whitelist
+      trash:
+        enable: true
+        days: 1
+    monster:
+      msg: '[Server] Cleaned up %size% monster'
+      enable: false
+      whitelist: []
+      time: 1800
+      mode: whitelist
+  spawnForChunk: true
+  spawnForNatural: true
+  nonblocking_structure_spawn_lookup: true
+bans:
+  item: false
+  block: false
+  entity:
+    enable: false
+    vanilla_entity:
+      enable: false
+      whitelist: []
+  enchantment: false
+  recipe: false
+  world: false
+  structure: false
+  effect: false
+  command: false
+  eat: false
+settings:
+  messages:
+    ping-command-output: §2%s's ping is %sms
+events:
+  fire_tick: false
+  explosion: false
+  farmlandTrample: false
+  join_message: true
+  quit_message: true
+neoforge:
+  bukkitpermissionshandler: true
+recipe:
+  warn: false
+permissions:
+  debug:
+    console: false
+    player: false
+pluginchannel:
+  debug: false
+deepseek:
+  chatfromat: <小小墨> %s
+  enable: false
+  baseUrl: https://api.deepseek.com/chat/completions
+  apikey: youer
+  model: deepseek-v4-pro
+  max_tokens: 2048
+  max_history: 20
+  system: 你的名字叫小小墨，年龄18岁，是个可爱的女孩子!
+  command: ai
+  all_command: ai-all
+  chatformat: <小小墨> %s
+custom:
+  no_villager: false
+  entity_tp_end: true
+  entity_tp_nether: true
+  raid_no_emerald: false
+  lava_speed:
+    normal: 30
+    nether: 10
+  fix_flat: false
+  fix_cmi_tempban: false
+  disabled_spawner: false
+  disabled_signblock_commands: true
+  no_damage_particle: false
+  keepSpawnLoaded: true
+  no_recipeBook: false
+  command_log: false
+backup_world:
+  enable: false
+  interval: 3600
+  max_backups: 5
+  use_zstd: false
+player_modlist_blacklist:
+  enable: false
+  use_real_feedback: false
+  failurereasons: <gradient:#00FF00:#0000FF>Do not install mods privately</gradient>
+  list: []
+fakeplayer:
+  callbukkitevent: false
+message:
+  require_neoforge: 'You are trying to connect to a server that is running NeoForge,
+    but you are not. Please install NeoForge Version: %s to connect to this server.'
+event:
+  NoRaining: false
+SkyLight15: false
+disable_skullblock_skin: false
+modcompatibility:
+  terrablender:
+    enable: true
+    skip_worlds: []
+  lithostitched:
+    enable: true
+    skip_worlds: []
+youer:
+  show_logo: true
+  check_update: true
+  watchdog_spigot: true
+  watchdog_mohist: false
+  async_advancement_loading: true
+  async_advancement_saving: true
+  cache_worldgen_settings: true
+  lang: ko_KR
+  libraries:
+    check: true
+  auto_delete_mods: true
+  installation-finished: false
+config-version: 1

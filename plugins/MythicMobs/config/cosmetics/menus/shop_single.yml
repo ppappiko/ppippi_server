@@ -1,0 +1,15 @@
+Menu:
+  Display: "<white><fontimage.empty_character><fontimage.empty_character><fontimage.myc_shop>"
+  Size: 36
+  UIElements:
+  - myc_shop{char=\ue850;path=ui/cosmetic_gui_shop;height=256;ascent=18}
+  Schema:
+  - 'Q Q Q Q Q Q Q Q Q'
+  - 'Q Q Q Q S Q Q Q Q'
+  - 'Q Q Q Q Q Q Q Q Q'
+  - 'Q Q Q Q Q Q Q Q Q'
+  Icons:
+    SHOP:
+      Mapping: S
+      Material: EMERALD
+      Display: '&aPurchase'

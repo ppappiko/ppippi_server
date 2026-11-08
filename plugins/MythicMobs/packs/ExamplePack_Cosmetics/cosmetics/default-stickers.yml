@@ -1,0 +1,60 @@
+
+cat:
+  Type: STICKER
+  Model: 'mythic:cosmetics/stickers/cat'
+  Generation: item/cosmetics/stickers/cat
+  Display: 'Cat'
+  Description:
+  - "<white>A small cat sticker"
+  - "<white>for chat messages."
+  Key: cat
+  Height: 10
+  Ascent: 8
+
+flame:
+  Type: STICKER
+  Model: 'mythic:cosmetics/stickers/flame'
+  Generation: item/cosmetics/stickers/flame
+  Display: 'Flame'
+  Description:
+  - "<white>A bright flame sticker"
+  - "<white>for heated moments."
+  Key: flame
+  Height: 10
+  Ascent: 8
+
+heart:
+  Type: STICKER
+  Model: 'mythic:cosmetics/stickers/heart'
+  Generation: item/cosmetics/stickers/heart
+  Display: 'Heart'
+  Description:
+  - "<white>A heart sticker for"
+  - "<white>friendly messages."
+  Key: heart
+  Height: 10
+  Ascent: 8
+
+milkbone:
+  Type: STICKER
+  Model: 'mythic:cosmetics/stickers/milkbone'
+  Generation: item/cosmetics/stickers/milkbone
+  Display: 'Milkbone'
+  Description:
+  - "<white>A playful milkbone sticker"
+  - "<white>for pet fans."
+  Key: milkbone
+  Height: 10
+  Ascent: 8
+
+skull:
+  Type: STICKER
+  Model: 'mythic:cosmetics/stickers/skull'
+  Generation: item/cosmetics/stickers/skull
+  Display: 'Skull'
+  Description:
+  - "<white>A skull sticker for"
+  - "<white>dramatic messages."
+  Key: skull
+  Height: 10
+  Ascent: 8

@@ -1,0 +1,64 @@
+#
+# Example Mount Cosmetics
+#
+# Mount Types:
+#   MYTHICMOB  - Spawns a MythicMob and mounts the player on it.
+#                If the MythicMob has a ModelEngine model, it will be used automatically.
+#   VANILLA    - Spawns a vanilla entity and mounts the player on it.
+#
+# Common Options:
+#   MythicMob: <mythicmob id>          - The MythicMob to spawn (auto-detects type)
+#   EntityType: <vanilla entity type>  - Vanilla entity type (auto-detects type)
+#   MountBone: <bone name>             - MEG mount bone (if set, uses ModelEngine mounting)
+#   DespawnOnDismount: true            - Whether the mount despawns when dismounted
+#   Speed: 1.0                         - Movement speed multiplier
+#
+
+mount_horse:
+  Type: MOUNT
+  MythicMob: CosmeticHorse
+  Display: '<gold>Royal Horse'
+  Description:
+    - '<white>A majestic royal steed'
+    - '<white>Ride in style!'
+  Material: SADDLE
+  Rarity: rare
+  Price: 1000
+  DespawnOnDismount: true
+  Speed: 1.0
+
+mount_pig:
+  Type: MOUNT
+  EntityType: PIG
+  Display: '<light_purple>Pig Rider'
+  Description:
+    - '<white>Ride a trusty pig for fun'
+    - '<white>Not the fastest.'
+  Material: CARROT_ON_A_STICK
+  Rarity: common
+  Price: 200
+  DespawnOnDismount: true
+
+mount_dragon:
+  Type: MOUNT
+  MythicMob: CosmeticDragon
+  MountBone: mount
+  Display: '<red>Dragon Mount'
+  Description:
+    - '<white>A fearsome dragon to ride'
+    - '<white>Rule the skies!'
+  Material: DRAGON_EGG
+  Rarity: legendary
+  DespawnOnDismount: true
+  Speed: 1.5
+
+mount_spider:
+  Type: MOUNT
+  EntityType: SPIDER
+  Display: '<dark_gray>Giant Spider'
+  Description:
+    - '<white>Creepy, but effective'
+    - '<white>transportation'
+  Material: SPIDER_EYE
+  Rarity: rare
+  DespawnOnDismount: true

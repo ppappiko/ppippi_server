@@ -1,0 +1,1588 @@
+# Supports '&' colour codes and hex codes! Hex code format: <#000000>
+# Use $1, $2, etc. for args
+general:
+  prefix: <#9753f5>[Dungeons]
+  # The item display name of the function editor tool.
+  function-editor-name: '&6Function Builder'
+  function-editor-lore:
+  - '&6----------------------'
+  - '&eRight-click a block to'
+  - '&ecreate a function!'
+  room-editor-name: '&dRoom Editor'
+  room-editor-lore:
+  - '&d----------------------'
+  - '&eRight-click selects first corner.'
+  - '&eLeft-click selects second corner.'
+  - ''
+  - '&eRight-click while inside a room'
+  - '&eto edit the room''s settings.'
+  # What language to use for certain complicated system messages. (Such as the cooldown message.)
+  # A list of locales can be found here: https://www.oracle.com/java/technologies/javase/jdk8-jre8-suported-locales.html#util-text
+  # NOTE: Not all translations may be supported!
+  java-locale: en-US
+  date-format: EEE, MMM d, hh:mm aaa z
+
+# #####################
+# # COMMAND MESSAGES ##
+# #####################
+# Messages displayed by commands.
+
+commands:
+  # /recruit
+  recruit:
+    no-party-system: '&cThere''s no party system installed on this server!'
+    already-recruiting: '&cYou''re already recruiting!'
+    leader-only: '&cOnly party leaders can recruit members!'
+    recruit-for: '&eIn 3 words or less, what are you recruiting for?'
+    setup:
+      # $1 = Max number of text characters.
+      too-many-characters: '&cCannot be longer than $1 characters!'
+      # $1 = Max number of words.
+      too-many-words: '&cCannot be longer than $1 words!'
+      # $1 = The recruitment label. (What the party is recruiting for.)
+      label-set: '&bSet label to ''&6$1&b''!'
+      description: '&eEnter recruitment description to provide more details!'
+      # $1 = The recruitment description.
+      description-set: '&bSet description to ''&6$1&b''!'
+      players: '&eHow many players do you want to recruit?'
+      party-too-small: '&cParty size must be at least 2!'
+      party-too-big: '&cParty size cannot be more than 12!'
+      # $1 = The number of players needed for this recruitment listing.
+      players-set: '&bSet player count to ''&6$1&b''!'
+      password: '&eEnter a password to limit who can join! Use ''none'' for no password.'
+      no-spaces: '&cRecruitment password cannot contain spaces!'
+      # $1 = The password for this recruitment listing.
+      password-set: '&bSet recruitment password to ''&6$1&b''!'
+      open-recruitment: '&bLeaving party recruitment open to all!'
+      complete: '&bRecruitment setup complete!'
+    cancel:
+      not-recruiting: '&cYou aren''t currently recruiting party members!'
+      success: '&eYou cancelled the party recruitment.'
+    join:
+      unspecified: '&cYou must specify a player to join!'
+      join-self: '&cYou can''t join your own party!'
+      player-not-found: '&cNo player by that name found!'
+      not-recruiting: '&cThis player is not recruiting players!'
+  # /leave AND /md leave
+  leave:
+    not-in-dungeon: '&cYou are not currently in a dungeon!'
+    left-queue: '&eYou cancelled entering the dungeon with your party.'
+  # /ready
+  ready:
+    not-queued: '&cYou aren''t currently queued for a dungeon!'
+    waiting: '&eThere''s no ready check running right now!'
+    # $1 = Name of the player who is ready.
+    # $2 = Number of players ready.
+    # $3 = Total players needed to ready up.
+    success: '&a&l$1 &ais ready to enter the dungeon! &b($2/$3)'
+  # /notready
+  notready:
+    not-queued: '&cYou aren''t currently queued for a dungeon!'
+    waiting: '&eThere''s no ready check running right now!'
+    # $1 = Name of the player who is not ready.
+    cancel: '&c&l$1 &chas cancelled the dungeon.'
+  # /stuck AND /md stuck
+  stuck:
+    not-in-dungeon: '&cYou are not currently in a dungeon!'
+    success: '&dOh no! Sending you to your last checkpoint.'
+  # /md loot
+  loot:
+    create:
+      # $1 = Provided loot table name.
+      already-exists: '&cThere is already a table named ''&6$1&c''!'
+      # $1 = Provided loot table name.
+      success: '&aCreated new loot table ''&6$1&a''!'
+    remove:
+      # $1 = Provided loot table name.
+      success: '&eRemoved loot table ''&6$1&e''!'
+    edit:
+      # $1 = Provided loot table name.
+      not-found: '&cNo loot table found by name ''&6$1&c''!'
+      # $1 = Provided loot table name.
+      already-editing: '&cSomeone is already editing loot table ''&6$1&c''!'
+  # /md play
+  play:
+    # $1 = Provided player name.
+    player-not-found: '&cNo player found by name ''&6$1&c''!'
+    console-needs-player: '&cFrom console, this command requires you specify the player!'
+    already-in-dungeon: '&cYou''re already in a dungeon!'
+    already-in-queue: '&cYou''re already queued for another dungeon!'
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    party-lead-only: '&cOnly the party leader can start a dungeon!'
+    # $1 = Player that's currently in a dungeon.
+    player-in-dungeon: '&6&l$1 &cis in another dungeon instance!'
+    requirements-not-met: '&6&l$1 &cdoesn''t meet the requirements for this dungeon!'
+    instances-full: '&cAll instances are currently full! You will be notified when
+      an instance becomes available.'
+    how-to-cancel: '&bYou are waiting for a dungeon! Use &6/leave &bto cancel.'
+  # /md force
+  force:
+    # $1 = Player force-entered.
+    # $2 = Dungeon they were sent to.
+    success: '&aForced &6$1 &ainto dungeon &6$2&a.'
+  lives:
+    not-in-dungeon: '&cYou are not currently in a dungeon!'
+    infinite-lives: '&eYou have &6infinite &elives left.'
+    # $1 = Amount of lives remaining.
+    lives-remaining: '&eYou have &6$1 &elives left.'
+  join:
+    not-in-dungeon: '&cThis player is not currently in a dungeon!'
+  kick:
+    not-in-dungeon: '&cThis player is not currently in a dungeon!'
+    kick-alert: '&cYou were kicked from the dungeon by an admin.'
+    # $1 = Name of the player who was kicked.
+    success: '&aKicked &6$1 &afrom their dungeon.'
+  status:
+    # $1 = Total number of running dungeon instances.
+    total-instances: '&eTotal Instances: $1'
+    # $1 = Total number of players across all instances.
+    total-players: '&eTotal players: $1'
+    # $1 = Number of running instances of a specific dungeon.
+    dungeon-instances: '&e - Instances: $1'
+    # $1 = Number of players across all instances of a specific dungeon.
+    dungeon-players: '&e - Instances: $1'
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    none-loaded: '&eThere are no instances of this dungeon loaded!'
+  reload:
+    config-reloading: '&eReloading config and loot tables...'
+    config-reloaded: '&aConfigs reloaded!'
+    all-dungeons-reloading: '&eReloading all dungeons...'
+    all-dungeons-reloaded: '&aDungeons reloaded!'
+    reload-all-warning: '&cThis kicks any players currently in a dungeon!'
+    reload-all-confirm: '&cUse &6/dungeon reload all &cagain to confirm.'
+    # $1 = Dungeon being reloaded
+    dungeon-reloading: '&eReloading dungeon $1...'
+    # $1 = Dungeon that has been reloaded
+    dungeon-reloaded: '&a$1 reloaded!'
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    # $1 = Dungeon that we are trying to reload.
+    reload-dungeon-warning: '&cThis kicks any players currently in $1!'
+    # $1 = Dungeon that we are trying to reload.
+    reload-dungeon-confirm: '&cUse &6/dungeon reload $1 &cagain to confirm.'
+  create:
+    already-exists: '&cA dungeon with this name already exists!'
+    failed-to-create: '&cCould not create dungeon! Check console for info...'
+    # $1 = Provided dimension type.
+    invalid-dimension: '&c$1 is not a valid dimension type!'
+    # $1 = Provided dungeon name.
+    success: '&aSuccessfully created blank dungeon &6$1'
+  edit:
+    already-in-dungeon: '&cYou''re already in a dungeon!'
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    no-permission: '&cYou don''t have permission to edit that dungeon!'
+    loading: Loading dungeon...
+  delete:
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    edit-in-progress: '&cSomeone is currently editing this dungeon!'
+    delete-warning: '&cAre you sure you want to delete this dungeon? (Backups will
+      remain.)'
+    delete-confirm: '&bRun the command again to confirm.'
+    notification: '&cThe dungeon was deleted by an admin!'
+    # $1 = The dungeon deleted.
+    success: '&cDungeon ''$1'' was deleted.'
+  addkey:
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    difficulty-not-found: '&cThat dungeon has no difficulty level named ''&6$1&c''!'
+    no-permission: '&cYou don''t have permission to edit that dungeon!'
+    no-held-item: '&cYou aren''t holding anything in your hand!'
+    success: '&aAdded the item in your hand as an access key for this dungeon!'
+  removekey:
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    difficulty-not-found: '&cThat dungeon has no difficulty level named ''&6$1&c''!'
+    no-permission: '&cYou don''t have permission to edit that dungeon!'
+    no-held-item: '&cYou aren''t holding anything in your hand!'
+    no-key-found: '&cNo access key was found matching the item in your hand for this
+      dungeon.'
+    success: '&aRemoved the item in your hand from the dungeon''s access keys.'
+  setlobby:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    # $1 = X position
+    # $2 = Y position
+    # $3 = Z position
+    # $4 = YAW position
+    success: '&aSet dungeon lobby to &6X: $1 Y: $2 Z: $3 YAW: $4'
+  setspawn:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    # $1 = X position
+    # $2 = Y position
+    # $3 = Z position
+    # $4 = YAW position
+    success: '&aSet dungeon spawn to &6X: $1 Y: $2 Z: $3 YAW: $4'
+  setexit:
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    # $1 = X position
+    # $2 = Y position
+    # $3 = Z position
+    # $4 = YAW position
+    success: '&aSet dungeon exit to &6X: $1 Y: $2 Z: $3 YAW: $4'
+  banitem:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    success: '&eAdded your held item to the dungeon''s ''banned item'' list.'
+  unbanitem:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    not-banned: '&cThis item is not banned in this dungeon!'
+    success: '&eRemoved your held item to the dungeon''s ''banned item'' list.'
+  dungeonitem:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    success: '&eMade item in your hand a dungeon item.'
+  functiontool:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+  roomtool:
+    not-in-procedural: '&cThis tool is only available in procedural dungeons!'
+  save:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    saving: '&eSaving dungeon...'
+    # $1 = Name of the dungeon being saved.
+    success: '&aSave of &6$1 &acomplete!'
+    # $1 = Name of the dungeon being saved.
+    failed: '&cSave of &6$1 &cfailed! Some block edits may not have been saved. Check
+      the console for details.'
+  import:
+    # $1 = Provided world name.
+    world-not-found: '&cA world by name &6$1 &cdoesn''t exist.'
+    # $1 = Provided dimension type.
+    invalid-dimension: '&c$1 is not a valid dimension type!'
+    failed: '&cCould not import dungeon! Check console for info...'
+    # $1 = Provided world name.
+    success: '&aSuccessfully imported dungeon &6$1'
+  dxlimport:
+    # $1 = The provided DXL map name.
+    importing: '&eAttempting to convert DXL map ''&6$1&e''...'
+    failed: '&c&lFAILED! &cCould not import DXL map! Check console for info.'
+    success: '&a&lSuccess! &aFinished importing DXL map!'
+    check-console: '&dSee console for any functions you need to configure manually!'
+    clean-signs: '&dYou can use &6&l/dungeon cleansigns &dto remove DXL signs in a
+      dungeon!'
+  cleansigns:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    # $1 = Number of signed cleaned up.
+    success: '&eCleaned out &6$1 &esigns. (Excluding Interact triggers.)'
+  setcooldown:
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    # $1 = Provided player name.
+    player-not-found: '&cNo player found by name ''&6$1&c''!'
+    invalid-duration: '&cInvalid duration! Enter a number and use &6s (seconds), m
+      (minutes), h (hours), or d (days)&c to determine the duration.'
+    # $1 = Provided player name.
+    # $2 = Provided dungeon name.
+    success: '&eSet &6$1''s &ecooldown for dungeon &6$2&e!'
+    # $1 = Time the dungeon will unlock at.
+    cooldown-time: '&eDungeon will unlock again at &6$1'
+  resetcooldown:
+    # $1 = Provided player name.
+    player-not-found: '&cNo player found by name ''&6$1&c''!'
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    # $1 = Provided player name.
+    # $2 = Provided dungeon name.
+    success: '&eCleared &6$1''s &ecooldown for dungeon &6$2&e!'
+    # $1 = Provided player name.
+    success-all: '&eCleared all dungeon cooldowns for &6$1&e!'
+  givekey:
+    # $1 = Provided player name.
+    player-not-found: '&cNo player found by name ''&6$1&c''!'
+    # $1 = Provided dungeon name.
+    dungeon-not-found: '&cNo dungeon found with name ''&6$1&c''!'
+    difficulty-not-found: '&cThat dungeon has no difficulty level named ''&6$1&c''!'
+    no-keys: '&cThis dungeon has no access keys!'
+    # $1 = Provided dungeon name.
+    # $2 = Provided player name.
+    success: '&aGave a key for &6$1 &ato &6$2&a.'
+  addregion:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    added-region: '&aMarked the region you''re standing in as part of the dungeon!'
+    already-marked: '&eThis region is already a part of the dungeon.'
+  removeregion:
+    not-in-dungeon: '&cYou are not currently editing a dungeon!'
+    removed-region: '&aUnmarked the region you''re standing in as part of the dungeon!'
+    already-unmarked: '&eThis region isn''t a part of the dungeon.'
+  # /party
+  party:
+    # Base command.
+    not-in-party: '&cYou are not in a party. Run &6/party invite [playername] &cto
+      invite another player and create a party.'
+    # /party invite
+    invite:
+      # $1 = Provided player name.
+      player-not-found: '&cNo player found by name ''&6$1&c'''
+      player-is-self: '&dIt''s not a party if there''s only one person!'
+      # $1 = Provided player name.
+      player-is-in-a-party: '&6$1 &cis already in a party!'
+      sender-not-leader: '&cOnly the party leader can invite players!'
+      player-is-in-sender-party: '&cThat player is already in your party!'
+      success: '&bInvited &6$1 &bto your party.'
+    # /party join
+    join:
+      no-pending-invites: '&cYou aren''t currently invited to a party.'
+    # /party leave
+    leave:
+      not-in-party: '&cYou aren''t currently in a party.'
+      # $1 = Party leader's name.
+      success: '&bYou left &6$1''s &bparty.'
+    # /party givelead
+    givelead:
+      not-in-party: '&cYou aren''t currently in a party.'
+      not-party-lead: '&cOnly party leaders can change the leader.'
+      # $1 = Provided player name.
+      player-not-found: '&cNo player found by name ''&6$1&c'' in the party.'
+    # /party kick
+    kick:
+      not-in-party: '&cYou aren''t currently in a party.'
+      not-party-lead: '&cOnly party leaders can kick players.'
+      # $1 = Provided player name.
+      player-not-found: '&cNo player found by name ''&6$1&c'' in the party.'
+      player-is-self: '&dYou know there''s a leave command, right?'
+    # /party disband
+    disband:
+      not-in-party: '&cYou aren''t currently in a party.'
+      not-party-lead: '&cOnly party leaders can disband the party.'
+    # /party chat
+    chat:
+      not-in-party: '&cYou aren''t currently in a party.'
+    # /party spy
+    spy:
+      enabled: '&aYou are now spying on party messages from other players!'
+      disabled: '&cYou are no longer spying on party messages from other players.'
+
+# ######################
+# # INSTANCE MESSAGES ##
+# ######################
+# Messages dedicated to the operating of dungeon instances.
+
+instance:
+  menu:
+    difficulty-select: '&8Select Difficulty'
+  loading: Loading dungeon...
+  is-saving: '&cDungeon is saving! Please wait and try again.'
+  timed-out: '&cDungeon took too long to load! Ask an admin to check console.'
+  loaded: Dungeon loaded!
+  failed: '&cFailed to load dungeon! Ask an admin to check console.'
+  stealth-join: '&7Entered dungeon as a spectator; you will not be considered a participant.'
+  prevent-teleport-in: '&cYou can''t teleport into an ongoing dungeon!'
+  requirements:
+    # $1 = Name of the player who doesn't meet the requirements.
+    requirements-not-met: '&6$1 &cdoesn''t meet this dungeon''s requirements!'
+    # $1 = The maximum party size this dungeon allows.
+    party-too-big: '&cThis dungeon only accepts parties of up to &6$1 &cplayers.'
+    # $1 = The minimum party size this dungeon requires.
+    party-too-small: '&cThis dungeon only accepts parties of at least &6$1 &cplayers.'
+    # $1 = The maximum distance allowed from the party leader.
+    party-too-far: '&cYou were too far from your party leader to join the dungeon!
+      (Max: &6$1 &cblocks)'
+    # $1 = Permission the player is missing.
+    no-permission: '&cMissing permission: &6$1'
+    on-cooldown: '&cYou must wait until you can play this dungeon again!'
+    # $1 = Time the dungeon will unlock at.
+    cooldown-time: '&eUnlocks on: &6$1'
+    # $1 = Dungeon the player must complete first.
+    complete-required: '&cYou need to complete the dungeon &6$1 &cfirst!'
+    # $1 = Required experience level.
+    player-level: '&cYou need to be at least experience level &6$1 &cto play this
+      dungeon!'
+    # $1 = Amount of money required to play this dungeon.
+    not-enough-money: '&cYou don''t have enough currency to play this dungeon! Cost:
+      &6$1'
+    # $1 = Amount of money consumed to enter the dungeon.
+    money-deducted: '&eYou spent &6$1 &eto enter the dungeon!'
+    # $1 = Name of the banned item.
+    banned-item: '&cThis item is banned from this dungeon: &6$1'
+    no-access-key: '&cYou''re missing an access key for this dungeon!'
+    join-denied: '&cYou don''t meet this dungeon''s entry requirements.'
+  events:
+    # $1 = Name of the player who left the dungeon.
+    player-leave: '&6$1 &eleft the dungeon.'
+    # $1 = Name of the player kicked for being offline.
+    player-kicked: '&6$1 &cwas kicked from the dungeon for being offline!'
+    # $1 = Name of the player who returned from being offline.
+    player-returned: '&6$1 &areturned to the dungeon!'
+    # $1 = Name of the player who lost a life.
+    # $2 = How many lives the player has left.
+    life-lost: '&6$1 &cdied! They have &6$2 &clives left...'
+    # $1 = Name of the player who lost all their lives.
+    all-lives-lost: '&6$1 &clost all their lives!'
+    all-lives-lost-and-spectating: '&cAll players have lost all their lives! Use &6/md
+      leave &cto leave the dungeon.'
+    all-lives-lost-and-spectating-auto-close: '&cAll players have lost all their lives!
+      Closing the dungeon.'
+    # $1 = Name of the player who is inheriting the departed player's dungeon keys.
+    key-inheritance: '&eTheir keys were given to &6$1&e.'
+    # $1 = Name of the player who is inheriting the departed player's dungeon items.
+    dungeon-item-inheritance: '&eTheir dungeon items were given to &6$1&e.'
+    enderpearl-deny: '&cEnderpearls are not allowed here!'
+    chorus-fruit-deny: '&cEnderpearls are not allowed here!'
+    bucket-deny: '&cBuckets are not allowed here!'
+    item-banned: '&cThis item is banned in this dungeon!'
+    command-deny: '&cThat command is not allowed in this dungeon!'
+    spectate-deny: '&cCan''t spectate players outside the dungeon!'
+  queue:
+    # $1 = Name of the dungeon the player is about to play.
+    dungeon-ready: '&eDungeon ''&6$1&e'' is now available! Are you ready?'
+    click-one: ' &eClick one →  '
+    ready-button: '&b&l[READY!] '
+    cancel-button: '&c&l[CANCEL] '
+    dungeon-ready-title: '&6Dungeon Ready!'
+    not-all-ready: '&cNot all players were ready! Queue cancelled...'
+    all-ready: '&eAll players are ready. Entering the dungeon!'
+  editmode:
+    autosaving: '&e&lAutosaving dungeon...'
+    autosaved: '&a&lAutosave complete!'
+    function-select: '&eChoose the function you want to build here!'
+    # $1 = Name of the selected function.
+    function-selected: '&eFunction selected: $1'
+    room-click-required: '&cYou must click a block to select a corner.'
+    room-select-1: '&eSelected first corner.'
+    room-select-2: '&eSelected second corner.'
+    room-name-request: '&eWhat is the name of this room? &bUse the room tool again
+      to cancel.'
+    room-name-invalid: '&cRoom name can''t contain spaces or symbols! Try again.'
+    room-create-cancelled: '&eCancelled room creation.'
+    # $1 = Name of the newly created room.
+    room-created: '&aCreated new room &6$1&a!'
+    room-edit-cancelled: '&eCancelled new room area selection.'
+    # $1 = Name of the edited room.
+    room-edited: '&aSet new area for room &6$1&a!'
+    room-connectors-outside: '&eALERT! There are connectors outside the room''s bounds!'
+    function-outside-room: '&cCan''t place functions outside of a room!'
+    room-whitelist:
+      add-prompt: '&eType the name of the room you want to add.'
+      # $1 = Name of the added room.
+      add-success: '&aAdded room &6$1 &ato the whitelist!'
+      # $1 = Name that was typed at the prompt.
+      room-not-found: '&cNo room named &6$1 &cin this dungeon! Room names are case-sensitive.'
+      edit-prompt: '&eType the name of the room you want to edit the weight of.'
+      remove-prompt: '&eClick the rooms you want to remove from the whitelist.'
+      # $1 = Name of the removed room.
+      remove-success: '&cRemoved room &6$1 &cfrom the whitelist.'
+  rewards:
+    gui-display-name: Rewards
+    # $1 = Amount of experience received.
+    xp-received: '&aYou got $1 experience!'
+    # $1 = Amount of experience levels received.
+    levels-received: '&aYou got $1 experience levels!'
+    rewards-inv-info: '&eThese items will be added to your rewards inventory! You''ll
+      get them when you finish the dungeon.'
+    view-rewards-info: '&bView your rewards with &l/rewards'
+    already-received: '&cYou have already received this reward recently!'
+    # $1 = When the rewards will be available again.
+    cooldown-time: '&eUnlocks on: &6$1'
+    on-cooldown: ''
+    added-to-inv: '&eThe rewards you didn''t take were added to your inventory.'
+    added-to-rewards-inv: '&eThe rewards you didn''t take were added to your rewards
+      inventory.'
+    unclaimed-rewards: '&eYou have unclaimed rewards! &b&lClick here to access them!'
+    invalid-loottable: '&cERROR: This chest has an invalid loot table! Tell an admin!'
+  time-limit:
+    # $1 = Dungeon name.
+    ten-minute-warning: '&e10 minutes remaining to complete &6$1.'
+    # $1 = Dungeon name.
+    five-minute-warning: '&e5 minutes remaining to complete &6$1.'
+    # $1 = Dungeon name.
+    one-minute-warning: '&e1 minute remaining to complete &6$1.'
+    # $1 = Dungeon name.
+    times-up: '&cTimes up!! Dungeon ending...'
+  functions:
+    start-dungeon-ready: '&eYou are ready to start the dungeon.'
+    finish-dungeon: '&aYou completed $1&a!'
+    checkpoint: '&eRespawn checkpoint reached!'
+    savepoint: '&eStarting at the party leader''s last checkpoint!'
+    # $1 = Player's new life count.
+    # $2 = + or - change from their previous life count.
+    lives-editor: '&eYou now have &6$1 &elives. ($2&e)'
+    # $1 = Amount of the item received.
+    # $2 = Name of the item received.
+    item-dispenser: '&aYou got &b$1 &6$2&a!'
+    # $1 = Name of the dungeon finished.
+    keys:
+      key-ground: '&eThe party found a key! It dropped to the ground...'
+      # $1 = Name of the player who found the key.
+      key-player: '&6$1 &efound a key!'
+      # $1 = Name of the party leader.
+      key-leader: '&eThe party found a key! The key was given to &6$1'
+    doors:
+      lock: '&cThe door locks!'
+      unlock: '&aThe door unlocks!'
+      # $1 = Name of the key item.
+      locked-key: '&cThe door is locked! You need a &6$1 &cto open it!'
+      locked: '&cThe door is locked!'
+    reviver:
+      no-uses: '&cThis reviver can''t bring back any more players!'
+      infinite-uses: '&aYou can use this reviver an infinite number of times.'
+      # $1 = Number of remaining times the reviver can be used.
+      uses-remaining: '&aYou can use this reviver &6$1 &amore times.'
+      # $1 = Name of the player we are trying to revive.
+      not-in-dungeon: '&cAttempted to revive &6$1&c, but they aren''t in the dungeon
+        anymore!'
+      not-dead: '&cThis player isn''t dead!'
+      # $1 = Name of the player who has been revived.
+      revived: '&a&l$1 &awas revived!!'
+
+# ###################
+# # PARTY MESSAGES ##
+# ###################
+# Messages surrounding the party system.
+party:
+  prefix: '&b[Party]'
+  invite:
+    # $1 = Name of the player who sent the invite.
+    message: '&6$1 &binvited you to their party.'
+    join-prompt: '&e&l[JOIN]'
+    # $1 = Name of the player who sent the invite.
+    expired: '&cThe party invite from &6$1 &chas expired...'
+  # $1 = Name of the player who joined the party.
+  join: '&6$1 &bjoined the party!'
+  # $1 = Name of the player who left the party.
+  leave: '&6$1 &bleft the party!'
+  kick:
+    # $1 = Name of the player who owns the party and kicked the player.
+    kicked-player-alert: '&cYou were kicked from &6$1''s &cparty.'
+    # $1 = Name of the player who was kicked from the party.
+    party-kicked-player-alert: '&6$1 &cwas kicked from the party.'
+    # $1 = Name of the player who was kicked from the party for being offline too long.
+    offline-too-long: '&6$1 &cwas kicked from the party for being offline too long!'
+  disband: '&cThe party was disbanded.'
+  new-leader:
+    # $1 = Name of the player who is now the leader of the party.
+    success: '&6$1 &bis now the party leader!'
+    # $1 = Name of the player being made the party leader
+    failure: '&cPlayer &6$1 &cis not a party member.'
+  # This is shown when a player requests party info with /party
+  # $1 = Name of the leader of the party.
+  info: '&b&lParty owned by &6$1'
+  # $1 = Name of the player logging in.
+  login: '&6$1 &bhas returned to the party.'
+  # $1 = Name of the player logging out.
+  logout: '&6$1 &bhas logged off.'
+  # Shown when recruitment is cancelled because the party leader left.
+  recruit:
+    # $1 = Name of the host.
+    # $2 = Name of the recruitment listing.
+    listing: '&6&l$1 &eis recruiting for ''&b$2&e''!'
+    cancel-leader-left: '&cParty recruitment was cancelled because the party leader
+      left.'
+    join:
+      button: '&b&l--[CLICK TO JOIN]--'
+      cancel: '&cCancelled joining this recruitment...'
+      unsupported-party-plugin: '&cThe party finder can''t add you to this party!
+        Ask the host to invite you with their party plugin instead.'
+    already-in-party: '&cYou''re already in this party!'
+    listing-expired: '&cThis party is no longer recruiting!'
+    password:
+      request: '&eEnter the password for this recruitment listing.'
+      no-spaces: '&cPasswords cannot contain spaces!'
+      incorrect: '&cIncorrect password, try again! (Note: Passwords are CaSe SeNsItIvE.)'
+      correct: '&bPassword accepted!'
+    # $1 = Party Size
+    complete: '&bParty recruitment complete! &a$1/$1 &bplayers found!'
+  chat:
+    enable: '&bEnabled party chat.'
+    disable: '&bDisabled party chat.'
+    # $1 = Sending player's display name.
+    # $2 = Message sent.
+    format: '&b[Party] &6$1&f: &b$2'
+    # $1 = Sending player's party leader name.
+    # $2 = Sending player's display name.
+    # $3 = Message sent.
+    spy-format: '&7[$1''s Party] &f&6$2&f: &b$3'
+
+spectator:
+  speed-changed: '&7Changed spectator speed to &b$1.'
+# ###########################
+# # MISCELLANEOUS MESSAGES ##
+# ###########################
+# Messages that don't belong to a particular category.
+
+misc:
+  item-dropped: '&cYour inventory is full! Item dropped to the ground...'
+  rewards-unavailable: '&cNot all rewards are available to you in this dungeon!'
+  free-limit: '&cThe free version of MythicDungeons is limited to 1 procedural and
+    2 classic or continuous dungeons.'
+
+gui:
+  common:
+    back: '&c&lBACK'
+    next-page: '&e&lNext Page'
+    previous-page: '&e&lPrevious Page'
+  conditions:
+    _base:
+      toggle: '&d&lToggle Condition Requirement'
+    chance:
+      lore:
+      - '&eRandomizes whether or not the'
+      - '&etrigger should run.'
+      name: '&dTrigger Chance'
+      set-chance:
+        lore: '&7Current chance: &6'
+        name: '&d&lSet Chance'
+    difficulty:
+      lore:
+      - '&eChecks if the dungeon is set to'
+      - '&ea specific difficulty level.'
+      lore-note:
+      - '&cNOTE: Unrelated to Minecraft''s'
+      - '&c/difficulty command!'
+      name: '&dDungeon Difficulty'
+      set-difficulty:
+        lore: '&7Current difficulty: &6'
+        name: '&d&lSet Difficulty'
+    instance-variable:
+      lore:
+      - '&eChecks if a variable matches'
+      - '&ea given comparison value.'
+      name: '&dVariable Comparison'
+      set-comparison:
+        lore: '&7Current comparison: &6'
+        name: '&d&lSet Comparison'
+    mob-within:
+      distance: '&d&lDistance'
+      lore:
+      - '&eChecks for a number of specified'
+      - '&emobs within a configured radius'
+      - '&efrom this function.'
+      minimum-mobs-required: '&d&lMinimum Mobs Required'
+      mobs-required: '&d&lMobs Required'
+      name: '&dMobs Within'
+      required-mobs-exact: '&d&lRequired Mobs Exact'
+      set-mob-type: '&d&lSet Mob Type'
+      supports-mythicmobs: '&dSupports MythicMobs!'
+    mythic:
+      lore:
+      - '&eChecks if a configured Mythic'
+      - '&eMobs condition is met.'
+      mythic-line: '&d&lMythic Condition Data'
+      name: '&bMythic Condition'
+      target-player: '&d&lCondition Targets Player'
+    party-size:
+      based-on-starting-players: '&d&lBased On Starting Players'
+      lore:
+      - '&eChecks if the specified number'
+      - '&eof players are in the instance,'
+      - '&ewith support for a minimum.'
+      minimum-players-required: '&d&lMinimum Players Required'
+      name: '&6Player Count'
+      players-required: '&d&lPlayers Required'
+      required-players-exact: '&d&lRequired Players Exact'
+    placeholder-api:
+      check-all-players:
+        lore: '&7Current value: &6'
+        name: '&d&lCheck All Players'
+      lore:
+      - '&eChecks if a %placeholder% from'
+      - '&ePlaceholderAPI matches a given'
+      - '&ecomparison value. Supports'
+      - '&einstance variables.'
+      name: '&dPlaceholder Check'
+      set-comparison:
+        lore: '&7Current comparison: &6'
+        name: '&d&lSet Comparison'
+    player-variable:
+      lore:
+      - '&eChecks if a player variable matches'
+      - '&ea given comparison value.'
+      name: '&dPlayer Variable Comparison'
+      set-comparison:
+        lore: '&7Current comparison: &6'
+        name: '&d&lSet Comparison'
+    players-within:
+      distance: '&d&lDistance'
+      lore:
+      - '&eChecks for a number of players'
+      - '&ewithin a configured radius from'
+      - '&ethis function.'
+      minimum-players-required: '&d&lMinimum Players Required'
+      name: '&dPlayers Within'
+      players-required: '&d&lPlayers Required'
+      required-players-exact: '&d&lRequired Players Exact'
+    status:
+      lore-1: '&eChecks if the dungeon is set to'
+      lore-2: '&ea specific status.'
+      lore-3: '&7Similar to Mythic Mobs stances.'
+      name: '&dDungeon Status'
+      set-status:
+        lore: '&7Current status: &6'
+        name: '&d&lSet Status'
+    time-elapsed:
+      lore:
+      - '&eChecks if the dungeon has been'
+      - '&eactive for at least a,'
+      - '&ea specified duration.'
+      max-time: '&d&lMaximum Time'
+      min-time: '&d&lMinimum Time'
+      name: '&6Time Elapsed'
+  functions:
+    _base:
+      target-type: '&d&lTarget Type: '
+      trigger: '&a&lTrigger: '
+    allow-block:
+      lore:
+      - '&eAllows whitelisting or'
+      - '&eblacklisting the placing or'
+      - '&ebreaking of a block at this'
+      - '&elocation.'
+      name: '&dAllow Block Place/Break'
+      toggle-break: '&d&lToggle Break'
+      toggle-bucket: '&d&lToggle Bucket'
+      toggle-place: '&d&lToggle Place'
+    block-editor:
+      block-direction: '&d&lBlock Direction'
+      block-type: '&d&lBlock Type'
+      lore:
+      - '&ePlaces or removes a specified'
+      - '&eblock at the function''s location.'
+      name: '&dBlock Editor'
+      toggle-remover: '&d&lToggle Remover'
+    boss-bar:
+      color: '&d&lColor: '
+      fixed-progress:
+        lore: '&7Current: &6'
+        name: '&d&lFixed Progress'
+      lore:
+      - '&eShows a boss bar to the target'
+      - '&eplayer(s) with a title and progress.'
+      - '&eProgress can follow a variable or'
+      - '&ea %md_dungeon_...% placeholder.'
+      name: '&aBoss Bar'
+      progress-source:
+        lore: '&7Leave blank to use a fixed value.'
+        name: '&d&lProgress Source'
+      source-is-percent: '&d&lSource Is Percent'
+      style: '&d&lStyle: '
+      title: '&d&lTitle'
+      visible-by-default: '&d&lVisible by Default'
+    checkpoint:
+      lore:
+      - '&eSets a respawn checkpoint at'
+      - '&ethis location. If the checkpoint'
+      - '&ehas been triggered, players will'
+      - '&erespawn here after losing a life.'
+      name: '&6Respawn Checkpoint'
+      player-direction: '&d&lPlayer Direction'
+      save-point: '&d&lUse as Save Point'
+    chunk-load:
+      lore:
+      - '&eForce-loads the chunks in'
+      - '&ea radius around this function'
+      - '&eusing it as the center.'
+      - Triggering again releases the chunk.
+      - '&7Useful for keeping mobs and'
+      - '&7redstone responsive even when'
+      - '&7players are far away.'
+      name: '&6Chunk Loader'
+      radius: '&d&lRadius'
+    command:
+      command-sender: '&d&lCommand Sender: '
+      for-each-player: '&d&lToggle ''For Each Player'''
+      lore:
+      - '&eRuns a command as the player(s),'
+      - '&eOP''d player(s), or console.'
+      name: '&bCommand Sender'
+      set-command: '&d&lSet Command'
+    conditional:
+      add-else: '&a&lAdd ELSE Function'
+      add-then: '&a&lAdd THEN Function'
+      conditions: '&a&lConditions'
+      edit-else: '&e&lEdit ELSE Functions'
+      edit-then: '&e&lEdit THEN Functions'
+      else-functions:
+        lore:
+        - '&eFunctions that run when the'
+        - '&econditions do NOT pass.'
+        name: '&c&lELSE Functions'
+      lore:
+      - '&eChecks its conditions when triggered,'
+      - '&ethen runs the THEN functions if they'
+      - '&epass or the ELSE functions if they don''t.'
+      name: '&bConditional Function'
+      remove-else: '&c&lRemove ELSE Function'
+      remove-then: '&c&lRemove THEN Function'
+    delayed:
+      edit-function: '&e&lEdit Function'
+      lore:
+      - '&eRuns a configured function'
+      - '&eafter a delayed interval.'
+      name: '&bDelayed Function'
+      set-function: '&a&lSet Function'
+      start-delay: '&d&lStart Delay'
+    door-control:
+      auto-open-close: '&d&lAuto Open/Close'
+      hide-key-name:
+        lore:
+        - '&7When ON, the locked-door message'
+        - '&7will not reveal which key is required.'
+        name: '&d&lHide Key Name'
+      lore:
+      - '&eUnlocks or locks a door at'
+      - '&ethis location.'
+      name: '&dDoor Controller'
+      start-locked: '&d&lStart Locked'
+    finish-dungeon:
+      leave: '&d&lLeave Dungeon'
+      lore:
+      - '&eFormally finishes the dungeon,'
+      - '&emarking the dungeon as finished'
+      - '&efor the player.'
+      - '&eAlso puts the dungeon on cooldown'
+      - '&eif there is an access cooldown.'
+      name: '&6Finish Dungeon'
+    give-item:
+      choose-item: '&d&lChoose Item'
+      lore:
+      - '&eGives or drops an item at this'
+      - '&elocation.'
+      name: '&aItem Dispenser'
+      toggle-drop: '&d&lToggle Drop'
+      toggle-notify: '&d&lToggle Notification'
+    give-key:
+      lore:
+      - '&eGives or drops a key item to the'
+      - '&eplayer for use on &dKey Item'
+      - '&dDetector &etriggers.'
+      lore-note:
+      - '&8Similar to Item Dispenser, but'
+      - '&8informs the players about the'
+      - '&8key.'
+      name: '&aKey Dispenser'
+      take-out-of-dungeon: '&d&lToggle Taking Key Out of Dungeon'
+    hologram:
+      lore:
+      - '&eDisplays hologram text at a'
+      - '&especified location. Triggering'
+      - '&etoggles hologram visibility.'
+      message: '&d&lHologram Message'
+      name: '&bHologram'
+      set-location: '&d&lSet Location'
+      view-distance: '&d&lView Distance'
+      visible-by-default: '&d&lVisible by Default'
+    instance-variable:
+      edit-mode: '&d&lEdit Mode: '
+      edit-name: '&d&lEdit Name'
+      lore:
+      - '&eStores and manages instance-wide'
+      - '&evariables. Used in combination with'
+      - '&ethe dungeon variable trigger condition.'
+      name: '&aDungeon Variable'
+      value: '&d&lValue'
+    leave-dungeon:
+      lore:
+      - '&eImmediately takes the player'
+      - '&eor players out of the dungeon.'
+      name: '&6Leave Dungeon'
+    lives:
+      amount: '&d&lSet Lives'
+      lore:
+      - '&eChanges the number of lives the'
+      - '&eplayer(s) have.'
+      mode: '&d&lSet Lives Change Mode'
+      name: '&6Lives Editor'
+    loot-table-rewards:
+      cooldown-settings: '&a&lCooldown Settings'
+      exp-levels-reward: '&d&lExp Levels Reward'
+      exp-reward: '&d&lExp Reward'
+      lore:
+      - '&eGenerates rewards from a loot'
+      - '&etable when opened.'
+      lore-note:
+      - '&7Use /dungeon loot [create/edit]'
+      - '&7to create or edit a loot table.'
+      name: '&eLoot Table Rewards'
+      set-loot-table: '&d&lSet Loot Table'
+    message:
+      edit-message: '&d&lEdit Message'
+      lore:
+      - '&eSends a chat or action bar'
+      - '&emessage to the target player(s).'
+      message-type: '&d&lMessage Type'
+      name: '&aMessage Sender'
+    moving-block:
+      become-physical:
+        lore:
+        - '&8Blocks become real blocks again'
+        - '&8when they reach their endpoint.'
+        - '&8Re-trigger to move them again.'
+        - '&8Container contents are not kept.'
+        name: '&d&lBecome Physical'
+      lore:
+      - '&eTurns the block at this location'
+      - '&einto a moving block with a'
+      - '&econfigurable destination.'
+      movement-speed: '&d&lMovement Speed'
+      name: '&aMoving Block'
+      set-destination: '&d&lSet Destination'
+    moving-cluster:
+      lore:
+      - '&eTurns a group of blocks into'
+      - '&emoving blocks with a configurable'
+      - '&edestination.'
+      name: '&aMoving Block Cluster'
+      remove-area:
+        lore:
+        - '&8Right-click selects corner 1'
+        - '&8Left-click selects corner 2'
+        name: '&d&lRemove Area'
+      select-area:
+        lore:
+        - '&8Right-click selects corner 1'
+        - '&8Left-click selects corner 2'
+        name: '&d&lSelect Area'
+    multi:
+      add-function: '&a&lAdd Function'
+      change-triggers: '&e&lChange Triggers'
+      edit-function: '&e&lEdit Function'
+      lore:
+      - '&eRuns a set of multiple functions'
+      - '&ewhen triggered.'
+      name: '&bMulti-Function'
+      remove-function: '&c&lRemove Function'
+    mythic-loot-table-rewards:
+      cooldown-settings: '&a&lCooldown Settings'
+      exp-levels-reward: '&d&lExp Levels Reward'
+      exp-reward: '&d&lExp Reward'
+      lore-1: '&eGenerates rewards from a loot'
+      lore-2: '&etable when opened.'
+      lore-3: '&7Use /dungeon loot [create/edit]'
+      lore-4: '&7to create or edit a loot table.'
+      lore-5: '&dSupports Mythic Mobs drop tables!'
+      name: '&eLoot Table Rewards'
+      set-loot-table: '&d&lSet Loot Table'
+    mythic-signal:
+      lore:
+      - '&eBroadcasts a MythicMobs signal for'
+      - '&euse with ''~onSignal'' Mythic triggers.'
+      mob-filter: '&d&lMob Filter'
+      name: '&bMythic Signal'
+      range: '&d&lRange'
+      signal-name: '&d&lSignal Name'
+    mythic-skill:
+      lore:
+      - '&ePerforms a specified skill from'
+      - '&eMythic Mobs at this location.'
+      name: '&bMythic Skill'
+      skill-name: '&d&lSkill Name'
+    play-sound:
+      lore: '&ePlays a sound to the player(s).'
+      name: '&dSound Player'
+      set-category: '&d&lSet Category'
+      set-pitch: '&d&lSet Pitch'
+      set-sound: '&d&lSet Sound'
+      set-volume: '&d&lSet Volume'
+      toggle-location: '&d&lToggle Sound Location'
+    player-variable:
+      edit-mode: '&d&lEdit Mode: '
+      edit-name: '&d&lEdit Name'
+      lore:
+      - '&eStores and manages variables'
+      - '&escoped to each target player. Used'
+      - '&ewith the player variable condition.'
+      name: '&aPlayer Variable'
+      persist: '&d&lPersist Across Runs'
+      value: '&d&lValue'
+    pushable-block:
+      become-physical:
+        lore:
+        - '&7When on, the block turns back into'
+        - '&7a real block wherever it stops, so a'
+        - '&7Block Detector there can see it.'
+        name: '&d&lBecomes Solid At Rest'
+      grid-snap:
+        lore:
+        - '&7When on, the block lines up with the'
+        - '&7block grid when it stops, and drops'
+        - '&7into any hole underneath it.'
+        name: '&d&lSnap To Grid'
+      lore:
+      - '&eTurns the block at this location'
+      - '&einto a block players can push.'
+      lore-2:
+      - '&7Options for weight, slipperiness,'
+      - '&7max speed, grid snapping and'
+      - '&7whether it becomes solid at rest.'
+      max-speed: '&d&lMax Speed'
+      name: '&aPushable Block'
+      slipperiness: '&d&lSlipperiness'
+      weight: '&d&lWeight'
+    random:
+      lore:
+      - '&eRuns a random function from a'
+      - '&econfigured list.'
+      name: '&bFunction Randomizer'
+    random-reward:
+      lore:
+      - '&eCreates a random rewards menu'
+      - '&eat this location.'
+      max-rewards: '&d&lMax Rewards'
+      min-rewards: '&d&lMin Rewards'
+      name: '&eRandom Rewards'
+    redstone-block:
+      delay: '&a&lDelay'
+      lore:
+      - '&ePlaces a redstone block at'
+      - '&ethis location.'
+      name: '&dPlace Redstone Block'
+      repeat-count: '&a&lRepeat Count'
+      repeat-interval: '&a&lRepeat Interval'
+    remote-trigger:
+      lore:
+      - '&eSends a signal to any Signal'
+      - '&eReceiver triggers.'
+      name: '&6Signal Sender'
+      signal-name: '&d&lSignal Name'
+      signal-range: '&d&lSignal Range'
+    repeater:
+      edit-function: '&e&lEdit Function'
+      interval: '&d&lRepeater Interval'
+      lore:
+      - '&eRuns a configured function'
+      - '&erepeatedly on an interval.'
+      max-repeats: '&d&lMax Repeats'
+      name: '&bFunction Repeater'
+      set-function: '&a&lSet Function'
+      start-delay: '&d&lStart Delay'
+    revive-player:
+      lives-after-revival: '&d&lLives After Revival'
+      lore:
+      - '&eAllows players to revive other'
+      - '&edead players still spectating.'
+      max-revives: '&d&lMax Revives'
+      name: '&6Player Reviver'
+    reward:
+      cooldown-minutes: '&d&lCooldown in Minutes'
+      cooldown-settings: '&a&lCooldown Settings'
+      cooldown-type: '&d&lType: '
+      day-of-month: '&d&lDay of Month'
+      day-of-week: '&d&lDay of Week'
+      edit-rewards: '&d&lEdit Rewards'
+      exp-levels-reward: '&d&lExp Levels Reward'
+      exp-reward: '&d&lExp Reward'
+      hour-of-day: '&d&lHour of Day'
+      lore:
+      - '&eCreates a rewards menu at this'
+      - '&elocation.'
+      modify:
+        title: Modify Rewards
+      name: '&eRewards'
+      toggle-cooldown: '&d&lToggle Cooldown Enabled'
+      toggle-custom-cooldown: '&e&lToggle Custom Cooldown'
+    room-door:
+      action: '&d&lAction: '
+      door-name: '&d&lDoor Name'
+      keep-entrance-open:
+        lore:
+        - '&7Whether to keep the door the player'
+        - '&7entered from open.'
+        name: '&d&lKeep Entrance Open'
+      lore:
+      - '&eOpens or closes a specified room'
+      - '&edoors. Room doors can be created'
+      - '&ewhen editing a connector.'
+      name: '&dRoom Door Controller'
+    sequence:
+      loop: '&d&lLoop Sequence'
+      lore:
+      - '&eRuns a list of functions'
+      - '&eone at a time in order'
+      - '&eeach time it''s triggered.'
+      name: '&bFunction Sequencer'
+    set-difficulty:
+      difficulty:
+        lore: '&7Current difficulty: &6'
+        name: '&d&lSet Difficulty'
+      lore-1: '&eSets the difficulty level of the'
+      lore-2: '&edungeon, which can be used for'
+      lore-3: '&econdition checks and triggers.'
+      lore-4: '&cNOTE: Unrelated to Minecraft''s'
+      lore-5: '&c/difficulty command!'
+      name: '&dDungeon Difficulty'
+    set-status:
+      lore-1: '&eSets the status of the dungeon,'
+      lore-2: '&ewhich can be used for condition'
+      lore-3: '&echecks and triggers.'
+      lore-4: '&7Similar to Mythic Mobs stances.'
+      name: '&dDungeon Status'
+      status:
+        lore: '&7Current status: &6'
+        name: '&d&lSet Status'
+    spawn-mythic-mob:
+      amount: '&d&lAmount'
+      lore-1: '&eSpawns mobs at this location.'
+      lore-2: '&dSupports MythicMobs!'
+      mob-direction: '&d&lMob Direction'
+      mob-name: '&d&lMob Name'
+      mythic-mob-level: '&d&lMythic Mob Level'
+      name: '&dMob Spawner'
+      spawn-delay: '&d&lSpawn Delay'
+      spawn-interval: '&d&lSpawn Interval'
+    spawn-npc:
+      lore:
+      - '&eSpawns a Citizens NPC at this'
+      - '&elocation.'
+      name: '&dNPC Spawner'
+      npc-direction: '&d&lNPC Direction'
+      npc-id: '&d&lNPC ID'
+    start-dungeon:
+      lore:
+      - '&eStarts the dungeon when the'
+      - '&etrigger condition is met.'
+      name: '&6Start Dungeon'
+    teleport:
+      lore:
+      - '&eTeleports the target player(s)'
+      - '&eto a configured location.'
+      name: '&aTeleporter'
+      set-location: '&d&lSet Location'
+    title:
+      duration: '&d&lDuration'
+      edit-subtitle: '&d&lEdit Subtitle'
+      edit-title: '&d&lEdit Title'
+      fade-in: '&d&lFade-In Ticks'
+      fade-out: '&d&lFade-Out Ticks'
+      lore:
+      - '&eSends a title and subtitle'
+      - '&eto the target player(s).'
+      name: '&aTitle Sender'
+  hotbar:
+    change-trigger: '&e&lChange Trigger'
+    copy-function: '&3&lCopy Function'
+    cut-function: '&3&lCut Function'
+    default-weight:
+      lore:
+      - '&eHow likely this room will'
+      - '&egenerate relative to others.'
+      name: '&d&lDefault Weight'
+    delete-function: '&c&lDelete Function'
+    delete-room: '&c&lDelete Room'
+    edit-allowed-rooms:
+      lore:
+      - '&eOpens a menu for customizing'
+      - '&ea whitelist of what rooms can'
+      - '&ebe connected to this one.'
+      name: '&e&lEdit Allowed Rooms'
+    edit-connector: '&a&lEdit Connector'
+    edit-function: '&a&lEdit Function'
+    edit-rules: '&e&lEdit Rules'
+    expand-shrink:
+      lore:
+      - '&eExpands or shrinks the room by one'
+      - '&ein the direction you''re facing.'
+      lore2:
+      - '&8Left-click expands.'
+      - '&8Right-click shrinks.'
+      name: '&3&lExpand & Shrink'
+    generation-depth:
+      lore:
+      - '&eHow many rooms deep into the dungeon'
+      - '&ethis room should generate.'
+      lore-note: '&dSupports ranges like 0-3, or 2+!'
+      name: '&d&lGeneration Depth'
+    generation-limit:
+      lore:
+      - '&eHow many times this room should'
+      - '&egenerate in the dungeon.'
+      lore-note: '&dSupports ranges like 0-3, or 2+!'
+      name: '&d&lGeneration Limit'
+    paste-function: '&3&lPaste Function'
+    select-area:
+      lore:
+      - '&8Right-click selects corner 1'
+      - '&8Left-click selects corner 2'
+      name: '&d&lSelect Area'
+    set-spawn:
+      lore:
+      - '&eMakes this room a valid starting'
+      - '&eroom and places the spawn point'
+      - '&eat the target location.'
+      name: '&d&lSet Spawn'
+  layout:
+    add-remove-block: '&d&lAdd/Remove Block'
+    copy-connector: '&3&lCopy Connector'
+    cut-connector: '&3&lCut Connector'
+    delete-connector: '&c&lDelete Connector'
+    edit-allowed-rooms:
+      lore:
+      - '&eOpens a menu for customizing'
+      - '&ea whitelist of what rooms can'
+      - '&ebe connected to this one.'
+      name: '&e&lEdit Allowed Rooms'
+    edit-door: '&e&lEdit Door'
+    paste-connector: '&3&lPaste Connector'
+    set-door-name: '&d&lSet Door Name'
+    toggle-sound: '&d&lToggle Sound'
+    toggle-start-open: '&d&lToggle Start Open'
+  layout-minecrafty:
+    connector-use-chance:
+      lore:
+      - '&eHow likely a room will generate'
+      - '&eat this connector.'
+      name: '&d&lConnector Use Chance'
+  loot-table:
+    dupes:
+      lore-1: '&7Toggles whether or not multiple'
+      lore-2: '&7of the same item can generate in'
+      lore-3: '&7a loot table.'
+      name: '&aDuplicate Items'
+    dupes-info-off: '&cDo not allow duplicate items'
+    dupes-info-on: '&aAllow duplicate items'
+    dupes-off: '&cDuplicate Items'
+    dupes-on: '&aDuplicate Items'
+    item:
+      lore-1: '&8Click to edit.'
+      lore-2: '&8Shift-Click to remove.'
+    max-items:
+      lore-1: '&7Determines the maximum amount of'
+      lore-2: '&7the below items this loot table can'
+      lore-3: '&7generate.'
+      lore-4: '&8Left click increases.'
+      lore-5: '&8Right click decreases.'
+      name: '&aMaximum Items'
+    min-items:
+      lore-1: '&7Determines the minimum amount of'
+      lore-2: '&7the below items this loot table can'
+      lore-3: '&7generate.'
+      lore-4: '&8Left click increases.'
+      lore-5: '&8Right click decreases.'
+      name: '&aMinimum Items'
+    title: '&8Edit Loot'
+  loot-table-item:
+    back: '&cBack'
+    max:
+      lore-1: '&7Determines the max amount of this'
+      lore-2: '&7item when it appears.'
+      lore-3: '&8Left click increases.'
+      lore-4: '&8Right click decreases.'
+      name: '&aMaximum Items'
+    min:
+      lore-1: '&7Determines the min amount of this'
+      lore-2: '&7item when it appears.'
+      lore-3: '&8Left click increases.'
+      lore-4: '&8Right click decreases.'
+      name: '&aMinimum Items'
+    title: '&8Edit Loot Item'
+    weight:
+      lore-1: '&7Determines the chance of this item'
+      lore-2: '&7compared to others. An item with a'
+      lore-3: '&7weight of 4 is twice as common as an'
+      lore-4: '&7item with a weight of 2.'
+      lore-5: '&8Left and Shift-Left click increases.'
+      lore-6: '&8Right and Shift-Right click decreases.'
+      name: '&aItem Weight'
+  menus:
+    conditions-menu:
+      title: '&8Select a Condition'
+    edit-condition:
+      title: '&8Edit a Condition'
+    edit-conditional-else:
+      title: '&8Edit an ELSE Function'
+    edit-gate-trigger:
+      title: '&8Edit a Trigger'
+    edit-multi-function:
+      title: '&8Edit a Function'
+    edit-multi-function-triggers:
+      title: '&8Edit Function Triggers'
+    func-cat-dungeon:
+      hint: '&8Checkpoint, start, signals, etc.'
+      lore:
+      - '&eFunctions relating to general'
+      - '&edungeon behaviour.'
+      name: '&6Dungeon Functions'
+    func-cat-location:
+      hint: '&8Mob spawners, sounds, doors, etc.'
+      lore:
+      - '&eFunctions involving or effecting'
+      - '&etheir location.'
+      name: '&dLocation Functions'
+    func-cat-meta:
+      hint: '&8Multi-functions, randoms, skills, etc.'
+      lore:
+      - '&eFunctions involving or effecting'
+      - '&eother functions and triggers.'
+      name: '&bMeta Functions'
+    func-cat-player:
+      hint: '&8Messages, keys, commands, etc.'
+      lore:
+      - '&eFunctions involving or effecting'
+      - '&eplayers and party members.'
+      name: '&aPlayer Functions'
+    func-cat-room:
+      hint:
+      - '&8Connector doors, locking and unlocking, etc.'
+      - '&dOnly available in randomly generated dungeons.'
+      lore:
+      - '&eFunctions involving or effecting'
+      - '&erooms in procedural dungeons.'
+      name: '&cRoom Functions'
+    function-category:
+      title: '&8$1 Functions'
+    function-menu:
+      title: '&8Select a Function'
+    functions-label: ' &eFunctions:'
+    gate-triggers-menu:
+      title: '&8Select a Trigger'
+    options-label: '&6Options:'
+    remove-condition:
+      title: '&8Remove a Condition'
+    remove-conditional-else:
+      title: '&8Remove an ELSE Function'
+    remove-gate-trigger:
+      title: '&8Remove a Trigger'
+    remove-multi-function:
+      title: '&8Remove a Function'
+    select-item-function:
+      title: '&8Put your item here'
+    select-item-trigger:
+      title: '&8Put your item here'
+    trig-cat-dungeon:
+      hint: '&8Dungeon start, signals, etc.'
+      lore:
+      - '&eTriggers caused by dungeon-related'
+      - '&eevents.'
+      name: '&6Dungeon Triggers'
+    trig-cat-general:
+      hint: '&8Mob deaths, redstone signal, etc.'
+      lore:
+      - '&eTriggers caused by anything outside'
+      - '&ethe other categories.'
+      name: '&5General Triggers'
+    trig-cat-meta:
+      hint: '&8AND gates, OR gates, etc.'
+      lore:
+      - '&eTriggers contain and interact with'
+      - '&eother triggers directly.'
+      name: '&bMeta Triggers'
+    trig-cat-player:
+      hint: '&8Right-click, player death, etc.'
+      lore:
+      - '&eTriggers caused by a direct player'
+      - '&eor party action.'
+      name: '&aPlayer Triggers'
+    trig-cat-room:
+      hint:
+      - '&8Doors opening/closing, etc.'
+      - '&dOnly available in randomly generated dungeons.'
+      lore:
+      - '&eTriggers caused by something changing'
+      - '&ein the room.'
+      name: '&cRoom Triggers'
+    trig-none:
+      lore:
+      - '&cCreate a function without a'
+      - '&ctrigger.'
+      name: '&cNONE'
+    trigger-category:
+      title: '&8$1 Triggers'
+    trigger-label: ' &eTrigger: &7'
+    trigger-label-bold: ' &d&lTrigger: &7&l'
+    trigger-menu:
+      title: '&8Select a Trigger'
+    triggers-label: ' &eTriggers:'
+  play:
+    revivalmenu:
+      title: '&8Choose who to revive'
+    revive: '&3&lRevive '
+    rewards:
+      title: '&8Rewards'
+  recruit:
+    password-required: '&cPassword Required!'
+    title: '&8Party Listings'
+  room-editor:
+    add-room: '&aAdd Room'
+    connector-whitelist:
+      title: '&8Edit Connector Whitelist'
+    edit-room:
+      lore:
+      - '&cNO FUNCTIONALITY HERE!'
+      - '&cThis button may be replaced with an explainer tooltip.'
+      name: '&eEdit Room'
+    removal-activate: '&eClick to &aACTIVATE &eremoval mode.'
+    removal-deactivate: '&eClick to &cDEACTIVATE &eremoval mode.'
+    remove-room: '&cRemove Room'
+    room-name: '&b&l'
+    room-whitelist:
+      title: '&8Edit Room Whitelist'
+    weight:
+      amount: '&eWeight of &6'
+      lore-1: '&7Determines the chance of this room'
+      lore-2: '&7compared to others. A room with a'
+      lore-3: '&7weight of 4 is twice as common as a'
+      lore-4: '&7room with a weight of 2.'
+      lore-5: '&8Left and Shift-Left click increases.'
+      lore-6: '&8Right and Shift-Right click decreases.'
+      lore-7: '&8Click with an item to set icon.'
+      lore-8: '&8Press Q to toggle once per dungeon.'
+      unique-on: '&eOnce per dungeon: &aYES'
+      unique-off: '&eOnce per dungeon: &cNO'
+  triggers:
+    _base:
+      add-condition: '&a&lAdd Condition'
+      edit-condition: '&e&lEdit Condition'
+      limit-to-room: '&d&lLimit to Room'
+      remove-condition: '&c&lRemove Condition'
+      trigger-conditions: '&a&lTrigger Conditions'
+    block-detector:
+      break-or-place: '&d&lBreak or Place'
+      delay: '&d&lDelay'
+      toggle-place: '&d&lToggle Place'
+      toggle-break: '&d&lToggle Break'
+      lore:
+      - '&eTriggered when a block is placed'
+      - '&eor broken at this location.'
+      lore-2:
+      - '&7Also allows placing or breaking'
+      - '&7blocks at this location.'
+      name: '&aBlock Detector'
+      set-block: '&d&lSet Block'
+    chat:
+      allow-retrigger: '&d&lAllow Retrigger'
+      case-sensitive: '&d&lCase Sensitive'
+      delay: '&d&lDelay'
+      edit-text: '&d&lEdit Required Text'
+      exact-text: '&d&lExact Text'
+      lore:
+      - '&eTriggered when a player sends'
+      - '&ea message with matching or'
+      - '&easimilar text.'
+      name: '&aChat Message'
+    condition-holder:
+      name: '&aCondition Holder'
+    distance:
+      allow-retrigger: '&d&lAllow Retrigger'
+      delay: '&d&lDelay'
+      distance: '&d&lDistance'
+      for-each-player:
+        lore-off: '&cOFF: &7triggers once for the nearest player'
+        lore-on: '&aON: &7triggers for every player in range'
+        name: '&d&lFor Each Player'
+      lore:
+      - '&eTriggered when a player or players'
+      - '&eare within range of this location.'
+      minimum-players: '&d&lMinimum Players'
+      name: '&aPlayer Detector'
+    dungeon-start:
+      lore:
+      - '&eTriggered when the dungeon'
+      - '&ebegins.'
+      name: '&6Dungeon Start'
+    gate:
+      add-trigger: '&a&lAdd Trigger'
+      allow-retrigger: '&d&lAllow Retrigger'
+      edit-trigger: '&e&lEdit Trigger'
+      remove-trigger: '&c&lRemove Trigger'
+    gate-and:
+      lore:
+      - '&eTriggered when several other'
+      - '&especified triggers have been'
+      - '&eactivated.'
+      name: '&bAND Gate'
+    gate-or:
+      lore:
+      - '&eTriggered when one of several'
+      - '&especified triggers have been'
+      - '&eactivated.'
+      name: '&bOR Gate'
+    interact:
+      allow-retrigger: '&d&lAllow Retrigger'
+      click-type: '&d&lClick Type: '
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggered when a player'
+      - '&eclicks the block at this'
+      - '&elocation.'
+      name: '&aRight-Click Block'
+    key-item:
+      allow-retrigger: '&d&lAllow Retrigger'
+      choose-item: '&d&lChoose Item'
+      click-type: '&d&lClick Type: '
+      consume-item: '&d&lToggle Consume Item'
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggers when a player uses'
+      - '&ean item with right-click.'
+      name: '&aKey Item Detector'
+      use-anywhere: '&d&lToggle Use Anywhere'
+    leave-dungeon:
+      allow-retrigger: '&d&lAllow Retrigger'
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggered when a player leaves'
+      - '&ethe dungeon.'
+      lore-2:
+      - '&7Optionally, can also stop players'
+      - '&7from leaving with /leave or leave'
+      - '&7functions.'
+      name: '&6Leave Dungeon Listener'
+      prevent-leaving: '&d&lPrevent Leaving'
+    mob-death:
+      allow-retrigger: '&d&lAllow Retrigger'
+      amount: '&d&lAmount'
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggered when a certain number of'
+      - '&ea mob has died.'
+      - '&dSupports MythicMobs!'
+      mob: '&d&lMob'
+      mob-radius: '&d&lMob Radius'
+      name: '&5Mob Death Counter'
+    mythic-mob-death:
+      allow-retrigger: '&d&lAllow Retrigger'
+      amount: '&d&lAmount'
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggered when a certain number of'
+      - '&ea mob has died.'
+      - '&dSupports MythicMobs!'
+      mob: '&d&lMob'
+      mob-radius: '&d&lMob Radius'
+      name: '&5Mob Death Counter'
+    player-death:
+      allow-retrigger: '&d&lAllow Retrigger'
+      amount: '&d&lAmount'
+      deaths-per-player: '&d&lToggle Deaths Per Player'
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggered when a certain number of'
+      - '&eplayers have died.'
+      name: '&aPlayer Death Counter'
+    redstone:
+      allow-retrigger: '&d&lAllow Retrigger'
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggered when the block at this'
+      - '&elocation receives a redstone'
+      - '&esignal.'
+      lore-note:
+      - '&dNote: Functions triggered by this'
+      - '&dcan''t target specific players or'
+      - '&dparties.'
+      name: '&5Redstone Receiver'
+    remote:
+      allow-retrigger: '&d&lAllow Retrigger'
+      delay: '&d&lDelay'
+      lore:
+      - '&eTriggered when a signal sender'
+      - '&esends a signal with a matching'
+      - '&econfigured name.'
+      name: '&6Signal Receiver'
+      signal-name: '&d&lSignal Name'
+      wait-for-conditions: '&d&lWait For Conditions'
+    room-door-change:
+      action: '&d&lAction: '
+      allow-retrigger: '&d&lAllow Retrigger'
+      door-name: '&d&lDoor Name'
+      lore:
+      - '&eTriggered when a door in this'
+      - '&eroom is opened or closed.'
+      name: '&aRoom Door Open/Close'
+    room-presence:
+      allow-retrigger: '&d&lAllow Retrigger'
+      cause-filter: '&d&lCause Filter: &f'
+      lore:
+      - '&eTriggered when a player enters or'
+      - '&eleaves this room.'
+      name: '&aRoom Enter/Leave'
+      trigger-on: '&d&lTrigger On: &f'

@@ -1,0 +1,26 @@
+worlds:
+  enable: false
+warps:
+  enable: false
+tpa:
+  enable: false
+back:
+  enable: false
+menus:
+  enable: false
+hideall:
+  enable: false
+hide:
+  enable: false
+hat:
+  enable: false
+vanish:
+  enable: false
+openinv:
+  enable: false
+entitylimits:
+  enable: false
+deepseek:
+  enable: false
+entityclear:
+  enable: false
