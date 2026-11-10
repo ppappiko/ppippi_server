@@ -22,6 +22,7 @@ PAPER:
   pipi_gear:bow_1_asset: 10020
   pipi_gear:bow_2_asset: 10021
   pipi_gear:fishing_rod_cast_asset: 10022
+  pipi_blueprints:blueprint_paper: 48120
 PLAYER_HEAD:
   __manually_handled:_iainternal__player_phead_0: 10000
   __manually_handled:_iainternal__player_parm_left_3: 10001
@@ -96,13 +97,20 @@ PANDA_SPAWN_EGG:
   pipi_pets:raccoon: 48208
 AXOLOTL_SPAWN_EGG:
   pipi_pets:otter: 48206
+  pipi_pets:sunlizard: 48215
 TURTLE_SPAWN_EGG:
   pipi_pets:tortoise: 48207
 SILVERFISH_SPAWN_EGG:
   pipi_pets:mole: 48210
+  pipi_pets:imugi: 48216
 SHEEP_SPAWN_EGG:
   pipi_pets:thundersheep: 48211
 POLAR_BEAR_SPAWN_EGG:
   pipi_pets:moonbear: 48212
 PIG_SPAWN_EGG:
   pipi_pets:angelpig: 48214
+BAT_SPAWN_EGG:
+  pipi_pets:vampbat: 48217
+AMETHYST_SHARD:
+  pipi_cores:iron_core: 48121
+  pipi_cores:diamond_core: 48122
