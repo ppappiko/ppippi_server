@@ -82,12 +82,15 @@ plots:
       anchor: '0_64_38'
       stations:
         '13_64_49':
-          level: 3
+          level: 5
     production:
       FARM:
         level: 2
         paused: 1793964964488
         anchor: '-1_64_38'
+        stations:
+          '6_64_55':
+            level: 4
       GOLD_MINE:
         paused: 1793958560037
         anchor: '-3_64_38'
@@ -97,7 +100,7 @@ plots:
         anchor: '-4_64_38'
         stations:
           '11_64_54':
-            level: 2
+            level: 4
       CARROT_FARM:
         anchor: '-5_64_38'
         stations:
@@ -119,12 +122,14 @@ tutorial:
 players:
   8fe0b940-3078-41c9-a3cc-f8c700b6651b:
     fox:
-      food: 36
-      stock: 0
-      active: false
-      since: 1794096697906
+      food: 42
+      stock: 27
+      active: true
+      since: 1794277608112
       facility-bound: true
       lumber-slot: 1
+      production-facility: DIAMOND_MINE
+      production-anchor: '11_64_54'
     wolf:
       aptitudes:
         CRAFT: 2
@@ -138,14 +143,11 @@ players:
     rabbit:
       aptitudes:
         FARM: 1
-      food: 81
+      food: 80
       stock: 0
-      since: 1794043248095
+      since: 1794227633768
       active: false
-      facility-bound: true
-      production-facility: CARROT_FARM
-      production-anchor: '-5_64_38'
-      lumber-slot: 1
+      facility-bound: false
     allay:
       aptitudes:
         CRAFT: 1
@@ -157,10 +159,14 @@ players:
       aptitudes:
         FARM: 2
         PET_STORAGE: 2
-      food: 0
-      stock: 0
-      since: 1794092381689
-      active: false
+      food: 70
+      stock: 64
+      since: 1794277611157
+      active: true
+      production-facility: FARM
+      production-anchor: '6_64_55'
+      lumber-slot: 1
+      facility-bound: true
     frog:
       aptitudes:
         CRAFT: 2
@@ -169,58 +175,43 @@ players:
       stock: 0
       since: 1794106642162
       active: false
-      production-facility: CARROT_FARM
-      production-anchor: '3_64_56'
-      lumber-slot: 1
-      facility-bound: true
+      facility-bound: false
     nightcat:
       aptitudes:
         CRAFT: 3
         MINE: 1
       food: 93
-      stock: 43
+      stock: 0
       since: 1794112718796
       active: false
-      production-facility: DIAMOND_MINE
-      production-anchor: '11_64_54'
-      lumber-slot: 1
-      facility-bound: true
+      facility-bound: false
     redfox:
       aptitudes:
         PET_STORAGE: 1
         LUMBER: 2
-      food: 100
+      food: 35
       stock: 0
-      since: 1794112756988
-      active: true
-      production-facility: LUMBER
-      production-anchor: '13_64_49'
-      lumber-slot: 1
-      facility-bound: true
+      since: 1794191158431
+      active: false
+      facility-bound: false
     wizrabbit:
       aptitudes:
         FARM: 3
         CRAFT: 2
-      food: 99
-      stock: 1
-      since: 1794112775752
-      active: true
-      production-facility: CARROT_FARM
-      production-anchor: '3_64_56'
-      lumber-slot: 1
-      facility-bound: true
+      food: 100
+      stock: 36
+      since: 1794189776914
+      active: false
+      facility-bound: false
     redpanda:
       aptitudes:
         CRAFT: 3
         MINE: 1
-      food: 100
-      stock: 0
-      since: 1794112721987
-      active: true
-      production-facility: DIAMOND_MINE
-      production-anchor: '11_64_54'
-      lumber-slot: 1
-      facility-bound: true
+      food: 98
+      stock: 26
+      since: 1794225221988
+      active: false
+      facility-bound: false
     pirateotter:
       aptitudes:
         CRAFT: 1
@@ -234,62 +225,137 @@ players:
         FARM: 1
         MINE: 1
       food: 100
-      stock: 0
-      since: 1794114397909
-      active: true
-      production-facility: MINE
-      production-anchor: '10_64_59'
-      lumber-slot: 1
-      facility-bound: true
+      stock: 26
+      since: 1794189821410
+      active: false
+      facility-bound: false
     fatraccoon:
       aptitudes:
         CRAFT: 3
         PET_STORAGE: 1
         LUMBER: 2
-      food: 100
+      food: 35
       stock: 0
-      since: 1794114442447
-      active: true
-      production-facility: LUMBER
-      production-anchor: '13_64_49'
-      lumber-slot: 2
-      facility-bound: true
+      since: 1794191139458
+      active: false
+      facility-bound: false
     thundersheep:
       aptitudes:
         CRAFT: 1
         LUMBER: 2
-      food: 100
+      food: 42
       stock: 0
-      since: 1794115464571
+      since: 1794277608112
       active: true
-      production-facility: LUMBER
-      production-anchor: '13_64_49'
-      lumber-slot: 3
       facility-bound: true
+      production-facility: DIAMOND_MINE
+      production-anchor: '11_64_54'
+      lumber-slot: 2
     clawmole:
       aptitudes:
         CRAFT: 1
         MINE: 1
       food: 100
-      stock: 0
-      since: 1794115473569
-      active: true
-      production-facility: DIAMOND_MINE
-      production-anchor: '11_64_54'
-      lumber-slot: 2
-      facility-bound: true
+      stock: 26
+      since: 1794189838410
+      active: false
+      facility-bound: false
     hornrabbit:
       aptitudes:
         FARM: 1
         PET_STORAGE: 1
       food: 100
+      stock: 26
+      since: 1794189809060
+      active: false
+      facility-bound: false
+    tortoise:
+      food: 42
       stock: 0
-      since: 1794115485571
+      since: 1794277608112
       active: true
-      production-facility: CARROT_FARM
-      production-anchor: '3_64_56'
+      production-facility: DIAMOND_MINE
+      production-anchor: '11_64_54'
+      lumber-slot: 3
+      facility-bound: true
+    otter:
+      food: 63
+      stock: 64
+      since: 1794277609157
+      active: true
+      production-facility: LUMBER
+      production-anchor: '13_64_49'
+      lumber-slot: 3
+      facility-bound: true
+    cat:
+      food: 63
+      stock: 64
+      since: 1794277609157
+      active: true
+      production-facility: LUMBER
+      production-anchor: '13_64_49'
       lumber-slot: 2
       facility-bound: true
+    raccoon:
+      food: 99
+      stock: 0
+      since: 1794275866619
+      active: false
+    mole:
+      food: 42
+      stock: 0
+      since: 1794277608112
+      active: true
+      production-facility: DIAMOND_MINE
+      production-anchor: '11_64_54'
+      lumber-slot: 4
+      facility-bound: true
+    sunlizard:
+      food: 70
+      stock: 0
+      since: 1794277611157
+      active: true
+      production-facility: FARM
+      production-anchor: '6_64_55'
+      lumber-slot: 4
+      facility-bound: true
+    ferret:
+      food: 70
+      stock: 64
+      since: 1794277611157
+      active: true
+      production-facility: FARM
+      production-anchor: '6_64_55'
+      lumber-slot: 2
+      facility-bound: true
+    angelpig:
+      food: 70
+      stock: 1
+      since: 1794277611157
+      active: true
+      production-facility: FARM
+      production-anchor: '6_64_55'
+      lumber-slot: 3
+      facility-bound: true
+    moonbear:
+      food: 63
+      stock: 0
+      since: 1794277609157
+      active: true
+      production-facility: LUMBER
+      production-anchor: '13_64_49'
+      lumber-slot: 5
+      facility-bound: true
+    imugi:
+      food: 0
+      stock: 0
+      since: 1794226653586
+      active: false
+    vampbat:
+      food: 0
+      stock: 0
+      since: 1794226675136
+      active: false
 typed-facilities-migrated: true
 sales:
   8fe0b940-3078-41c9-a3cc-f8c700b6651b:
@@ -344,9 +410,9 @@ town:
       '5_64_38': {}
       '-1_64_49': {}
       '12_64_44':
-        craft-worker: NIGHTCAT:07a764da-bcfb-4245-83a8-be07e053081b:CRAFT=3:MINE=2
+        craft-worker: REDPANDA
       '-14_64_52':
-        craft-worker: PIRATEOTTER
+        craft-worker: RACCOON
     shop:
       sell:
         raw_diamond:
@@ -370,30 +436,30 @@ pet-storage:
   8fe0b940-3078-41c9-a3cc-f8c700b6651b:
     slots:
     - FOX
-    - WOLF
-    - RABBIT
-    - ALLAY
-    - WOLF:1a3ff9ee-07d4-40b0-948f-5753461f1375:CRAFT=2:MINE=3
-    - WOLF:1e59d1f3-62c8-4073-aa46-bfb9b93f2eb0:CRAFT=2:MINE=1
-    - WOLF:d6b25593-da14-4d8f-b4e4-628dda2cab51:CRAFT=2:MINE=2
-    - WOLF:30efd9a5-0fc9-46b8-b9d3-df427b59dafb:CRAFT=2:MINE=2
-    - ALLAY:830e8825-e988-4e43-8c3b-961a468c832f:CRAFT=3:PET_STORAGE=1
-    - FOX:96e69b91-f984-4c26-9e58-70be03f7edab:LUMBER=3
-    - WOLF:49026895-e9ff-417b-8010-ce017d9edcb0:CRAFT=2:MINE=1
-    - SPARROW
-    - FROG
-    - NIGHTCAT
     - FROG:44867329-bc34-4972-b522-6fa5361c88fa:FARM=3:CRAFT=1
+    - RABBIT
+    - FOX:96e69b91-f984-4c26-9e58-70be03f7edab:LUMBER=3
     - SPARROW:7a9c0767-929c-44dc-a7ba-583a02143014:FARM=2:PET_STORAGE=1
-    - NIGHTCAT:07a764da-bcfb-4245-83a8-be07e053081b:CRAFT=3:MINE=2
-    - ''
-    - ''
-    - ''
-    - ''
-    - ''
-    - ''
-    - ''
-    - ''
+    - SPARROW
+    - HORNRABBIT
+    - REDPANDA
+    - FROG
+    - THUNDERSHEEP
+    - CAT
+    - OTTER
+    - TORTOISE
+    - RACCOON
+    - HORNRABBIT:4cfcbb74-229b-4a63-a57d-d22a400d28c4
+    - MOLE
+    - MOONBEAR
+    - FERRET
+    - ANGELPIG
+    - SUNLIZARD
+    - IMUGI
+    - VAMPBAT
+    - IMUGI:a973340b-f23c-46b2-8bec-bb48024d7122
+    - MOLE:ede299a7-6fa1-44a8-8921-03080df80d36
+    - HORNRABBIT:ef3ae9cc-4be2-4f86-91c4-e74c42835954
     - ''
     - ''
     - ''
@@ -482,37 +548,55 @@ pet-storage:
         since: 1794043241893
         active: false
       7a9c0767-929c-44dc-a7ba-583a02143014:
-        production-facility: CARROT_FARM
-        production-anchor: '-6_64_48'
-        lumber-slot: 1
+        production-facility: FARM
+        production-anchor: '6_64_55'
+        lumber-slot: 5
         facility-bound: true
-        food: 98
-        stock: 64
-        since: 1794112793741
-        active: false
+        food: 73
+        stock: 0
+        since: 1794277611157
+        active: true
       44867329-bc34-4972-b522-6fa5361c88fa:
-        production-facility: CARROT_FARM
-        production-anchor: '3_64_56'
+        production-facility: LUMBER
+        production-anchor: '13_64_49'
         lumber-slot: 1
         facility-bound: true
-        food: 76
-        stock: 60
-        since: 1794112727391
-        active: false
+        food: 63
+        stock: 64
+        since: 1794277609157
+        active: true
       07a764da-bcfb-4245-83a8-be07e053081b:
         food: 94
         stock: 0
         since: 1794111821908
         active: false
       96e69b91-f984-4c26-9e58-70be03f7edab:
+        production-facility: DIAMOND_MINE
+        production-anchor: '11_64_54'
+        lumber-slot: 5
+        facility-bound: true
+        food: 49
+        stock: 0
+        since: 1794277608112
+        active: true
+      c22688af-a430-4c0f-8089-604b09c72964:
         production-facility: LUMBER
         production-anchor: '13_64_49'
         lumber-slot: 1
         facility-bound: true
-        food: 76
-        stock: 60
-        since: 1794112755595
-        active: false
+        food: 100
+        stock: 0
+        since: 1794191160609
+        active: true
+      4cfcbb74-229b-4a63-a57d-d22a400d28c4:
+        production-facility: LUMBER
+        production-anchor: '13_64_49'
+        lumber-slot: 4
+        facility-bound: true
+        food: 63
+        stock: 47
+        since: 1794277609157
+        active: true
     level: 2
 facility-views:
   village:
@@ -555,16 +639,16 @@ facility-views:
         amount: 19
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
-        type: CARROT
+        type: WHEAT
         amount: 64
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
-        type: CARROT
-        amount: 64
+        type: WHEAT
+        amount: 37
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
         type: CARROT
-        amount: 64
+        amount: 31
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
         type: CARROT
