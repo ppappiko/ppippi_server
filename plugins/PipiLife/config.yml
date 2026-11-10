@@ -29,3 +29,23 @@ combat:
       item-level: 550
 wild-world: world
 village-world: village
+# 야생 월드의 네더. 비워두면 자동으로 village·pipi_tutorial을 제외한 첫 네더 월드를 사용합니다.
+wild-nether-world: ''
+# 야생 펫 스폰 설정
+pet-spawn:
+  # 스폰 시도 주기 (틱). 200 = 10초
+  interval-ticks: 200
+  # 플레이어 64블록 안에 이 수 이상 야생 펫이 있으면 스폰하지 않습니다.
+  cap: 6
+  # 레벨별 스폰 확률 (시도 1번당)
+  level-chance:
+    # 레벨 1 펫 스폰 확률
+    '1': 1.0
+    # 레벨 2 펫 스폰 확률
+    '2': 0.35
+    # 레벨 3 펫 스폰 확률
+    '3': 0.03
+  # 운반 펫(이무기·블벳)이 매칭될 때 스폰될 확률
+  transport-chance: 0.005
+# 네더 보스 처치 이후 true로 바꾸면 운반 펫이 스폰됩니다.
+transport-unlocked: false
