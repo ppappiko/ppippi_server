@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/hearty_salmon_stew"
+  },
+  "parent": "minecraft:item/generated"
+}

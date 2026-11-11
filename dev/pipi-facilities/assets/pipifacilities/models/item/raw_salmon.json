@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/raw_salmon"
+  },
+  "parent": "minecraft:item/generated"
+}

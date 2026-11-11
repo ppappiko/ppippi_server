@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/vitality_crystal"
+  },
+  "parent": "minecraft:item/generated"
+}

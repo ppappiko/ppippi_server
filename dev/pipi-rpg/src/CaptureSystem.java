@@ -56,7 +56,7 @@ final class CaptureSystem implements Listener {
         if(tier==null||!captureWorld(player)||player.isDead()){charges.remove(id);if(action.equals("start"))bar(player,"§e야생 월드의 생존·크리에이티브 모드에서 포획틀을 사용하세요.");return true;}
         Charge c=charges.get(id);
         if(action.equals("start")){
-            if(c==null&&!player.hasCooldown(Material.TRIPWIRE_HOOK))charges.put(id,new Charge(tick,tick,player.getInventory().getHeldItemSlot(),tier));
+            if(c==null&&!player.hasCooldown(ModItems.trap(tier)))charges.put(id,new Charge(tick,tick,player.getInventory().getHeldItemSlot(),tier));
         }else if(action.equals("keep")&&valid(player,c,tier))charges.put(id,new Charge(c.start,tick,c.slot,c.tier));
         else if(action.equals("release")){
             charges.remove(id);
@@ -75,7 +75,31 @@ final class CaptureSystem implements Listener {
         if(item==null||!item.hasItemMeta())return -1;
         String key=item.getItemMeta().getPersistentDataContainer().get(NamespacedKey.fromString("pipilife:processed_product"),PersistentDataType.STRING);
         if(key==null)return -1;
-        return switch(key){case "club"->item.getType()==Material.STICK?0:-1;case "ironclub"->item.getType()==Material.IRON_SWORD?1:-1;case "diamondclub"->item.getType()==Material.DIAMOND_SWORD?2:-1;default->-1;};
+        return switch(key){case "club"->item.getType()==ModItems.byId("club")?0:-1;case "ironclub"->item.getType()==ModItems.byId("iron_club")?1:-1;case "diamondclub"->item.getType()==ModItems.byId("diamond_club")?2:-1;case "amber_club"->{Material m=ModItems.byIdOrNull("amber_club");yield m!=null&&item.getType()==m?3:-1;}default->-1;};
+    }
+    static final int[] CLUB_DURABILITY={30,30,30,30};
+    /** Applies the tier's max durability to an existing club (clamping damage); returns true if changed. */
+    static boolean refreshClub(ItemStack item){
+        int tier=clubTier(item);
+        if(tier<0||!(item.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable d))return false;
+        int max=CLUB_DURABILITY[tier];
+        if(d.hasMaxDamage()&&d.getMaxDamage()==max&&d.getDamage()<max)return false;
+        d.setMaxDamage(max);d.setDamage(Math.min(d.getDamage(),max-1));
+        item.setItemMeta(d);return true;
+    }
+    /** Mod clubs are plain items, so the plugin applies the one-point-per-hit durability loss itself. */
+    private void wearClub(Player player){
+        ItemStack club=player.getInventory().getItemInMainHand();
+        if(!(club.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable d))return;
+        int tier=clubTier(club);
+        int max=tier>=0?CLUB_DURABILITY[tier]:d.hasMaxDamage()?d.getMaxDamage():club.getType().getMaxDurability();
+        if(tier>=0)d.setMaxDamage(max);
+        if(max<=0||player.getGameMode()==GameMode.CREATIVE)return;
+        d.setDamage(d.getDamage()+1);
+        if(d.getDamage()>=max){
+            player.getInventory().setItemInMainHand(null);
+            player.getWorld().playSound(player.getLocation(),Sound.ENTITY_ITEM_BREAK,1f,1f);
+        }else{club.setItemMeta(d);player.getInventory().setItemInMainHand(club);}
     }
     @EventHandler(priority=EventPriority.HIGHEST)
     public void damage(EntityDamageEvent event){
@@ -93,6 +117,7 @@ final class CaptureSystem implements Listener {
             && !player.isSprinting() && !player.hasPotionEffect(org.bukkit.potion.PotionEffectType.BLINDNESS)
             && !player.getLocation().getBlock().isLiquid() && !Tag.CLIMBABLE.isTagged(player.getLocation().getBlock().getType());
         event.setDamage(CaptureMath.clubDamage(tier,critical));
+        wearClub(player);
         // Let Minecraft apply health loss, red flash, knockback, hurt sound and death normally.
         if(critical)entity.getWorld().spawnParticle(Particle.CRIT,entity.getLocation().add(0,entity.getHeight()*.5,0),12,.2,.3,.2,.05);
     }
@@ -116,7 +141,7 @@ final class CaptureSystem implements Listener {
         shot.setPersistent(false);
         shot.setVelocity(player.getEyeLocation().getDirection().multiply(CaptureMath.throwSpeed(tick-c.start)));
         ItemStack left=held.clone();left.setAmount(held.getAmount()-1);player.getInventory().setItemInMainHand(left);
-        player.setCooldown(Material.TRIPWIRE_HOOK,12);
+        player.setCooldown(ModItems.trap(c.tier),12);
         player.getWorld().playSound(player.getLocation(),Sound.ENTITY_SNOWBALL_THROW,.7f,.75f);
         org.bukkit.Bukkit.getScheduler().runTaskLater(plugin,()->{if(shot.isValid())shot.remove();},200);
     }
@@ -255,7 +280,15 @@ final class CaptureSystem implements Listener {
                 if(cage.isValid()){cage.setInterpolationDelay(0);cage.setInterpolationDuration(3);var t=cage.getTransformation();t.getScale().set(1.4f);cage.setTransformation(t);}
                 later(()->{cage.remove();},4);later(()->{ui.remove();},30);
                 LivingEntity pet=a.target;
-                if(pet.isValid()){
+                String fleeLabel=pet.isValid()?plugin.captureFleeLabel(pet):null;
+                if(fleeLabel!=null&&ThreadLocalRandom.current().nextDouble()<0.05){
+                    Location at=pet.getLocation().add(0,pet.getHeight()*.5,0);
+                    w.spawnParticle(Particle.CLOUD,at,30,.4,.4,.4,.05);
+                    w.spawnParticle(Particle.LARGE_SMOKE,at,15,.3,.3,.3,.02);
+                    w.playSound(at,Sound.ENTITY_ENDERMAN_TELEPORT,.8f,1.4f);
+                    pet.remove();
+                    if(p!=null&&p.isOnline())p.sendMessage("§e"+fleeLabel+"이(가) 도망쳤습니다!");
+                }else if(pet.isValid()){
                     pet.setVelocity(new Vector(0,.4,0));
                     for(int i=0;i<3;i++)later(()->{if(pet.isValid()){pet.playHurtAnimation(0f);pet.getWorld().spawnParticle(Particle.ANGRY_VILLAGER,pet.getLocation().add(0,pet.getHeight()+.3,0),3,.25,.15,.25,0);}},5+i*10L);
                 }

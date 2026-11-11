@@ -1,11 +1,35 @@
 hourly-sale-limit-per-pet: 16
 food-cleared-floor-objective: pipi_cleared_floor
 combat:
+  # 체력 진단 로그 (문제 생기면 true로 켜고 서버 로그의 [HP진단] 확인)
+  debug-health: false
+  # 아이템 레벨 (기획 시트): 제작 시 100, 강화 1단계마다 +10. 상태창에는 무기+방어구 4부위 5칸의 평균이 표시됩니다.
+  # 티어별 차이는 1티어 이후 수치가 정해지면 per-tier로 넣으세요.
   item-level:
     base: 100
-    per-tier: 100
-    per-upgrade: 5
+    per-tier: 0
+    per-upgrade: 10
   difference-slope: 0.25
+  # 방어력 1당 받는 피해 감소율(%). 0.02 = 방어력 1000이면 20% 감소, 2500이면 50% 감소
+  defense-percent-per-point: 0.02
+  # 방어력으로 얻을 수 있는 최대 피해 감소율(%)
+  defense-max-reduction: 80
+  # 플레이어끼리 공격(무기·스킬·투사체) 허용 여부. false면 플레이어가 다른 플레이어에게 주는 피해를 모두 막습니다.
+  pvp: false
+  # 플레이어가 몬스터에게 준 피해를 머리 위에 떠오르는 숫자로 표시합니다 (치명타는 금색 큰 글씨)
+  damage-numbers: true
+  # 타격 이펙트: 플레이어가 몬스터를 맞히는 순간 직업(검/활/지팡이)별 작은 3D 효과를 표시합니다 (치명타는 금색 폭발 추가)
+  hit-effects: true
+  # 스킬·평타 조준 보정: 시야 40도 안의 가장 가까운 적을 우선 조준하고, 지면 지정 스킬은 사거리 내 가장 가까운 적을 노립니다
+  auto-aim: true
+  # 체력 자연 회복 (바닐라 회복은 배고픔 고정으로 꺼져 있고, 플러그인이 대신 회복시킵니다)
+  regen:
+    # 피해를 입거나 준 뒤 이 시간(초) 동안 전투 중으로 보고 회복하지 않습니다
+    out-of-combat-seconds: 6
+    # 전투 중이 아닐 때 초당 회복량 (최대 체력의 %)
+    percent-per-second: 2.0
+    # 거주지(마을) 월드에서 초당 회복량 (최대 체력의 %)
+    village-percent-per-second: 5.0
   dungeons:
     tower_01:
       item-level: 100
@@ -49,3 +73,16 @@ pet-spawn:
   transport-chance: 0.005
 # 네더 보스 처치 이후 true로 바꾸면 운반 펫이 스폰됩니다.
 transport-unlocked: false
+# 펫 전용 먹이 표: 모드 아이템 ID(태그) -> 먹일 때 채워지는 포만감 (최대 100). 새 먹이는 ModItems에 태그를 등록한 뒤 여기에 추가하세요.
+pet-food:
+  straw: 10
+  pet_carrot: 20
+  raw_salmon: 15
+# 자원 노드(호박석 돌무더기, 홍서나무, 양배추) 재생성 시간 (초)
+resource-nodes:
+  # 호박석을 캔 뒤 다시 박히기까지 (초). 300 = 5분
+  amber-respawn-seconds: 300
+  # 홍서나무를 벤 뒤 다시 자라기까지 (초). 600 = 10분
+  tree-respawn-seconds: 600
+  # 양배추를 캔 뒤 다시 자라기까지 (초). 600 = 10분
+  cabbage-respawn-seconds: 600

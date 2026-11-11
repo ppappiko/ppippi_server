@@ -55,24 +55,13 @@ plots:
       - - 6
         - 64
         - 55
+      - - 2
+        - 64
+        - 56
       DIAMOND_MINE:
       - - 11
         - 64
         - 54
-      CARROT_FARM:
-      - - 3
-        - 64
-        - 56
-      - - -6
-        - 64
-        - 48
-      MINE:
-      - - -15
-        - 64
-        - 42
-      - - 10
-        - 64
-        - 59
       FEEDER:
       - - 1
         - 64
@@ -83,6 +72,7 @@ plots:
       stations:
         '13_64_49':
           level: 5
+          paused: 1794393521822
     production:
       FARM:
         level: 2
@@ -101,11 +91,11 @@ plots:
         stations:
           '11_64_54':
             level: 4
+            paused: 1794393504049
       CARROT_FARM:
         anchor: '-5_64_38'
         stations:
-          '3_64_56':
-            level: 2
+          '3_64_56': {}
   plot09:
     z: 36
     x: 28
@@ -119,13 +109,14 @@ tutorial:
     done: true
     starter-kit: true
     installable-starter-kit: true
+    warp-blueprint: true
 players:
   8fe0b940-3078-41c9-a3cc-f8c700b6651b:
     fox:
-      food: 42
-      stock: 27
+      food: 99
+      stock: 465
       active: true
-      since: 1794277608112
+      since: 1794393499376
       facility-bound: true
       lumber-slot: 1
       production-facility: DIAMOND_MINE
@@ -159,9 +150,9 @@ players:
       aptitudes:
         FARM: 2
         PET_STORAGE: 2
-      food: 70
-      stock: 64
-      since: 1794277611157
+      food: 58
+      stock: 20
+      since: 1794393679041
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -243,9 +234,9 @@ players:
       aptitudes:
         CRAFT: 1
         LUMBER: 2
-      food: 42
-      stock: 0
-      since: 1794277608112
+      food: 97
+      stock: 64
+      since: 1794393499376
       active: true
       facility-bound: true
       production-facility: DIAMOND_MINE
@@ -270,41 +261,41 @@ players:
       active: false
       facility-bound: false
     tortoise:
-      food: 42
-      stock: 0
-      since: 1794277608112
+      food: 95
+      stock: 41
+      since: 1794393499376
       active: true
       production-facility: DIAMOND_MINE
       production-anchor: '11_64_54'
       lumber-slot: 3
       facility-bound: true
     otter:
-      food: 63
+      food: 88
       stock: 64
-      since: 1794277609157
+      since: 1794393521822
       active: true
       production-facility: LUMBER
       production-anchor: '13_64_49'
       lumber-slot: 3
       facility-bound: true
     cat:
-      food: 63
+      food: 88
       stock: 64
-      since: 1794277609157
+      since: 1794393521822
       active: true
       production-facility: LUMBER
       production-anchor: '13_64_49'
       lumber-slot: 2
       facility-bound: true
     raccoon:
-      food: 99
+      food: 96
       stock: 0
-      since: 1794275866619
+      since: 1794284698502
       active: false
     mole:
-      food: 42
+      food: 97
       stock: 0
-      since: 1794277608112
+      since: 1794393499376
       active: true
       production-facility: DIAMOND_MINE
       production-anchor: '11_64_54'
@@ -313,34 +304,34 @@ players:
     sunlizard:
       food: 70
       stock: 0
-      since: 1794277611157
+      since: 1794393679041
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
-      lumber-slot: 4
+      lumber-slot: 5
       facility-bound: true
     ferret:
-      food: 70
-      stock: 64
-      since: 1794277611157
-      active: true
-      production-facility: FARM
-      production-anchor: '6_64_55'
-      lumber-slot: 2
-      facility-bound: true
-    angelpig:
-      food: 70
+      food: 57
       stock: 1
-      since: 1794277611157
+      since: 1794393679041
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 3
       facility-bound: true
-    moonbear:
-      food: 63
+    angelpig:
+      food: 61
       stock: 0
-      since: 1794277609157
+      since: 1794393679041
+      active: true
+      production-facility: FARM
+      production-anchor: '6_64_55'
+      lumber-slot: 4
+      facility-bound: true
+    moonbear:
+      food: 88
+      stock: 64
+      since: 1794393521822
       active: true
       production-facility: LUMBER
       production-anchor: '13_64_49'
@@ -424,6 +415,12 @@ town:
         iron_ingot:
         - 498345
         - 100
+        coated_plank:
+        - 498413
+        - 200
+        m_raw_salmon:
+        - 498433
+        - 1
       buy:
         plank:
         - 498345
@@ -460,7 +457,7 @@ pet-storage:
     - IMUGI:a973340b-f23c-46b2-8bec-bb48024d7122
     - MOLE:ede299a7-6fa1-44a8-8921-03080df80d36
     - HORNRABBIT:ef3ae9cc-4be2-4f86-91c4-e74c42835954
-    - ''
+    - CAT:44bc06ff-b436-4a93-b015-eb71f7464179
     - ''
     - ''
     - ''
@@ -550,20 +547,20 @@ pet-storage:
       7a9c0767-929c-44dc-a7ba-583a02143014:
         production-facility: FARM
         production-anchor: '6_64_55'
-        lumber-slot: 5
+        lumber-slot: 2
         facility-bound: true
-        food: 73
+        food: 58
         stock: 0
-        since: 1794277611157
+        since: 1794393679041
         active: true
       44867329-bc34-4972-b522-6fa5361c88fa:
         production-facility: LUMBER
         production-anchor: '13_64_49'
         lumber-slot: 1
         facility-bound: true
-        food: 63
-        stock: 64
-        since: 1794277609157
+        food: 88
+        stock: 448
+        since: 1794393521822
         active: true
       07a764da-bcfb-4245-83a8-be07e053081b:
         food: 94
@@ -575,9 +572,9 @@ pet-storage:
         production-anchor: '11_64_54'
         lumber-slot: 5
         facility-bound: true
-        food: 49
-        stock: 0
-        since: 1794277608112
+        food: 99
+        stock: 7
+        since: 1794393499376
         active: true
       c22688af-a430-4c0f-8089-604b09c72964:
         production-facility: LUMBER
@@ -593,16 +590,14 @@ pet-storage:
         production-anchor: '13_64_49'
         lumber-slot: 4
         facility-bound: true
-        food: 63
-        stock: 47
-        since: 1794277609157
+        food: 88
+        stock: 64
+        since: 1794393521822
         active: true
     level: 2
 facility-views:
   village:
     '6_64_55':
-      wide: true
-    '3_64_56':
       wide: true
     '13_64_49':
       wide: true
@@ -612,15 +607,7 @@ facility-views:
       wide: true
     '3_64_45':
       wide: true
-    '-15_64_42':
-      width: 2
-      depth: 2
-      wide: true
     '-15_64_46':
-      width: 2
-      depth: 2
-      wide: true
-    '-6_64_48':
       width: 2
       depth: 2
       wide: true
@@ -635,28 +622,88 @@ facility-views:
       food:
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
-        type: CARROT
-        amount: 19
+        type: PIPIFACILITIES_STRAW
+        amount: 46
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
-        type: WHEAT
+        type: PIPIFACILITIES_STRAW
         amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
-        type: WHEAT
-        amount: 37
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
-        amount: 31
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: CARROT
+        type: PIPIFACILITIES_STRAW
         amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
-        type: CARROT
+        type: PIPIFACILITIES_STRAW
         amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
       - null
       - null
       - null
@@ -682,7 +729,7 @@ facility-views:
       width: 3
       depth: 1
       wide: true
-    '10_64_59':
+    '2_64_56':
       width: 2
       depth: 2
       wide: true

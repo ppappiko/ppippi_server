@@ -60,7 +60,7 @@ final class AlchemyScreen extends ContainerScreen {
                     if (!text.startsWith("잠재 슬롯 ") || text.length() < 7) continue;
                     int count = Character.digit(text.charAt(6), 10);
                     long filled = lore(item(i)).stream().map(Component::getString).map(ChatFormatting::stripFormatting)
-                        .filter(value -> value.startsWith("[일반]") || value.startsWith("[상급]") || value.startsWith("[이탈]")).count();
+                        .filter(AlchemyScreen::isGradeLine).count();
                     for (int j = 0; j < count; j++, gemX += 9)
                         g.drawString(font, j < filled ? "◆" : "◇", gemX, row + 3, j < filled ? 0xff81d997 : MUTED, false);
                 }
@@ -74,23 +74,40 @@ final class AlchemyScreen extends ContainerScreen {
             }
             panel(g, 330, 37, 40, 36, true);
             g.renderItem(selected, 342, 47);
-            g.drawCenteredString(font, name(22), 350, 83, TEXT);
-            panel(g, 216, 102, 268, 134, false);
+            g.drawCenteredString(font, name(22), 350, 78, TEXT);
+            // grade badge
+            Component grade = styled(item(43).getHoverName());
+            int bw = font.width(grade) + 14;
+            panel(g, 350 - bw / 2, 89, bw, 12, false);
+            g.drawCenteredString(font, grade, 350, 91, TEXT);
+            panel(g, 216, 104, 268, 130, false);
             for (int i = 0; i < 7 && !item(27 + i).isEmpty(); i++) {
-                int row = 107 + i * 18;
+                int row = 108 + i * 18;
                 boolean filled = !item(27 + i).is(Items.GRAY_DYE);
-                g.drawString(font, filled ? "◆" : "◇", 224, row + 4, filled ? 0xff81d997 : MUTED, false);
-                g.drawString(font, name(27 + i), 238, row + 4, filled ? TEXT : MUTED, false);
-                if (!item(36 + i).isEmpty()) {
-                    panel(g, 457, row, 21, 16, item(36 + i).is(Items.GOLD_NUGGET) || hit(x,y,457,row,21,16));
-                    g.renderItem(item(36 + i), 459, row);
+                boolean locked = item(36 + i).is(Items.GOLD_NUGGET);
+                if (filled) g.drawString(font, styled(item(27 + i).getHoverName()), 224, row + 4, TEXT, false);
+                else g.drawString(font, "◇ " + name(27 + i), 224, row + 4, MUTED, false);
+                if (filled && !item(36 + i).isEmpty()) {
+                    panel(g, 440, row, 38, 16, locked || hit(x, y, 440, row, 38, 16));
+                    g.drawCenteredString(font, locked ? "잠금" : "해제", 459, row + 4, locked ? GOLD : MUTED);
+                } else {
+                    panel(g, 440, row, 38, 16, false);
+                    g.drawCenteredString(font, "-", 459, row + 4, 0xff55606c);
                 }
             }
-            g.drawString(font, "소모 레벨", 223, 249, MUTED, false);
-            g.renderItem(item(44), 480, 265);
-            g.drawString(font, "소모 골드", 223, 270, MUTED, false);
-            g.drawString(font, name(43), 473 - font.width(name(43)), 249, TEXT, false);
-            g.drawString(font, name(44), 473 - font.width(name(44)), 270, GOLD, false);
+            panel(g, 216, 238, 268, 60, false);
+            java.util.List<Component> gl = lore(item(43)), bl = lore(item(44));
+            g.drawString(font, "등급 상승", 224, 244, MUTED, false);
+            String chance = gl.size() > 0 ? ChatFormatting.stripFormatting(gl.get(0).getString()) : "";
+            g.drawString(font, chance, 476 - font.width(chance), 244, TEXT, false);
+            g.drawString(font, "잠긴 줄", 224, 257, MUTED, false);
+            String locks = gl.size() > 1 ? ChatFormatting.stripFormatting(gl.get(1).getString()) : "";
+            g.drawString(font, locks, 476 - font.width(locks), 257, TEXT, false);
+            g.drawString(font, "소모 골드", 224, 270, MUTED, false);
+            g.drawString(font, name(44), 476 - font.width(name(44)), 270, GOLD, false);
+            g.drawString(font, "보유 골드", 224, 283, MUTED, false);
+            String bal = bl.isEmpty() ? "" : ChatFormatting.stripFormatting(bl.get(0).getString());
+            g.drawString(font, bal, 476 - font.width(bal), 283, TEXT, false);
             button(g, "인챈트 하기", 275, 307, 150, 29, x, y);
             int sy = 41;
             if (selected.isDamageableItem()) {
@@ -107,7 +124,7 @@ final class AlchemyScreen extends ContainerScreen {
                 panel(g, 224, 113, 242, 122, true);
                 g.drawCenteredString(font, name(22), 345, 126, GOLD);
                 g.drawCenteredString(font, "잠그지 않은 옵션을 새로 부여할까요?", 345, 148, TEXT);
-                g.drawCenteredString(font, name(43) + "  /  " + name(44), 345, 168, MUTED);
+                g.drawCenteredString(font, name(44), 345, 168, GOLD);
                 button(g, "확인", 244, 192, 93, 25, x, y);
                 button(g, "취소", 353, 192, 93, 25, x, y);
             }
@@ -115,6 +132,15 @@ final class AlchemyScreen extends ContainerScreen {
             g.pose().popPose();
         }
         if (!modal && hit(x, y, 330, 37, 40, 36)) g.renderTooltip(font, selected, mx, my);
+    }
+
+    static boolean isGradeLine(String stripped) {
+        return stripped.startsWith("[레어]") || stripped.startsWith("[에픽]")
+            || stripped.startsWith("[유니크]") || stripped.startsWith("[레전더리]");
+    }
+
+    private static Component styled(Component c) {
+        return c.copy().withStyle(s -> s.withItalic(false));
     }
 
     private static java.util.List<Component> lore(ItemStack stack) {
@@ -156,7 +182,7 @@ final class AlchemyScreen extends ContainerScreen {
             return true;
         }
         for (int i = 0; i < 9; i++) if (hit(x, y, 7, 32 + i * 31, 186, 29)) click(i);
-        for (int i = 0; i < 7; i++) if (hit(x, y, 457, 107 + i * 18, 21, 16)) click(36 + i);
+        for (int i = 0; i < 7; i++) if (hit(x, y, 440, 108 + i * 18, 38, 16) && !item(27 + i).is(Items.GRAY_DYE)) click(36 + i);
         if (hit(x, y, 275, 307, 150, 29)) click(45);
         if (hit(x, y, 8, 319, 77, 22)) click(48);
         if (hit(x, y, 114, 319, 77, 22)) click(50);

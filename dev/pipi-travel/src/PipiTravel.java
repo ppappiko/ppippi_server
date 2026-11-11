@@ -16,6 +16,14 @@ public final class PipiTravel {
     public PipiTravel(IEventBus bus) {
         bus.addListener(this::registerHud);
         NeoForge.EVENT_BUS.addListener(CombatBar::receiveCooldown);
+        NeoForge.EVENT_BUS.addListener(CombatBar::layerPre);
+        NeoForge.EVENT_BUS.addListener(HudBar::receive);
+        NeoForge.EVENT_BUS.addListener(CastAnim::receive);
+        NeoForge.EVENT_BUS.addListener(CastAnim::hand);
+        NeoForge.EVENT_BUS.addListener(HudBar::layerPre);
+        NeoForge.EVENT_BUS.addListener(HudBar::layerPost);
+        NeoForge.EVENT_BUS.addListener(HudInfo::receive);
+        NeoForge.EVENT_BUS.addListener(HudInfo::key);
         NeoForge.EVENT_BUS.addListener(CaptureInput::tick);
         NeoForge.EVENT_BUS.addListener(CaptureInput::receive);
         NeoForge.EVENT_BUS.addListener(CaptureInput::fov);
@@ -26,7 +34,7 @@ public final class PipiTravel {
 
     private void openResearch(ScreenEvent.Opening event) {
         if (!(event.getNewScreen() instanceof ContainerScreen incoming)
-            || incoming instanceof PetMarketScreen || incoming instanceof CharacterScreen || incoming instanceof UpgradeScreen || incoming instanceof ShopScreen || incoming instanceof FoodStorageScreen || incoming instanceof AlchemyScreen || incoming instanceof ForgeScreen || incoming instanceof ResearchScreen || incoming instanceof CraftScreen || incoming instanceof PetStorageScreen ) return;
+            || incoming instanceof PetMarketScreen || incoming instanceof CharacterScreen || incoming instanceof UpgradeScreen || incoming instanceof UpgradeConfirmScreen || incoming instanceof ShopScreen            || incoming instanceof FoodStorageScreen || incoming instanceof AlchemyScreen || incoming instanceof CookingScreen || incoming instanceof InheritScreen || incoming instanceof ForgeScreen || incoming instanceof ResearchScreen || incoming instanceof CraftScreen || incoming instanceof PetStorageScreen || incoming instanceof WarpScreen ) return;
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
         if (incoming.getMenu().getRowCount() == 3 && java.util.Set.of("펫 먹이통", "식량 저장소").contains(incoming.getTitle().getString())) {
@@ -41,11 +49,19 @@ public final class PipiTravel {
             event.setNewScreen(new CharacterScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (UpgradeScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new UpgradeScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
+        else if (UpgradeConfirmScreen.TITLE.equals(incoming.getTitle().getString()))
+            event.setNewScreen(new UpgradeConfirmScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (ShopScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new ShopScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle(),
                 event.getCurrentScreen() instanceof ShopScreen shop ? shop : null));
         else if (AlchemyScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new AlchemyScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
+        else if (WarpScreen.TITLE.equals(incoming.getTitle().getString()))
+            event.setNewScreen(new WarpScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
+        else if (CookingScreen.TITLE.equals(incoming.getTitle().getString()))
+            event.setNewScreen(new CookingScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
+        else if (InheritScreen.TITLE.equals(incoming.getTitle().getString()))
+            event.setNewScreen(new InheritScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (ForgeScreen.MENU.equals(incoming.getTitle().getString()) || ForgeScreen.CRAFT.equals(incoming.getTitle().getString()))
             event.setNewScreen(new ForgeScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (ResearchScreen.TITLE.equals(incoming.getTitle().getString()))
@@ -60,20 +76,31 @@ public final class PipiTravel {
 
     private void registerHud(RegisterGuiLayersEvent event) {
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "capture_aim"), (graphics, delta) -> CaptureInput.draw(graphics));
-        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "combat_bar"), (graphics, delta) -> CombatBar.draw(graphics));
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "combat_bar"), (graphics, delta) -> HudBar.draw(graphics));
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "hud_info"), (graphics, delta) -> HudInfo.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "menu_bar"), (graphics, delta) -> {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null && client.level != null && !client.options.hideGui
-                && !(client.screen instanceof PipiMenu) && !(client.screen instanceof ResearchScreen) && !(client.screen instanceof CraftScreen) && !(client.screen instanceof PetStorageScreen) && !(client.screen instanceof ForgeScreen) && !(client.screen instanceof AlchemyScreen) && !(client.screen instanceof ShopScreen) && !(client.screen instanceof UpgradeScreen) && !(client.screen instanceof CharacterScreen) && !(client.screen instanceof PetMarketScreen)) drawBar(graphics, false);
+                && !(client.screen instanceof PipiMenu) && !(client.screen instanceof ResearchScreen) && !(client.screen instanceof CraftScreen) && !(client.screen instanceof PetStorageScreen) && !(client.screen instanceof ForgeScreen) && !(client.screen instanceof AlchemyScreen) && !(client.screen instanceof CookingScreen) && !(client.screen instanceof InheritScreen) && !(client.screen instanceof ShopScreen) && !(client.screen instanceof UpgradeScreen) && !(client.screen instanceof UpgradeConfirmScreen) &&!(client.screen instanceof CharacterScreen) && !(client.screen instanceof PetMarketScreen)) drawBar(graphics, false);
         });
+    }
+
+    /** Full-screen custom screens that must not show the bottom HUD bar. */
+    static boolean customScreen(Object screen) {
+        return screen instanceof PipiMenu || screen instanceof ResearchScreen || screen instanceof CraftScreen || screen instanceof PetStorageScreen
+            || screen instanceof ForgeScreen || screen instanceof AlchemyScreen || screen instanceof CookingScreen || screen instanceof InheritScreen
+            || screen instanceof ShopScreen || screen instanceof UpgradeScreen || screen instanceof CharacterScreen || screen instanceof PetMarketScreen
+            || screen instanceof FoodStorageScreen || screen instanceof WarpScreen || screen instanceof UpgradeConfirmScreen;
     }
 
     static void drawBar(GuiGraphics graphics, boolean expanded) {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null) return;
         int right = expanded ? 329 : 149;
-        graphics.fill(8, 8, right, 36, 0xDE171D2C);
+        int bottom = expanded ? 36 : 52;
+        graphics.fill(8, 8, right, bottom, 0xDE171D2C);
         graphics.fill(8, 35, right, 36, 0xFF7686B1);
+        if (!expanded) HudInfo.drawGold(graphics, 17, 39);
         graphics.drawString(client.font, "삐삐서버", 17, 18, 0xFFF1F3FF);
         int minutes = (int) ((Math.floorMod(client.level.getDayTime(), 24000L) * 60 / 1000 + 360) % 1440);
         graphics.drawString(client.font, "%02d:%02d".formatted(minutes / 60, minutes % 60), 72, 18, 0xFFCDD5ED);

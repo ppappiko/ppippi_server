@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/bp_amber_quarry"
+  },
+  "parent": "minecraft:item/generated"
+}

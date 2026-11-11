@@ -1,17 +1,3 @@
 info:
   namespace: pipi_cores
-items:
-  iron_core:
-    display_name: iron_core
-    resource:
-      material: AMETHYST_SHARD
-      generate: false
-      model_id: 48121
-      model_path: item/iron_core
-  diamond_core:
-    display_name: diamond_core
-    resource:
-      material: AMETHYST_SHARD
-      generate: false
-      model_id: 48122
-      model_path: item/diamond_core
+items: {}

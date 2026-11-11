@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/reinforced_plank"
+  },
+  "parent": "minecraft:item/generated"
+}

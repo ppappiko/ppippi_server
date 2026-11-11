@@ -1,0 +1,33 @@
+players:
+  8fe0b940-3078-41c9-a3cc-f8c700b6651b:
+    combat: {}
+    weapon:
+      ==: org.bukkit.inventory.ItemStack
+      v: 3955
+      type: BOW
+      meta:
+        ==: ItemMeta
+        meta-type: UNSPECIFIC
+        display-name: '{"text":"","extra":[{"text":"0티어 활 +0","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"aqua","bold":false}]}'
+        lore:
+        - '{"text":"","extra":[{"text":"아이템레벨 100","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gold","bold":false}]}'
+        - '{"text":"","extra":[{"text":"공격력 +120","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"힘 +32","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"민첩 +60","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"잠재 슬롯 5개","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"인챈트","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"dark_purple","bold":false}]}'
+        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        custom-model-data: 10000
+        ItemFlags:
+        - HIDE_UNBREAKABLE
+        Unbreakable: true
+        PublicBukkitValues: |-
+          {
+              "pipilife:smith_catalog": "0티어 활",
+              "pipilife:smith_combat_schema": 3,
+              "pipilife:smith_lines": 5
+          }

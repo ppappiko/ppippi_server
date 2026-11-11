@@ -122,6 +122,26 @@ final class CraftScreen extends ContainerScreen {
         return new int[]{1, 1, 0};
     }
 
+    private int[] catalogPages() {
+        var lines = lore(item(23));
+        if (!lines.isEmpty() && item(23).is(Items.BOOK)) {
+            String[] values = lines.getFirst().split(",");
+            if (values.length == 2) try { return new int[]{Integer.parseInt(values[0]), Integer.parseInt(values[1])}; }
+            catch (NumberFormatException ignored) {}
+        }
+        return new int[]{1, 1};
+    }
+    private void catalogPage(int delta) {
+        int[] cat = catalogPages();
+        int next = cat[0] + delta;
+        if (next < 1 || next > cat[1]) return;
+        if (request()) {
+            recipe = -1;
+            recipeScroll = 0;
+            minecraft.getConnection().sendCommand("pipilife workstation catalog " + (next - 1));
+        }
+    }
+
     private void drawLumber(GuiGraphics g, int x, int y) {
         String level = name(item(4));
         g.drawString(font, level, 391, 58, CYAN, false);
@@ -205,7 +225,12 @@ final class CraftScreen extends ContainerScreen {
                 int thumb = 137 + recipeScroll * 116 / (rows - 4);
                 g.fill(511, thumb, 513, thumb + 40, CYAN);
             }
-            g.drawCenteredString(font, "제작 목록 · 휠 스크롤로 아이템 선택", 361, 317, MUTED);
+            int[] cat = catalogPages();
+            if (cat[1] > 1) {
+                button(g, 205, 311, 24, 24, "<", x, y, cat[0] > 1);
+                button(g, 492, 311, 24, 24, ">", x, y, cat[0] < cat[1]);
+                g.drawCenteredString(font, "제작 목록 " + cat[0] + "/" + cat[1] + " · 휠 스크롤", 361, 317, MUTED);
+            } else g.drawCenteredString(font, "제작 목록 · 휠 스크롤로 아이템 선택", 361, 317, MUTED);
             return;
         }
         button(g, 205, 133, 311, 24, "다른 제작 아이템 선택", x,y,true);        ItemStack target = item(RECIPES[recipe]);
@@ -405,6 +430,10 @@ final class CraftScreen extends ContainerScreen {
         }
         if (recipe < 0) {
             var choices = availableRecipes();
+            if (catalogPages()[1] > 1) {
+                if (hit(x,y,205,311,24,24)) { catalogPage(-1); return true; }
+                if (hit(x,y,492,311,24,24)) { catalogPage(1); return true; }
+            }
             for (int visible = 0; visible < 8; visible++) {
                 int index = recipeScroll * 2 + visible;
                 if (index >= choices.size()) break;
@@ -476,7 +505,10 @@ final class CraftScreen extends ContainerScreen {
         double mx = inputX((x-left)/scale), my = (y-top)/scale;
         if (!lumber && recipe < 0 && item(34).isEmpty() && hit(mx,my,205,133,311,167)) {
             int max = Math.max(0, (availableRecipes().size()+1)/2 - 4);
-            recipeScroll = Math.clamp(recipeScroll - (int)Math.signum(vertical), 0, max);
+            int step = (int)Math.signum(vertical);
+            if (step < 0 && recipeScroll >= max) catalogPage(1);
+            else if (step > 0 && recipeScroll <= 0) catalogPage(-1);
+            else recipeScroll = Math.clamp(recipeScroll - step, 0, max);
         }
         return true;
     }

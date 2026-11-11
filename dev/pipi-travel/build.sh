@@ -32,6 +32,9 @@ BASE_ABS="$(cd "$(dirname "$BASE")" && pwd)/$(basename "$BASE")"
 ( cd "$TMP/jar" && jar xf "$BASE_ABS" )
 
 cp -r "$TMP/classes/." "$TMP/jar/"
+if [ -d dev/pipi-travel/assets ]; then mkdir -p "$TMP/jar/assets" && cp -r dev/pipi-travel/assets/. "$TMP/jar/assets/"; fi
+
+if [ -f dev/pipi-travel/pipitravel.mixins.json ]; then cp dev/pipi-travel/pipitravel.mixins.json "$TMP/jar/pipitravel.mixins.json"; fi
 
 TOML="$TMP/jar/META-INF/neoforge.mods.toml"
 OLD="$(grep -m1 -oE '^version="[0-9]+\.[0-9]+\.[0-9]+"' "$TOML" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"

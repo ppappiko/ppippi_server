@@ -1,0 +1,37 @@
+warps:
+  '1':
+    world: village
+    x: 0
+    y: 64
+    z: 14
+    yaw: 171.98333740234375
+    category: 마을
+    name: 거주구역
+  '2':
+    world: world
+    x: -17
+    y: 63
+    z: -372
+    yaw: 20.566192626953125
+    category: 항구
+    name: 북쪽
+  '3':
+    world: village
+    x: 77
+    y: 64
+    z: -1
+    yaw: -91.28036499023438
+    category: 마을
+    name: 동쪽
+  '4':
+    world: village
+    x: -79
+    y: 64
+    z: 0
+    yaw: 91.93377685546875
+    category: 마을
+    name: 서쪽
+players:
+  8fe0b940-3078-41c9-a3cc-f8c700b6651b:
+  - '1'
+  - '2'

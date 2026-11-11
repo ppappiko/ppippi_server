@@ -69,7 +69,7 @@ final class TownNpcRegistry implements Listener {
             entity.remove();
             return;
         }
-        for (String role : List.of("merchant", "npc", "alchemist"))
+        for (String role : List.of("merchant", "npc", "alchemist", "armory"))
             if (matches(entity, role)) restore(entity, role);
     }
 

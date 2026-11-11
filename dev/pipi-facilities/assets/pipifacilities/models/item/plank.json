@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/plank"
+  },
+  "parent": "minecraft:item/generated"
+}

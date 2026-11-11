@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/repair_kit"
+  },
+  "parent": "minecraft:item/generated"
+}

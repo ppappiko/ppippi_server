@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/pet_carrot"
+  },
+  "parent": "minecraft:item/generated"
+}
