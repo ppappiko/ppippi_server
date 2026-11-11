@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/gold_core"
+  },
+  "parent": "minecraft:item/generated"
+}

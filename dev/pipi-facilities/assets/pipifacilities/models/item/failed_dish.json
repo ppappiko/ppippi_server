@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/failed_dish"
+  },
+  "parent": "minecraft:item/generated"
+}

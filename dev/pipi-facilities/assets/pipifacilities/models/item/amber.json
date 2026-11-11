@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/amber"
+  },
+  "parent": "minecraft:item/generated"
+}

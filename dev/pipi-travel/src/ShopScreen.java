@@ -24,7 +24,7 @@ final class ShopScreen extends ContainerScreen {
 
     ShopScreen(ChestMenu menu, Inventory inventory, Component title, ShopScreen previous) {
         super(menu, inventory, title);
-        if (previous != null && previous.buying()==buying()) first = previous.first;
+        if (previous != null && previous.tab()==tab()) first = previous.first;
     }
 
     @Override protected void init() {
@@ -35,6 +35,7 @@ final class ShopScreen extends ContainerScreen {
 
     private ItemStack item(int index) { return menu.getSlot(index).getItem(); }
     private boolean buying() { return item(45).is(Items.LIME_DYE); }
+    private int tab() { return buying() ? 0 : item(51).is(Items.LIME_DYE) ? 2 : 1; }
     private boolean confirming() { return !item(48).isEmpty(); }
     private String action() { return buying() ? "구매" : "판매"; }
     private String data(int slot, int line) {
@@ -62,10 +63,11 @@ final class ShopScreen extends ContainerScreen {
             g.renderItem(item(47), 375, 12);
             g.drawString(font, font.plainSubstrByWidth("보유 골드  " + item(47).getHoverName().getString(), 628 - 6 - 395), 395, 16, GOLD, false);
             button(g, "×", 628, 8, 24, 23, hit(x,y,628,8,24,23));
-            button(g, "구매", 13, 32, 64, 24, buying());
-            button(g, "판매", 82, 32, 64, 24, !buying());
+            button(g, "구매", 13, 32, 48, 24, tab()==0);
+            button(g, "광물 상점", 65, 32, 70, 24, tab()==1);
+            button(g, "재료 상점", 139, 32, 70, 24, tab()==2);
             long seconds = (3600 - Math.floorMod(System.currentTimeMillis()/1000, 3600));
-            g.drawString(font, "한도 초기화까지  %02d:%02d".formatted(seconds/60, seconds%60), 159, 41, MUTED, false);
+            g.drawString(font, "초기화  %02d:%02d".formatted(seconds/60, seconds%60), 280, 41, MUTED, false);
             g.drawString(font, "아이템 이름", 33, 65, MUTED, false);
             g.drawString(font, "남은 한도", 200, 65, MUTED, false);
             g.drawString(font, "개당 가격", 282, 65, MUTED, false);
@@ -155,8 +157,9 @@ final class ShopScreen extends ContainerScreen {
                 slide(x);
             } else for(int i=0;i<STEPS.length;i++)
                 if(hit(x,y,STEP_X[i],142,28,20) && maximum()>0) count=Math.clamp(count+STEPS[i],1,maximum());
-        } else if(hit(x,y,13,32,64,24)) sendClick(45);
-        else if(hit(x,y,82,32,64,24)) sendClick(46);
+        } else if(hit(x,y,13,32,48,24)) sendClick(45);
+        else if(hit(x,y,65,32,70,24)) sendClick(46);
+        else if(hit(x,y,139,32,70,24)) sendClick(51);
         else if(hit(x,y,12,80,330,217)) {
             int index=first+(int)((y-80)/31);
             if(index<27 && !item(index).isEmpty()) { selected=index; count=maximum()==0&&!buying()?0:1; }

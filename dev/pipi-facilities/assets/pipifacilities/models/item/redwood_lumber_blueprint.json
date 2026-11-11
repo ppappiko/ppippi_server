@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/bp_redwood_lumber"
+  },
+  "parent": "minecraft:item/generated"
+}

@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/fish_feed"
+  },
+  "parent": "minecraft:item/generated"
+}

@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/redwood_log"
+  },
+  "parent": "minecraft:item/generated"
+}

@@ -1,0 +1,35 @@
+# 조리대 레시피 설정 (서버 재시작 시 적용)
+# 재료 id: cabbage(양배추) carrot(당근) straw(짚) salmon(생 연어) potato(감자)
+# 조미료 id: salt(소금) sugar(설탕) pepper(후추) soy_sauce(간장)
+# 레시피 키 = 결과 요리 아이템 id (hearty_salmon_stew / hearty_carrot_soup / hearty_veggie_salad)
+# ingredients: 재료 3개 (순서 무관, 중복 가능), seasoning: 조미료 1개
+# pet-food: 펫 먹이로 줄 때의 포만감 (0이면 펫 먹이 아님)
+# buff: 우클릭으로 먹을 때의 효과. type = health | strength | speed | regeneration
+#       amplifier = 0이 I, 1이 II ... / seconds = 지속 시간(초)
+recipes:
+  hearty_salmon_stew:
+    name: 든든한 연어 양배추찜
+    ingredients: [salmon, cabbage, potato]
+    seasoning: salt
+    pet-food: 60
+  hearty_carrot_soup:
+    name: 든든한 당근 수프
+    ingredients: [carrot, carrot, potato]
+    seasoning: sugar
+    pet-food: 40
+    buff:
+      type: regeneration
+      amplifier: 0
+      seconds: 60
+  hearty_veggie_salad:
+    name: 든든한 채소 샐러드
+    ingredients: [cabbage, carrot, straw]
+    seasoning: pepper
+    buff:
+      type: speed
+      amplifier: 0
+      seconds: 180
+# 레시피가 맞지 않거나 미니게임에 실패했을 때 나오는 요리
+failed-dish:
+  name: 정체불명의 요리
+  pet-food: 5

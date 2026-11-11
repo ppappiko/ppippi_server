@@ -76,7 +76,7 @@ final class UpgradeScreen extends ContainerScreen {
                         String number = line.substring("잠재 슬롯 ".length()).replace("개","");
                         try { slots = Integer.parseInt(number); } catch (NumberFormatException ignored) {}
                     }
-                    if (line.startsWith("[상급]") || line.startsWith("[일반]") || line.startsWith("[이탈]")) filled++;
+                    if (AlchemyScreen.isGradeLine(line)) filled++;
                 }
                 for (int j=0;j<slots;j++) g.drawString(font,j<filled?"◆":"◇",34+j*9,row+3,j<filled?0xff82d99a:MUTED,false);
             }
@@ -94,17 +94,24 @@ final class UpgradeScreen extends ContainerScreen {
             icon(g,item(22),346,51,2.8f);
             g.drawCenteredString(font,font.plainSubstrByWidth(name(22),288),368,116,TEXT);
             g.drawCenteredString(font,max ? "최대 강화 단계" : v[0]+"강 → "+v[1]+"강",368,135,GOLD);
-            g.drawCenteredString(font,max ? "강화 완료" : "강화 성공 확률 "+v[2]+".0%",368,153,GOLD);
+            g.drawCenteredString(font,max ? "강화 완료" : "강화 성공 확률 "+(v[2]/10)+"."+(v[2]%10)+"%",368,153,GOLD);
             g.drawString(font,"대장장이의 축복",228,173,MUTED,false);
             String blessing = v[3]+" / 100%";
             g.drawString(font,blessing,508-font.width(blessing),173,CYAN,false);
             g.fill(228,187,508,193,0xff080f17);
             g.fill(228,187,228+280*Math.clamp(v[3],0,100)/100,193,GOLD);
             panel(g,226,203,284,57,false);
-            g.renderItem(item(36),234,212);
-            g.drawString(font,name(36),257,211,TEXT,false);
-            var inputs = lore(item(36));
-            if (!inputs.isEmpty()) g.drawString(font,inputs.getFirst(),257,230,MUTED,false);
+            int materials = 0;
+            for (int s = 36; s <= 38; s++) if (!item(s).isEmpty()) materials++;
+            int columnWidth = materials >= 3 ? 94 : 146;
+            for (int s = 36, column = 0; s <= 38; s++) {
+                if (item(s).isEmpty()) continue;
+                int mx0 = 234 + column++ * columnWidth;
+                g.renderItem(item(s),mx0,212);
+                g.drawString(font,font.plainSubstrByWidth(name(s),columnWidth-27),mx0+21,211,TEXT,false);
+                var inputs = lore(item(s));
+                if (!inputs.isEmpty()) g.drawString(font,inputs.getFirst(),mx0+21,230,MUTED,false);
+            }
             g.renderItem(item(43), 493, 267);
             g.drawString(font,"소모 골드",230,272,MUTED,false);
             g.drawString(font,name(43),505-font.width(name(43)),272,GOLD,false);
@@ -123,7 +130,7 @@ final class UpgradeScreen extends ContainerScreen {
                 g.fill(0,0,W,H,0xbb050a11);
                 panel(g,203,120,314,134,true);
                 g.drawCenteredString(font,"장비를 강화하시겠습니까?",360,138,GOLD);
-                g.drawCenteredString(font,"철판과 "+name(43)+"가 소모됩니다.",360,160,TEXT);
+                g.drawCenteredString(font,"재료와 "+name(43)+"가 소모됩니다.",360,160,TEXT);
                 g.drawCenteredString(font,v[0]>=10 ? "실패하면 강화 단계가 1단계 하락합니다." : "실패해도 강화 단계는 유지됩니다.",360,179,MUTED);
                 button(g,226,211,119,26,"확인",x,y);
                 button(g,374,211,119,26,"취소",x,y);

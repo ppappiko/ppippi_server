@@ -9,7 +9,7 @@ package dev.pipi.life;
  * check i breaks out after i shakes.
  */
 final class CaptureMath {
-    static double ballFactor(int tier) { return new double[]{1,1.5,2}[Math.clamp(tier,0,2)]; }
+    static double ballFactor(int tier) { return new double[]{1,1.5,2,2.5}[Math.clamp(tier,0,3)]; }
     static double a(double hp,double maximum,double speciesRate,int tier) {
         if(!Double.isFinite(hp)||!Double.isFinite(maximum)||!Double.isFinite(speciesRate)||maximum<=0||speciesRate<=0)return 0;
         return (3*maximum-2*hp)*speciesRate*ballFactor(tier)/(3*maximum);
@@ -31,7 +31,7 @@ final class CaptureMath {
     }
     static double throwSpeed(long ticks) { return .65+1.15*Math.clamp(ticks/20.0,0,1); }
     static double clubDamage(int tier, boolean critical) {
-        return new double[]{3,5,7}[Math.clamp(tier,0,2)]*(critical?1.5:1);
+        return new double[]{3,5,7,9}[Math.clamp(tier,0,3)]*(critical?1.5:1);
     }
     static double weakenedHealth(double hp,double max,int tier) { return Math.max(0,hp-clubDamage(tier,false)); }
 }

@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/advanced_blueprint_paper"
+  },
+  "parent": "minecraft:item/generated"
+}

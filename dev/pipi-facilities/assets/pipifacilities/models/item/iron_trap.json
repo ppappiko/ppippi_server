@@ -1,0 +1,9 @@
+{
+  "parent": "pipifacilities:item/trap_base",
+  "textures": {
+    "frame": "pipifacilities:item/trap_iron",
+    "bars": "pipifacilities:item/trap_bars",
+    "floor": "pipifacilities:item/trap_floor",
+    "particle": "pipifacilities:item/trap_iron"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/hearty_veggie_salad"
+  },
+  "parent": "minecraft:item/generated"
+}

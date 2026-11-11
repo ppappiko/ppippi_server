@@ -30,14 +30,21 @@ final class CharacterScreen extends ContainerScreen {
             g.drawString(font,"×",W-24,15,TEXT,false);
             var values=data();
             g.fill(17,45,131,185,0xff080f16);
-            if(minecraft!=null&&minecraft.player!=null)InventoryScreen.renderEntityInInventoryFollowsMouse(g,24,49,124,180,48,.0625f,(float)((mx-left)/scale),(float)((my-top)/scale),minecraft.player);
             String name=menu.getSlot(0).getItem().getHoverName().getString();
+            if(minecraft!=null&&minecraft.player!=null){
+                net.minecraft.world.entity.LivingEntity shown=minecraft.player;
+                if(minecraft.level!=null)for(var other:minecraft.level.players())if(other.getGameProfile().getName().equals(name)){shown=other;break;}
+                // the entity renderer's scissor uses screen coordinates, so draw it outside the scaled pose
+                g.pose().popPose();
+                InventoryScreen.renderEntityInInventoryFollowsMouse(g,(int)(left+24*scale),(int)(top+49*scale),(int)(left+124*scale),(int)(top+180*scale),
+                    Math.max(8,(int)(48*scale)),.0625f,mx,my,shown);
+                g.pose().pushPose();g.pose().translate(left,top,0);g.pose().scale(scale,scale,1);
+            }
             g.fill(143,46,500,65,0xff263a4b);g.drawString(font,name,151,52,TEXT,false);
-            g.pose().pushPose();g.pose().translate(153,78,0);g.pose().scale(2.3f,2.3f,1);g.renderItem(menu.getSlot(1).getItem(),0,0);g.pose().popPose();
             g.drawString(font,"아이템레벨",205,83,TEXT,false);g.drawString(font,val(values,0),422,83,0xffe6c588,false);
             g.drawString(font,"무기 1개 + 방어구 4개의 평균",205,106,MUTED,false);
             g.drawString(font,"미착용 부위는 0으로 계산",205,121,MUTED,false);
-            for(int i=0;i<4;i++)g.renderItem(menu.getSlot(2+i).getItem(),208+i*33,148);
+            g.renderItem(menu.getSlot(1).getItem(),208,148);
             line(g,"◇ 전투력",val(values,1),24,198);
             g.fill(17,219,503,220,0xff385367);
             line(g,"체력",val(values,2),25,235);line(g,"방어력",val(values,3),275,235);
@@ -45,11 +52,13 @@ final class CharacterScreen extends ContainerScreen {
             line(g,"버프 지속 시간",val(values,6)+"%",25,283);line(g,"쿨타임 감소",val(values,7)+"%",275,283);
             g.drawString(font,"기초 스탯",25,315,TEXT,false);g.fill(17,332,503,333,0xff385367);
             line(g,"· 힘",val(values,8),25,346);line(g,"· 민첩",val(values,9),275,346);
-            line(g,"· 지력",val(values,10),25,369);line(g,"· 행운",val(values,11),275,369);
+            line(g,"· 지능",val(values,10),25,369);line(g,"· 행운",val(values,11),275,369);
             g.drawCenteredString(font,"ESC 닫기",W/2,394,MUTED);
         } finally{g.pose().popPose();}
         if(minecraft!=null&&minecraft.player!=null){double x=(mx-left)/scale,y=(my-top)/scale;
-            if(y>=148&&y<166&&x>=208&&x<340){int i=(int)(x-208)/33;if(i<4)g.renderTooltip(font,menu.getSlot(2+i).getItem(),mx,my);}
+            var weapon=menu.getSlot(1).getItem();
+            if(y>=148&&y<164&&x>=208&&x<224&&!weapon.isEmpty())g.renderTooltip(font,weapon,mx,my);
+            else if(y>=233&&y<245&&x>=275&&x<440)g.renderTooltip(font,Component.literal("받는 피해 "+val(data(),15)+"% 감소"),mx,my);
         }
     }
     @Override public boolean mouseClicked(double x,double y,int button){if((x-left)/scale>W-35&&(y-top)/scale<33)onClose();return true;}

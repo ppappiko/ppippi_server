@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/warp_stone_blueprint"
+  },
+  "parent": "minecraft:item/generated"
+}

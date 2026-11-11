@@ -10,6 +10,11 @@ enum Facility {
     MINE("철광석 채석장", Material.STONECUTTER, Material.RAW_IRON),
     GOLD_MINE("금광석 채석장", Material.BLAST_FURNACE, Material.RAW_GOLD),
     DIAMOND_MINE("다이아 채석장", Material.GRINDSTONE, Material.DIAMOND),
+    AMBER_QUARRY("호박석 채석장", Material.LODESTONE, Material.AMETHYST_SHARD),
+    CABBAGE_FARM("양배추 농장", Material.CAULDRON, Material.BEETROOT),
+    REDWOOD_LUMBER("홍서나무 벌목장", Material.CARTOGRAPHY_TABLE, Material.DARK_OAK_LOG),
+    COOKING_TABLE("조리대", Material.SMOKER, Material.COOKED_BEEF),
+    RANCH("목장", Material.HAY_BLOCK, Material.WHEAT),
     FEEDER("식량 저장소", Material.BARREL, Material.OAK_PLANKS),
     PET_STORAGE("펫 창고", Material.CHEST, Material.OAK_PLANKS),
     RESEARCH("연구소", Material.LECTERN, Material.BOOK),
@@ -40,17 +45,26 @@ enum Facility {
         return material;
     }
 
-    int width() { return this==CRAFT || this==RESEARCH || this==LUMBER || this==PET_STORAGE || this==PET_MARKET ? 3 : 2; }
-    int depth() { return this==CRAFT || this==RESEARCH ? 1 : this==LUMBER || this==PET_STORAGE ? 3 : 2; }
+    boolean isQuarry() { return this==MINE || this==GOLD_MINE || this==DIAMOND_MINE || this==AMBER_QUARRY; }
+    boolean wide3() { return isQuarry() || this==FARM || this==CRAFT || this==RESEARCH || this==LUMBER || this==REDWOOD_LUMBER || this==COOKING_TABLE || this==PET_STORAGE || this==PET_MARKET; }
+    int width() { return wide3() ? 3 : 2; }
+    int depth() { return this==CRAFT || this==RESEARCH || this==COOKING_TABLE ? 1 : isQuarry() || this==LUMBER || this==REDWOOD_LUMBER || this==PET_STORAGE ? 3 : 2; }
 
-    boolean matches(Material material) { return this != TRANSPORT && (material == block || material == installedBlock()); }
+    boolean matches(Material material) {
+        if (this == TRANSPORT) return false;
+        if (material == block) return true;
+        Material installed = Material.matchMaterial("PIPIFACILITIES_" + name()); // tolerate an older mod without this block
+        return installed != null && material == installed;
+    }
 
-    boolean isProducer() { return this == LUMBER || this == FARM || this == CARROT_FARM || this == POTATO_FARM || this == MINE || this == DIAMOND_MINE; }
+    boolean isProducer() { return this == LUMBER || this == FARM || this == CARROT_FARM || this == POTATO_FARM || this == MINE || this == DIAMOND_MINE
+        || this == AMBER_QUARRY || this == CABBAGE_FARM || this == REDWOOD_LUMBER; }
+
+    /** Facilities that exist as items/blocks but whose function is not implemented yet. */
+    boolean comingSoon() { return this == RANCH; }
 
     static long duration(long base, int level) {
         if (level < 1 || level > 3) throw new IllegalArgumentException("Invalid aptitude level");
         return base / level;
     }
 }
-
-

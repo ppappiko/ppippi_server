@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/bp_cooking_table"
+  },
+  "parent": "minecraft:item/generated"
+}

@@ -43,7 +43,7 @@ final class GearTooltips {
         boolean existingSection = false;
         for (int i = 0; i < lines.size(); i++) {
             String line = ChatFormatting.stripFormatting(lines.get(i).getString());
-            if (line.equals("인챈트")) existingSection = true;
+            if (line.equals("인챈트") || line.startsWith("인챈트 등급")) existingSection = true;
             if (line.equals("큐브를 사용해 잠재 옵션을 부여하세요.")) oldHint = i;
         }
         if (existingSection) return;

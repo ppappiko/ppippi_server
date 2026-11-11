@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/blue_diamond"
+  },
+  "parent": "minecraft:item/generated"
+}

@@ -28,6 +28,9 @@ public final class PetSoundPlayer {
  @SubscribeEvent public static void tick(ClientTickEvent.Post event){var mc=Minecraft.getInstance();stations(mc);if(mc.level==null||mc.player==null){for(var loop:ACTIVE.values())mc.getSoundManager().stop(loop);ACTIVE.clear();return;}
   Map<String,PipiPets.Pet> wanted=new HashMap<>();
   for(var entity:mc.level.entitiesForRendering())if(entity instanceof PipiPets.Pet pet){int type=soundType(pet);if(type<0||pet.isRemoved()||pet.distanceToSqr(mc.player)>144)continue;String key=type==3?pet.getUUID()+":eat":pet.soundGroup()+":"+type;var old=wanted.get(key);if(old==null||old.distanceToSqr(mc.player)>pet.distanceToSqr(mc.player))wanted.put(key,pet);}
+  // eating pets: the vanilla player eating sound (entity.generic.eat), repeated every 4 ticks like a player eating
+  for(var it=wanted.entrySet().iterator();it.hasNext();){var item=it.next();if(soundType(item.getValue())!=3)continue;it.remove();var pet=item.getValue();
+   if((clock+(pet.getId()&3))%4==0){var r=mc.level.random;mc.getSoundManager().play(new net.minecraft.client.resources.sounds.SimpleSoundInstance(net.minecraft.sounds.SoundEvents.GENERIC_EAT,SoundSource.NEUTRAL,.5f+.5f*r.nextInt(2),(r.nextFloat()-r.nextFloat())*.2f+1f,RandomSource.create(),pet.getX(),pet.getY()+.3,pet.getZ()));}}
   for(String key:new ArrayList<>(ACTIVE.keySet()))if(!wanted.containsKey(key)){mc.getSoundManager().stop(ACTIVE.remove(key));}
   for(var item:wanted.entrySet()){Loop loop=ACTIVE.get(item.getKey());if(loop==null||loop.pet!=item.getValue()||loop.isStopped()||(clock-loop.started>30&&!mc.getSoundManager().isActive(loop))){if(loop!=null)mc.getSoundManager().stop(loop);loop=new Loop(item.getValue(),soundType(item.getValue()));ACTIVE.put(item.getKey(),loop);mc.getSoundManager().play(loop);}}
  }

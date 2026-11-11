@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/warden_soul_stone"
+  },
+  "parent": "minecraft:item/generated"
+}

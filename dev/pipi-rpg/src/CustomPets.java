@@ -54,15 +54,18 @@ final class CustomPets implements Listener {
   else{String hint=biomeKey(world,x,playerY,z);spot=hint.equals("deep_dark")?undergroundSpot(world,x,z,playerY):surfaceSpot(world,x,z,hint.equals("warm_ocean"));}
   if(spot==null)return;
   Block ground=spot.getBlock().getRelative(0,-1,0);
-  PipiLife.Pet pet=pick(world,biomeKey(world,x,spot.getBlockY(),z),ground,transportUnlocked,transportChance,rnd);
+  Set<String> allowed=null;
+  if(plugin.regions!=null){Regions.Region reg=plugin.regions.at(spot);if(reg!=null){allowed=reg.allowedSkins();if(allowed!=null&&allowed.isEmpty())return;}}
+  PipiLife.Pet pet=pick(world,biomeKey(world,x,spot.getBlockY(),z),ground,transportUnlocked,transportChance,rnd,allowed);
   if(pet==null)return;
   if(!pet.transport()&&rnd.nextDouble()>=levelChance(pet.level))return;
   spawn(spot,pet.name().toLowerCase(Locale.ROOT),false);
  }
- private PipiLife.Pet pick(World world,String biome,Block ground,boolean transportUnlocked,double transportChance,ThreadLocalRandom rnd){
+ private PipiLife.Pet pick(World world,String biome,Block ground,boolean transportUnlocked,double transportChance,ThreadLocalRandom rnd,Set<String> allowed){
   List<PipiLife.Pet> normal=new ArrayList<>(),transport=new ArrayList<>();
   boolean fortress=structure(ground,"fortress"),bastion=structure(ground,"bastion");
   for(PipiLife.Pet pet:PipiLife.Pet.values()){
+   if(allowed!=null&&!allowed.contains(pet.name().toLowerCase(Locale.ROOT)))continue;
    if(pet.netherPlace()){if(pet.place.equals("fortress")&&!fortress)continue;if(pet.place.equals("bastion")&&!bastion)continue;transport.add(pet);}
    else if(pet.place.equals(biome))normal.add(pet);
   }
