@@ -7,6 +7,9 @@ import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../pipi-facilities/assets/pipifacilities");
+const ORTHO = !!process.env.ORTHO;  // ORTHO=1 -> straight-on view of the model front (-Z), implies FRONT
+const FRONT = ORTHO || !!process.env.FRONT;  // FRONT=1 -> view from -x,-z (model front)
+const fl = (p, c = 8) => FRONT ? [2 * c - p[0], p[1], 2 * c - p[2]] : p;
 const TOP = !!process.env.TOP, PY = TOP ? 1.5 : 0.82, PH = TOP ? 0.6 : 1.0;  // TOP=1 -> higher camera angle, writes <name>_top.png
 const outDir = path.join(here, "preview"); fs.mkdirSync(outDir, { recursive: true });
 
@@ -69,11 +72,11 @@ function render(name, opt = {}) {
   const K = opt.model ? 1 : 0.8; let S = 30, W = 640, H = 560, cx = W / 2, cy = H * 0.7;
   if (opt.model) {   // fit: project at S=1 to get the bounds, then scale/centre to fill ~88% of a square image
     W = H = opt.size || 800;
-    const pr = p => { const x = p[0] - 8, z = p[2] - 8; return [(x - z) * 0.866, ((x + z) * 0.5 * 0.82 - p[1] * 1.0)]; };
+    const pr = p => { const x = p[0] - 8, z = p[2] - 8; if (ORTHO) return [x, -p[1]]; return [(x - z) * 0.866, ((x + z) * 0.5 * 0.82 - p[1] * 1.0)]; };
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     if (opt.grid) for (const gx of [-16, 32]) for (const gz of [-16, 32]) { const q = pr([gx, 0, gz]); x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]); }
     for (const e of model.elements) for (let i = 0; i < 8; i++) {
-      const q = pr(rot([i & 1 ? e.to[0] : e.from[0], i & 2 ? e.to[1] : e.from[1], i & 4 ? e.to[2] : e.from[2]], e.rotation));
+      const q = pr(fl(rot([i & 1 ? e.to[0] : e.from[0], i & 2 ? e.to[1] : e.from[1], i & 4 ? e.to[2] : e.from[2]], e.rotation)));
       x0 = Math.min(x0, q[0]); x1 = Math.max(x1, q[0]); y0 = Math.min(y0, q[1]); y1 = Math.max(y1, q[1]);
     }
     S = Math.min(W * .88 / (x1 - x0), H * .88 / (y1 - y0));
@@ -83,9 +86,10 @@ function render(name, opt = {}) {
   // dimetric projection viewed from +x,+z above (depth grows toward camera)
   const proj = p => {
     const x = p[0] - 8, z = p[2] - 8;
+    if (ORTHO) return [cx + x * S * K, cy - p[1] * S * K, p[2]];
     return [cx + (x - z) * 0.866 * S * K, cy + ((x + z) * 0.5 * PY - p[1] * PH) * S * K, (x + z) * 0.6 + p[1] * 0.8];
   };
-  const L = unit([-0.35, 0.85, 0.45]), V = unit(TOP ? [0.3, 1.2, 0.35] : [0.5, 0.65, 0.6]);
+  const L = unit([-0.35, 0.85, 0.45]), V = ORTHO ? [0, 0, 1] : unit(TOP ? [0.3, 1.2, 0.35] : [0.5, 0.65, 0.6]);
   const img = Buffer.alloc(W * H * 4), zb = new Float32Array(W * H).fill(-1e9);
   for (let i = 0; i < W * H; i++) { img[i * 4] = 0x7a; img[i * 4 + 1] = 0x9c; img[i * 4 + 2] = 0x5a; img[i * 4 + 3] = 255; }
   const quad = (pts, shade, uvs, tex) => {
@@ -123,11 +127,11 @@ function render(name, opt = {}) {
   for (const e of model.elements) {
     const f = e.from, t = e.to;
     for (const [fn, fd] of Object.entries(e.faces)) {
-      const [n0, cs] = FACES[fn], n = rotN(n0, e.rotation);
+      const [n0, cs] = FACES[fn], n = fl(rotN(n0, e.rotation), 0);
       if (n[0] * V[0] + n[1] * V[1] + n[2] * V[2] <= 0) continue;
       const sh = .5 + .5 * Math.max(0, n[0] * L[0] + n[1] * L[1] + n[2] * L[2]), [u0, v0, u1, v1] = fd.uv;
       const uvs = [[u0, v1], [u1, v1], [u1, v0], [u0, v0]];
-      const pts = cs.map(c => proj(rot([c[0] ? t[0] : f[0], c[1] ? t[1] : f[1], c[2] ? t[2] : f[2]], e.rotation)));
+      const pts = cs.map(c => proj(fl(rot([c[0] ? t[0] : f[0], c[1] ? t[1] : f[1], c[2] ? t[2] : f[2]], e.rotation))));
       quad(pts, [0, 0, 0, sh], uvs, texs[fd.texture]);
     }
   }

@@ -49,6 +49,7 @@ public final class HudInfo {
     private static boolean visible() {
         var client = client();
         return client.player != null && client.level != null && !client.options.hideGui
+            && !client.getDebugOverlay().showDebugScreen() // F3 open: get out of the way of the debug text (FPS line)
             && (client.screen == null || client.screen instanceof ChatScreen);
     }
 
@@ -80,6 +81,7 @@ public final class HudInfo {
         var font = client.font;
         goldText(); // owner reset
         // objective panel under the info bar (bar is 8..52 tall with the gold row)
+        int coordTop = 58;
         if (!questTitle.isEmpty() && !questLines.isEmpty()) {
             int w = 141;
             for (String line : questLines) w = Math.max(w, font.width(line) + 28);
@@ -97,6 +99,24 @@ public final class HudInfo {
                     y += 11;
                 }
             }
+            coordTop = top + h + 3;
         }
+        drawCoords(g, coordTop);
+    }
+
+    private static final String[] DIRS = {"남", "남서", "서", "북서", "북", "북동", "동", "남동"};
+
+    /** Block coordinates + facing under the top-left panels; hidden while F3 is open. */
+    private static void drawCoords(GuiGraphics g, int top) {
+        var client = client();
+        if (client.getDebugOverlay().showDebugScreen()) return;
+        var p = client.player;
+        var font = client.font;
+        int idx = Math.floorMod((int) Math.floor(p.getYRot() / 45.0 + 0.5), 8);
+        String text = "X " + p.getBlockX() + "  Y " + p.getBlockY() + "  Z " + p.getBlockZ() + "  " + DIRS[idx];
+        int w = Math.max(141, font.width(text) + 20);
+        g.fill(8, top, 8 + w, top + 15, 0xDE171D2C);
+        g.fill(8, top, 11, top + 15, 0xFF7686B1);
+        g.drawString(font, text, 17, top + 4, 0xFFE4E9FA);
     }
 }

@@ -445,76 +445,275 @@ const noisy2 = (c, n = 10, a) => ({ c, noise: n, a });
 }
 // ------------------------------------------------------------------ blue dragon / 청룡 (blue-teal scales, cyan glow, mouth open toward -Z)
 {
-  const m = new Model("dragon_head", [noisy2("#1f6fd0"), noisy2("#2fb4d8"), noisy2("#12408f"), "#2fe0ff", "#bff8ff", "#ffffff", "#eef8ff", { c: "#4fe6ff", a: 150 }, noisy2("#0a1f4a"), { c: "#9ff4ff", a: 120 }]);
+  const m = new Model("dragon_head", [noisy2("#1f6fd0"), noisy2("#2fb4d8"), noisy2("#12408f"), "#2fe0ff", "#bff8ff", "#ffffff", "#efe6c8", { c: "#4fe6ff", a: 150 }, noisy2("#0a1f4a"), { c: "#9ff4ff", a: 120 }, "#8e0f1c", "#d9323f", noisy2("#0d5aa0"), "#c9b98a"]);
   seed = 33;
   const B = (a, b, ci, r) => m.box(a, b, ci, r);
-  B([4, 5, 9], [12, 14, 21], 0);                       // skull
-  B([4.4, 13.4, 9], [11.6, 15, 21], 1);                // crown plate
-  B([5.4, 8.5, 0], [10.6, 13, 9.5], 0);                // upper snout
-  B([6.2, 9, -7], [9.8, 12.4, 0.5], 1);                // snout front
-  B([6.8, 11.8, -7.6], [9.2, 13, -3], 2);              // nose ridge
-  B([5.4, 7.3, 0], [10.6, 8.8, 9], 8);                 // upper-jaw underside
-  const jaw = { axis: "x", angle: -22.5 * SGN, origin: [8, 6, 10] };
-  B([5.6, 3.6, -5], [10.4, 6, 10], 2, jaw); B([6.4, 4.8, -5.8], [9.6, 6, -2], 0, jaw);   // open lower jaw
-  B([6.2, 6.2, -3], [9.8, 8, 8], 3); B([6.8, 6.6, -2], [9.2, 7.6, 5], 4);                // throat glow
-  B([6, 4, -16], [10, 8, -8], 7); B([6.8, 5, -12], [9.2, 7.2, -4], 9); B([7.4, 5.6, -16], [8.6, 6.8, -9], 9, { axis: "y", angle: 22.5 });   // flame
-  for (const [x, z] of [[6.4, -5.5], [9.1, -5.5], [6.4, -2.5], [9.1, -2.5], [6.4, 0.5], [9.1, 0.5]]) B([x, 6.2, z], [x + .5, 7.8, z + 1], 5);
+  const XS = -1, YS = 1;   // rotation direction checks (verified in previews)
+  // box along +z from p, elevation el (deg, up = +), cross-section w (x) by h (y); returns end point
+  const dseg = (p, el, L, w, h, ci) => {
+    B([p[0] - w / 2, p[1] - h / 2, p[2]], [p[0] + w / 2, p[1] + h / 2, p[2] + L], ci, el ? { axis: "x", angle: XS * el, origin: [...p] } : null);
+    const r = el * D; return [p[0], p[1] + L * Math.sin(r), p[2] + L * Math.cos(r)];
+  };
+  // box along +y from p, leaning back (toward +z) by a deg; returns end point
+  const hseg = (p, a, L, w, d, ci) => {
+    B([p[0] - w / 2, p[1], p[2] - d / 2], [p[0] + w / 2, p[1] + L, p[2] + d / 2], ci, a ? { axis: "x", angle: -XS * a, origin: [...p] } : null);
+    const r = a * D; return [p[0], p[1] + L * Math.cos(r), p[2] + L * Math.sin(r)];
+  };
+  // horizontal sweep outward+back (side s), yaw out deg; returns end
+  const yseg = (p, s, out, L, w, h, ci) => {
+    B([p[0] - w / 2, p[1] - h / 2, p[2]], [p[0] + w / 2, p[1] + h / 2, p[2] + L], ci, out ? { axis: "y", angle: YS * s * out, origin: [...p] } : null);
+    const r = out * D; return [p[0] + s * L * Math.sin(r), p[1], p[2] + L * Math.cos(r)];
+  };
+  const JA = 45, J = [8, 9, 9];
+  const jaw = { axis: "x", angle: XS * JA, origin: J };
+  // ---- skull + brow
+  B([4.6, 9, 8], [11.4, 14, 18.5], 0);                // skull
+  B([5, 10, 2.5], [11, 13.6, 9.5], 0);                // mid-head / brow block
+  B([5.4, 13.4, 5], [10.6, 14.6, 17], 12);            // dark crown
+  B([6.6, 14, 8], [9.4, 15, 16], 2);                  // crown ridge
+  // ---- long narrow snout, flared nose
+  B([6, 9.8, -1], [10, 12.6, 9], 0);
+  B([6.4, 10, -7.5], [9.6, 12.4, -.8], 0);
+  B([6.2, 12.2, -6], [9.8, 12.9, 2], 12);             // snout scale plate
+  for (const z of [-5.5, -3, -.5, 2, 4.5]) B([6.5, 12.7, z], [9.5, 13.3, z + .8], 2);
+  B([5.4, 10.3, -9.4], [10.6, 12.9, -6.8], 1);        // flared nose pad
+  B([7, 12.8, -9.2], [9, 14, -4.5], 2);               // nose bump
+  B([6.9, 13.8, -8.6], [9.1, 14.8, -5.5], 1);
   for (const s of [-1, 1]) {
-    B([8 + s * 2.3 - .5, 10.6, -6.8], [8 + s * 2.3 + .5, 11.4, -6], 8);              // nostrils
-    B([8 + s * 2.6 - .8, 12, 3], [8 + s * 2.6 + .8, 13.6, 6.5], 4);                  // eyes
-    B([8 + s * 2.6 - .4, 12.2, 3], [8 + s * 2.6 + .4, 13.4, 4], 8);
-    B([8 + s * 4.4 - .6, 8, 11], [8 + s * 4.4 + .6, 14, 20], 2, { axis: "y", angle: s * 22.5 });   // cheek fins
-    B([8 + s * 5.4 - .5, 9, 13], [8 + s * 5.4 + .5, 15, 22], 6, { axis: "y", angle: s * 45 });
-    const hx = 8 + s * 3.4;                                                          // horns sweep back and up
-    B([hx - 1.1, 13, 14], [hx + 1.1, 17.5, 18.5], 1, { axis: "x", angle: -22.5 * SGN });
-    B([hx - .9, 16.5, 17.5], [hx + .9, 21.5, 22.5], 6, { axis: "x", angle: -45 * SGN });
-    B([hx - .6, 20.5, 21.5], [hx + .6, 24, 26], 5, { axis: "x", angle: -45 * SGN });
+    B([8 + s * 1.9 - .55, 11, -9.6], [8 + s * 1.9 + .55, 12.1, -8.8], 8);        // nostrils
+    B([8 + s * 3 - .5, 10.6, -8.4], [8 + s * 3 + .5, 12.2, -6.8], 1, { axis: "z", angle: s * 22.5 });   // nose flares
   }
-  for (const [z, h] of [[12, 2.6], [16, 3.2], [20, 3.4], [24, 3], [28, 2.4]]) { const y = 14.2 - (z > 21 ? (z - 21) * .6 : 0); B([7.2, y, z], [8.8, y + h, z + 2], 3, { axis: "x", angle: 22.5 * SGN }); }  // dorsal spikes
-  B([4.6, 5, 21], [11.4, 13.4, 26], 0); B([5, 3, 26], [11, 11.5, 31], 2); B([5.6, 4, 24], [10.4, 7, 31], 1);   // neck
-  for (const z of [22.5, 27]) B([4.2, 4.8, z], [11.8, 6.6, z + 1.4], 8);
+  B([6.1, 9.4, -7.5], [9.9, 10.1, 9], 8);             // gum line
+  B([6.3, 9, -5], [9.7, 9.6, 8.5], 10);               // mouth roof (red)
+  // ---- eyes with angry brows
+  for (const s of [-1, 1]) {
+    B([8 + s * 3.3 - 1.9, 12.6, 2.6], [8 + s * 3.3 + 1.9, 13.9, 9.4], 2, { axis: "z", angle: s * -22.5 });    // heavy brow ridge
+    B([8 + s * 3.3 - 1.4, 13.6, 3.4], [8 + s * 3.3 + 1.4, 14.6, 7.5], 12, { axis: "z", angle: s * -22.5 });
+    B([8 + s * 3.2 - 1.4, 10.8, 1.9], [8 + s * 3.2 + 1.4, 12.6, 3.6], 9);       // glow halo
+    B([8 + s * 3.2 - 1, 11.2, 1.5], [8 + s * 3.2 + 1, 12.2, 2.9], 3, { axis: "z", angle: s * 22.5 });         // eye
+    B([8 + s * 3.2 - .45, 11.5, 1.3], [8 + s * 3.2 + .45, 12, 2.2], 5);          // hot core
+    B([8 + s * 4.2 - .5, 11.2, 2.4], [8 + s * 4.2 + .5, 12.4, 4.4], 3);          // side glint
+  }
+  // ---- fangs on upper jaw
+  for (const s of [-1, 1]) {
+    B([8 + s * 1.9 - .55, 6.6, -6.2], [8 + s * 1.9 + .55, 9.8, -5.1], 6);        // big canine
+    B([8 + s * 1.9 - .3, 6.2, -6], [8 + s * 1.9 + .3, 7.2, -5.4], 5);
+    B([8 + s * 2.3 - .5, 6.8, .6], [8 + s * 2.3 + .5, 9.8, 1.6], 6);
+    B([8 + s * 2.3 - .3, 6.4, .8], [8 + s * 2.3 + .3, 7.4, 1.4], 5);
+    for (const z of [-3.6, -1.6, 3.2, 5.4, 7.2]) B([8 + s * 2.4 - .35, 8.2, z], [8 + s * 2.4 + .35, 9.8, z + .8], 5);
+    B([8 + s * 1.0 - .3, 8.4, -6.8], [8 + s * 1.0 + .3, 9.8, -6.1], 5);
+  }
+  // ---- lower jaw (dropped wide), all rotated about the hinge
+  B([5.9, 6.6, -5], [10.1, 8.8, 9.5], 0, jaw);
+  B([6.2, 5.9, -4.4], [9.8, 6.9, 8.5], 1, jaw);       // belly plates
+  B([6.4, 6.4, -5.6], [9.6, 8.8, -4.4], 0, jaw);      // chin
+  B([6.3, 8.7, -5.2], [9.7, 9.2, 8], 10, jaw);        // inner mouth red
+  B([7, 8.9, -3.5], [9, 9.7, 6], 11, jaw);            // tongue
+  B([7.4, 9.2, -5], [8.6, 9.9, -2.4], 11, jaw);
+  for (const s of [-1, 1]) {
+    B([8 + s * 1.8 - .5, 8.8, -5.6], [8 + s * 1.8 + .5, 11.8, -4.6], 6, jaw);    // lower tusks
+    B([8 + s * 1.8 - .3, 11, -5.4], [8 + s * 1.8 + .3, 12.2, -4.8], 5, jaw);
+    B([8 + s * 2.2 - .45, 8.8, 1], [8 + s * 2.2 + .45, 10.8, 1.9], 6, jaw);
+    for (const z of [-2.6, 3.4, 5.8]) B([8 + s * 2.4 - .35, 8.8, z], [8 + s * 2.4 + .35, 10, z + .8], 5, jaw);
+  }
+  // ---- spiky beard under the jaw (in jaw frame)
+  for (const [x, z, len] of [[0, -6, 3.6], [-1.6, -3.5, 3], [1.6, -3.5, 3], [0, -1.5, 3.8], [-2.2, 1, 2.6], [2.2, 1, 2.6], [0, 3.5, 3.2], [-1.8, 5.5, 2.4], [1.8, 5.5, 2.4]])
+    B([8 + x - .45, 6 - len, z], [8 + x + .45, 6.6, z + .9], x === 0 ? 6 : 4, jaw);
+  // ---- throat glow (breath source)
+  B([6.4, 7.4, 4], [9.6, 9.6, 8.8], 7); B([6.9, 7.9, 5], [9.1, 9.1, 7.6], 3);
+  // ---- whisker barbels from the upper lip
+  for (const s of [-1, 1]) {
+    let p = [8 + s * 3.4, 10.2, -5.5];
+    p = yseg(p, s, 45, 6, .6, .6, 4); p[1] -= .6; p = yseg(p, s, 22.5, 6, .5, .5, 3); p[1] -= .8; p = yseg(p, s, 22.5, 5, .4, .4, 9);
+    let q = [8 + s * 3.2, 11.2, -2]; q = yseg(q, s, 22.5, 6, .5, .5, 9); q[1] += .6; q = yseg(q, s, 45, 5, .4, .4, 3);
+  }
+  // ---- cheek mane fins (sweep back and out)
+  for (const s of [-1, 1]) {
+    B([8 + s * 4.9 - .3, 8.4, 9], [8 + s * 4.9 + .3, 13.2, 13.6], 12);
+    yseg([8 + s * 5.2, 12.2, 10], s, 22.5, 7.5, .5, 2.4, 9);
+    yseg([8 + s * 5.2, 10.4, 11], s, 45, 6.5, .5, 1.8, 3);
+    yseg([8 + s * 5.2, 8.6, 11.5], s, 45, 5, .5, 1.6, 7);
+    yseg([8 + s * 5.2, 13.6, 12], s, 22.5, 6, .5, 1.6, 9);
+    yseg([8 + s * 5.2, 11.4, 10.5], s, 22.5, 5.5, .5, 1.4, 3); yseg([8 + s * 5.2, 9.6, 11], s, 45, 4, .5, 1.2, 9);
+    B([8 + s * 5.4 - .3, 7.2, 5], [8 + s * 5.4 + .3, 10, 9], 1, { axis: "z", angle: s * 22.5 });                  // jaw fin
+  }
+  // ---- two long swept-back antler horns with tines
+  for (const s of [-1, 1]) {
+    let p = [8 + s * 2.8, 13.8, 12.5];
+    p = hseg(p, 22.5, 3.6, 2.2, 2.2, 6);
+    hseg([p[0], p[1] - 1.4, p[2] - .2], 22.5, 3.2, .7, .7, 5);
+    p = hseg(p, 45, 3.8, 1.9, 1.9, 6); p[0] += s * .5;
+    hseg([p[0], p[1] - 1.2, p[2]], 22.5, 3, .6, .6, 5);
+    p = dseg(p, 22.5, 4.6, 1.6, 1.6, 6); p[0] += s * .6;
+    hseg([p[0], p[1] - .6, p[2] - 3], 22.5, 2.6, .6, .6, 5);
+    p = dseg(p, 22.5, 4.4, 1.2, 1.2, 13); p[0] += s * .4;
+    p = dseg(p, 0, 3.4, .8, .8, 13);
+  }
+  // ---- flame-like mane crest spikes along the back of the head and nape
+  for (let i = 0; i < 8; i++) {
+    const z = 8.5 + i * 1.8, el = i < 3 ? 45 : 22.5, hgt = 2.6 - i * .12;
+    dseg([8, 15 - (i > 4 ? (i - 4) * .5 : 0), z], el, 4.8 + (i % 3), .8, hgt, i % 2 ? 9 : 3);
+    for (const s of [-1, 1]) if (i % 2 === 0) dseg([8 + s * 2.3, 14.2, z + .6], el, 4, .6, 1.8, 7);
+  }
+  // ---- S-curved scaled neck going back/down
+  let np = [8, 11.4, 16.4];
+  const neck = [[-22.5, 4.5, 8.2, 7.6], [-45, 4.5, 8, 7.4], [-22.5, 3.8, 7.6, 7], [0, 2, 7.2, 6.8]];
+  for (const [el, L, w, h] of neck) {
+    const r = el * D;
+    dseg(np, el, L + 1.2, w, h, 0);
+    dseg([np[0], np[1] - h * .46 * Math.cos(r), np[2] + h * .46 * Math.sin(r)], el, L + .6, w * .55, h * .3, 1);       // belly plates
+    for (let k = 0.5; k < L; k += 1.7) {
+      const c = [np[0], np[1] + k * Math.sin(r), np[2] + k * Math.cos(r)];
+      dseg(c, el, .7, w + .5, h + .5, 12);                                                                       // scale bands
+      dseg([c[0], c[1] + (h / 2 + .2) * Math.cos(r), c[2] - (h / 2 + .2) * Math.sin(r)], el, .8, .6, 1.6, k % 3.4 < 1.7 ? 3 : 9);   // dorsal fin
+    }
+    np = [np[0], np[1] + L * Math.sin(r), np[2] + L * Math.cos(r)];
+  }
   m.write();
 }
 // ------------------------------------------------------------------ white tiger / 백호 claw (white-grey striped tiger head, icy-blue claw glow at the back, three claw rakes in front)
 {
-  const m = new Model("tiger_claw", [noisy2("#e6eaf0", 6), noisy2("#ffffff", 4), "#f4f8ff", "#14141a", { c: "#7fd8ff", a: 150 }, { c: "#c8f2ff", a: 130 }, "#6fd0ff", "#ffffff", noisy2("#b4bfcf", 6)]);
+  const m = new Model("tiger_claw", [noisy2("#e6eaf0", 6), noisy2("#ffffff", 4), "#f4f8ff", "#14141a", { c: "#7fd8ff", a: 150 }, { c: "#c8f2ff", a: 130 }, "#6fd0ff", "#ffffff", noisy2("#b4bfcf", 6), "#d9566c", "#9c2f45", "#c8707e", "#d8f6ff"]);
   const B = (a, b, ci, r) => m.box(a, b, ci, r);
   const hz = 16;
-  B([2, 3, hz - 2], [14, 13.5, hz + 8], 0);               // head
-  B([3, 12.8, hz - 1], [13, 14, hz + 7], 8);
-  B([4.4, 2, hz - 5], [11.6, 8.5, hz - 1.5], 2);          // muzzle
-  B([6.8, 6.6, hz - 5.6], [9.2, 8, hz - 4.2], 3);         // nose
-  B([4.6, 1.2, hz - 4.2], [11.4, 3.2, hz - 1], 8);        // lower jaw
-  for (const s of [-1, 1]) {
-    B([8 + s * 2.2 - .5, 2.8, hz - 5], [8 + s * 2.2 + .5, 5, hz - 4], 7);                         // fangs
-    B([8 + s * 3.8 - 1.1, 8.6, hz - 2.6], [8 + s * 3.8 + 1.1, 10.4, hz - 1.6], 6);                // eyes
-    B([8 + s * 3.8 - .4, 8.8, hz - 2.9], [8 + s * 3.8 + .4, 10.2, hz - 2.5], 3);
-    B([8 + s * 5 - 1.8, 13, hz + 1], [8 + s * 5 + 1.8, 17, hz + 3.5], 0, { axis: "z", angle: s * 22.5 });   // ears
-    B([8 + s * 5 - .8, 13.4, hz + .8], [8 + s * 5 + .8, 16, hz + 1.1], 2, { axis: "z", angle: s * 22.5 });
-    const sx = s > 0 ? 14 : 2;                                                                    // cheek stripes on the sides
-    for (const [y, z] of [[10, hz + 1], [10, hz + 4.5], [5.5, hz + 2.5]]) B([sx - (s > 0 ? .4 : 1.2), y, z], [sx + (s > 0 ? 1.2 : .4), y + 2.4, z + 1.2], 3);
+  const q22 = a => Math.max(-45, Math.min(45, Math.round(a / 22.5) * 22.5));
+  const wAt = (i, n) => Math.max(.32, .78 - .5 * (i / Math.max(1, n - 1)));   // taper along the stripe
+  // stripe on the x=2.5 / x=13.5 skull side, pts = [y, z]
+  function sideStripe(s, pts) {
+    const surf = s > 0 ? 13.5 : 2.5, x0 = s > 0 ? surf - .1 : surf - .3, x1 = x0 + .4;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [y0, z0] = pts[i], [y1, z1] = pts[i + 1], c = [(y0 + y1) / 2, (z0 + z1) / 2], L = Math.hypot(y1 - y0, z1 - z0) * 1.15 + .3, w = wAt(i, pts.length - 1);
+      let a = Math.atan2(y1 - y0, z1 - z0) / D; if (a > 90) a -= 180; if (a <= -90) a += 180;
+      if (Math.abs(a) <= 45) { const th = q22(-a); B([x0, c[0] - w / 2, c[1] - L / 2], [x1, c[0] + w / 2, c[1] + L / 2], 3, th ? { axis: "x", angle: th } : null); }
+      else { let b = Math.atan2(z1 - z0, y1 - y0) / D; if (b > 90) b -= 180; if (b <= -90) b += 180; const th = q22(b); B([x0, c[0] - L / 2, c[1] - w / 2], [x1, c[0] + L / 2, c[1] + w / 2], 3, th ? { axis: "x", angle: th } : null); }
+    }
   }
-  for (const dx of [-3, 0, 3]) B([8 + dx - .5, 13.4, hz - 1], [8 + dx + .5, 14.4, hz + 5], 3);    // forehead stripes
-  B([7.6, 9.2, hz - 2.2], [8.4, 12.5, hz - 1.7], 3);
+  // stripe in the xy plane on a z-surface, pts = [x, y]
+  function xyStripe(pts, zs) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], c = [(x0 + x1) / 2, (y0 + y1) / 2, zs - .1];
+      m.tan("xy", c, [Math.hypot(x1 - x0, y1 - y0) * 1.15 + .3, wAt(i, pts.length - 1), .5], Math.atan2(y1 - y0, x1 - x0) / D, 3);
+    }
+  }
+  const frontStripe = (s, pts) => xyStripe(pts.map(([d, y]) => [8 + s * d, y]), hz - 2);   // [dx, y] on the front of the skull (z = hz-2)
+  const frontPlate = pts => xyStripe(pts, hz - 2.6);                                       // [x, y] on the forehead plate
+  // stripe on top of the brow (y = 14), pts = [x, z]
+  function topStripe(pts) {
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, z0] = pts[i], [x1, z1] = pts[i + 1], c = [(x0 + x1) / 2, (z0 + z1) / 2], L = Math.hypot(x1 - x0, z1 - z0) * 1.15 + .3, w = wAt(i, pts.length - 1), th = q22(Math.atan2(x1 - x0, z1 - z0) / D);
+      B([c[0] - w / 2, 13.85, c[1] - L / 2], [c[0] + w / 2, 14.3, c[1] + L / 2], 3, th ? { axis: "y", angle: th } : null);
+    }
+  }
+  // skull + heavy brow
+  B([2.5, 3, hz - 2], [13.5, 13, hz + 8], 0);
+  B([3, 12.6, hz - 1], [13, 14, hz + 7], 8);
+  B([5.2, 11.2, hz - 2.6], [10.8, 13.6, hz - 1.8], 1);            // forehead
+  // muzzle, nose, snarling lips
+  B([4.8, 3.4, hz - 5.8], [11.2, 8, hz - 1.5], 1);
+  B([5.6, 5, hz - 6.3], [10.4, 7.6, hz - 5.4], 2);                // whisker pads
+  B([6.9, 7, hz - 6.6], [9.1, 8.5, hz - 5.4], 11);                // nose
+  B([7.2, 7.3, hz - 6.9], [8.8, 8, hz - 6.4], 10);
+  B([6, 8.4, hz - 3.2], [7.2, 9.6, hz - 2.2], 3, { axis: "z", angle: 22.5 }); B([8.8, 8.4, hz - 3.2], [10, 9.6, hz - 2.2], 3, { axis: "z", angle: -22.5 });   // snarl wrinkles
+  B([4.6, 2.6, hz - 5.9], [11.4, 3.8, hz - 4.9], 2);              // upper lip line
+  // open mouth: pink inside, long white fangs, lower jaw dropped
+  B([5.2, .6, hz - 5.2], [10.8, 3.4, hz - .8], 9);                // mouth interior
+  B([6.6, 1.2, hz - 4.6], [9.4, 2.2, hz - 2.4], 10);              // tongue
+  const jaw = { axis: "x", angle: -22.5, origin: [8, 3.6, hz + 1] };
+  B([4.8, -.8, hz - 5.6], [11.2, 1.8, hz - .6], 1, jaw); B([5.4, -1.2, hz - 5.2], [10.6, -.4, hz - 1.4], 8, jaw);
+  for (const s of [-1, 1]) {
+    B([8 + s * 2.4 - .55, 1.2, hz - 5.4], [8 + s * 2.4 + .55, 3.6, hz - 4.3], 7);                                // upper fangs
+    B([8 + s * 2.4 - .3, .4, hz - 5.2], [8 + s * 2.4 + .3, 1.6, hz - 4.6], 7);
+    B([8 + s * 1.4 - .3, 2, hz - 5.6], [8 + s * 1.4 + .3, 3.2, hz - 5], 7);
+    B([8 + s * 2 - .4, -.6, hz - 5.6], [8 + s * 2 + .4, 1.4, hz - 4.8], 7, jaw);                                // lower fangs
+    B([8 + s * 4.6 - .35, 1.4, hz - 5], [8 + s * 4.6 + .35, 3.2, hz - 4.3], 7);
+    // eyes: glowing icy-blue iris, dark outline, white highlight, angry slanted brow, faint blue glow
+    const ex = 8 + s * 3.9, ey = 8.3, ez = hz - 2.2, er = { axis: "z", angle: s * 22.5, origin: [ex, ey, ez] };
+    B([ex - 2.2, ey - 1.5, ez - .38], [ex + 2.2, ey + 1.5, ez - .1], 4);                                        // glow layer
+    B([ex - 1.75, ey - .95, ez - .4], [ex + 1.75, ey + .95, ez + .4], 3, er);                                    // dark outline
+    B([ex - 1.35, ey - .65, ez - .65], [ex + 1.35, ey + .65, ez - .35], 6, er);                                  // iris
+    B([ex - .55, ey - .6, ez - .85], [ex + .55, ey + .6, ez - .6], 12, er);                                       // bright inner iris
+    B([ex - .17, ey - .62, ez - .98], [ex + .17, ey + .62, ez - .8], 3, er);                                     // slit pupil
+    B([ex + s * -.75 - .24, ey + .3 - .24, ez - 1.12], [ex + s * -.75 + .24, ey + .3 + .24, ez - .92], 7);        // highlight pixel
+    B([ex - 2.6, ey + 1.1, ez - .7], [ex + 2.6, ey + 2.3, ez - .15], 3, { axis: "z", angle: s * 22.5, origin: [ex, ey + 1.7, ez] });   // angry brow
+    B([ex - 1.7, ey + 1.1, ez - 1.0], [ex + 1.7, ey + 1.6, ez - .6], 3, { axis: "z", angle: s * 22.5, origin: [ex, ey + 1.4, ez] });
+    // ears
+    B([8 + s * 5 - 1.8, 13, hz + 1], [8 + s * 5 + 1.8, 17, hz + 3.5], 0, { axis: "z", angle: s * 22.5 });
+    B([8 + s * 5 - .8, 13.4, hz + .8], [8 + s * 5 + .8, 16, hz + 1.1], 9, { axis: "z", angle: s * 22.5 });
+    B([8 + s * 5 - 1.8, 13.4, hz + 3.3], [8 + s * 5 + 1.8, 16.6, hz + 3.8], 3, { axis: "z", angle: s * 22.5 });
+    // cheek ruff (spiky fur) + side stripes
+    B([8 + s * 6.4 - .8, 3, hz + .4], [8 + s * 6.4 + .8, 9, hz + 5], 2, { axis: "y", angle: s * -22.5 });
+    B([8 + s * 7.4 - .7, 3.4, hz + 2], [8 + s * 7.4 + .7, 7.4, hz + 6.4], 8, { axis: "y", angle: s * -45 });
+    // ---- tiger stripes: thin tapered wavy segments hugging the fur
+    const sx = s * 5.5 + 8;
+    sideStripe(s, [[9.8, 14.4], [9.3, 16], [9.8, 17.6], [9.1, 19.2], [9.4, 20.8], [8.6, 22]]);
+    sideStripe(s, [[7.9, 14.4], [7.3, 16], [7.6, 17.6], [6.7, 19], [6.9, 20.4]]);
+    sideStripe(s, [[5.9, 14.4], [5.4, 16], [5.6, 17.4], [4.8, 18.6]]);
+    sideStripe(s, [[11.6, 15.4], [11.2, 17], [11.7, 18.8], [11, 20.6], [11.2, 22]]);
+    sideStripe(s, [[4, 15], [3.6, 16.2]]);
+    frontStripe(s, [[3.2, 6.9], [4.2, 6.6], [5, 5.9], [5.7, 5.2]]);
+    frontStripe(s, [[3.2, 5.3], [4.2, 5], [4.9, 4.2]]);
+    frontStripe(s, [[3.4, 3.9], [4.2, 3.5]]);
+    frontStripe(s, [[3.7, 10.8], [4.4, 11.6], [4.8, 12.6]]);
+    for (const [pts] of [[[[8 + s * 2.2, 15.2], [8 + s * 2.5, 17], [8 + s * 2, 19], [8 + s * 2.4, 21]]], [[[8 + s * 4.2, 15.2], [8 + s * 4.6, 17], [8 + s * 4, 18.8]]]]) topStripe(pts);
+    // forehead: classic 王 mark above the brow (centre line + three bars narrowing downward, bent like real markings)
+    frontPlate([[8 + s * .5, 13], [8 + s * 1.9, 13.1], [8 + s * 3.1, 12.7], [8 + s * 3.9, 12.1]]);
+    frontPlate([[8 + s * .5, 12.1], [8 + s * 1.6, 12.1], [8 + s * 2.5, 11.7]]);
+    frontPlate([[8 + s * .5, 11.4], [8 + s * 1.2, 11.3]]);
+  }
+  frontPlate([[8, 13.5], [8, 12.6], [8, 11.9], [8, 11.3]]);
+  topStripe([[8, 15.2], [8.2, 17], [7.9, 19], [8.1, 21], [8, 22.4]]);
   B([-1, 1, hz + 6], [17, 12, hz + 12], 8);               // mane toward the back
   B([1, 3, hz + 10], [15, 11, hz + 15], 4);
-  // three claw rakes: tapering streaks along a line leaning 22.5 deg (each box pivots about its own centre so they join cleanly)
-  const ca = Math.sin(22.5 * D), cb = Math.cos(22.5 * D);
+  B([-.4, 0, hz + 4], [16.4, 3.5, hz + 9], 2);            // chin ruff
+
+  // three claw slashes: very thin curved scratch marks (white core, faint icy-blue edge), tapering to a point
   for (let k = 0; k < 3; k++) {
-    const x0 = 0 + k * 7, z0 = -11 + k * 1.2, top = 20;
-    let t = 0;
-    for (const [len, w, ci] of [[7, 3.4, 8], [7, 3.0, 0], [6, 2.2, 0], [5, 1.4, 1], [4, .8, 7]]) {
-      const c = [x0 + (t + len / 2) * ca, top - (t + len / 2) * cb];
-      const rot = { axis: "z", angle: 22.5, origin: [c[0], c[1], z0 + 2] };
-      m.box([c[0] - w / 2, c[1] - len / 2 * 1.1, z0 + .6], [c[0] + w / 2, c[1] + len / 2 * 1.1, z0 + 3.4], ci, rot);
-      m.box([c[0] - w / 4, c[1] - len / 2 * 1.1, z0], [c[0] + w / 4, c[1] + len / 2 * 1.1, z0 + 4], ci === 8 ? 5 : 7, rot);   // bright core
-      m.box([c[0] - w / 2 - 1, c[1] - len / 2 * 1.1, z0 - .4], [c[0] + w / 2 + 1, c[1] + len / 2 * 1.1, z0 + 4.4], 4, rot);   // translucent edge
-      t += len;
+    const x0 = 1 + k * 6.5, z0 = -11 + k * 1.2, top = 29 - k * .6, N = 10, Lh = 22 - k;
+    let px = x0, py = top;
+    for (let i = 0; i < N; i++) {
+      const t0 = i / N, t1 = (i + 1) / N, nx = x0 + 11 * t1 + 4 * t1 * t1, ny = top - Lh * t1 + 1.5 * Math.sin(t1 * 3);
+      const ang = Math.atan2(ny - py, nx - px) / D, len = Math.hypot(nx - px, ny - py) * 1.2 + .2, c = [(px + nx) / 2, (py + ny) / 2, z0];
+      const w = Math.max(.3, 1.1 * (1 - t0) * (1 - .3 * t0));
+      m.tan("xy", c, [len, w + 1, .3], ang, 4);             // faint icy-blue edge
+      m.tan("xy", [c[0], c[1], z0 + .05], [len, w, .45], ang, 5);   // pale body
+      m.tan("xy", [c[0], c[1], z0 + .1], [len, Math.max(.3, w * .5), .6], ang, 7);   // bright white core
+      px = nx; py = ny;
     }
   }
   m.write();
 }
 
+// ------------------------------------------------------------------ dragon breath: blue fire plume, origin (8,8,4) widening toward -Z to z=-16
+{
+  const m = new Model("dragon_breath", ["#f0ffff", { c: "#5ae6ff", a: 205 }, { c: "#2a9cff", a: 175 }, { c: "#1a52e0", a: 150 }, "#ffffff", { c: "#1030b0", a: 110 }, { c: "#9ff4ff", a: 150 }, "#c8ffff"]);
+  seed = 77;
+  const Z0 = 4, ZL = -16, R = [-45, -22.5, 0, 22.5, 45];
+  const seg = 3.2, n = 7;
+  for (let i = 0; i < n; i++) {
+    const zf = Z0 - i * seg, zt = zf - seg * 1.35, d = (i + .5) / n, r = .7 + 7 * Math.pow(d, 1.05);
+    const rot = ang => ang ? { axis: "z", angle: ang } : null;
+    m.box([8 - r * .8, 8 - r * .8, Math.max(ZL, zt)], [8 + r * .8, 8 + r * .8, zf], 5, rot(R[(i * 2) % 5 === 2 ? 3 : 1 + (i % 2) * 2 - 1 + 1]));
+    m.box([8 - r * .6, 8 - r * .6, Math.max(ZL, zt)], [8 + r * .6, 8 + r * .6, zf], 3, rot(i % 2 ? 45 : 22.5));
+    m.box([8 - r * .42, 8 - r * .42, Math.max(ZL, zt + .3)], [8 + r * .42, 8 + r * .42, zf], 2, rot(i % 2 ? 22.5 : 45));
+    if (i < 6) m.box([8 - r * .27, 8 - r * .27, Math.max(ZL, zt + .5)], [8 + r * .27, 8 + r * .27, zf], 1, rot(i % 2 ? 45 : 0));
+    if (i < 4) m.box([8 - r * .15, 8 - r * .15, zt + .8], [8 + r * .15, 8 + r * .15, zf], 0);
+  }
+  // flame tongues: licking, elongated, outward-offset chunks
+  for (let j = 0; j < 44; j++) {
+    const z = Z0 - 2 - rnd() * 17, d = (Z0 - z) / 20, rad = (.5 + 7.5 * d) * (.4 + rnd() * .8), th = rnd() * Math.PI * 2;
+    const cx = 8 + rad * Math.cos(th), cy = 8 + rad * Math.sin(th), L = 2.5 + rnd() * 4, w = .6 + rnd() * 1.4 + d * 1.2;
+    const ci = d < .3 ? [6, 1, 1][j % 3] : d < .6 ? [1, 2, 6][j % 3] : [2, 3, 3, 5][j % 4];
+    const zz0 = Math.max(ZL, z - L / 2), zz1 = Math.min(32, z + L / 2);
+    m.box([cx - w / 2, cy - w / 2, zz0], [cx + w / 2, cy + w / 2, zz1], ci, { axis: ["x", "y", "z"][j % 3], angle: R[(j * 3 + 1) % 5] || 22.5 });
+  }
+  // sparks
+  for (let j = 0; j < 9; j++) {
+    const z = -2 - rnd() * 14, d = (Z0 - z) / 20, rad = (2 + 7 * d) * (.4 + rnd() * .8), th = rnd() * Math.PI * 2, s2 = .3 + rnd() * .35;
+    const cx = 8 + rad * Math.cos(th), cy = 8 + rad * Math.sin(th);
+    m.box([cx - s2, cy - s2, z - s2], [cx + s2, cy + s2, z + s2], j % 2 ? 4 : 7, { axis: "z", angle: 45 });
+  }
+  m.write();
+}
 // ================================================================== skill FX batch 3
 // ------------------------------------------------------------------ lightning bolt (vertical, zig-zag in the XY plane, y 0..32)
 {
@@ -578,41 +777,209 @@ const noisy2 = (c, n = 10, a) => ({ c, noise: n, a });
   for (const [x, y, z] of [[4.4, 11, 20], [11.8, 4.8, 24], [12, 11.2, 29], [4, 5, 28]]) m.box(...sq([x, y, z], .5), 5, { axis: "y", angle: 45 });
   m.write();
 }
-// ------------------------------------------------------------------ phoenix (spread wings, head toward model -Z)
+////// ------------------------------------------------------------------ phoenix (upright regal firebird, wings raised in a big V, head toward model -Z, long tail curling below)
 {
   const nz = (c, n = 8) => ({ c, noise: n });
-  const m = new Model("phoenix", [nz("#b3141a"), nz("#e8321c"), nz("#ff7a1f"), nz("#ffb02e"), nz("#ffe14a"), "#fff6b0", "#ffffff", "#3a1410", { c: "#ff8a2a", a: 100 }, { c: "#ffd23a", a: 140 }]);
+  const m = new Model("phoenix", [nz("#9c0f1c"), nz("#e8321c"), nz("#ff7a1f"), nz("#ffb02e"), nz("#ffe14a"), "#fff6b0", "#ffffff", "#2a0c10", { c: "#ff8a2a", a: 100 }, { c: "#ffd23a", a: 140 }, "#b9bfd0", { c: "#fff2a8", a: 120 }]);
   seed = 61;
   const B = (a, b, ci, r) => m.box(a, b, ci, r);
-  B([6, 5.5, -2], [10, 10, 9], 1); B([6.4, 5, -3], [9.6, 8.5, 4], 3); B([6.6, 9.6, 0], [9.4, 10.6, 8], 0);   // body
-  B([6.8, 8.6, -4.6], [9.2, 12.4, -1], 2, { axis: "x", angle: 22.5 * SGN });                                  // neck
-  B([6.2, 10.4, -8], [9.8, 14, -3.6], 1);                                                                    // head
-  B([7.2, 11.6, -11.6], [8.8, 12.8, -8], 4); B([7.4, 10.6, -10.2], [8.6, 11.8, -8], 3);                      // beak
-  for (const s of [-1, 1]) { B([8 + s * 2.6 - .4, 12.2, -7.2], [8 + s * 2.6 + .4, 13.2, -6], 6); B([8 + s * 2.6 - .3, 12.4, -7.5], [8 + s * 2.6 + .3, 13, -7.1], 7); }
-  B([7.2, 13.6, -6.2], [8.8, 17.2, -4.6], 3, { axis: "x", angle: -22.5 * SGN }); B([7.4, 16.4, -4.4], [8.6, 19.6, -2.2], 4, { axis: "x", angle: -45 * SGN });   // crest
-  B([5.4, 13.4, -4.4], [6.6, 16.4, -2.6], 2, { axis: "z", angle: 22.5 }); B([9.4, 13.4, -4.4], [10.6, 16.4, -2.6], 2, { axis: "z", angle: -22.5 });
-  for (const s of [-1, 1]) {                                                                                 // wings
-    for (let i = 0; i < 8; i++) {
-      const x0 = 8 + s * (2.6 + i * 1.95), x1 = x0 + s * 2.0, y = 8.6 + i * 0.75 + (i > 5 ? 1.2 : 0);
-      const zf = -2.5 + i * .55, len = 5.5 + (i < 5 ? i * 2.2 : 11 - (i - 5) * 3);
-      const lo = Math.min(x0, x1), hi = Math.max(x0, x1);
-      B([lo, y, zf], [hi, y + 1.3, zf + len * .38], i < 4 ? 0 : 1);
-      B([lo, y, zf + len * .38], [hi, y + 1.1, zf + len * .7], i % 2 ? 2 : 1);
-      B([lo, y - .1, zf + len * .7], [hi, y + .9, zf + len], i % 3 ? 3 : 2);
-      B([lo + .1, y - .2, zf + len], [hi - .1, y + .6, zf + len + 3], i % 2 ? 4 : 3);
-      B([lo + .35, y + 1.25, zf + 0.5], [hi - .35, y + 1.7, zf + len * .5], 5);
+  const qa = a => Math.max(-45, Math.min(45, Math.round(a / 22.5) * 22.5));
+  // one ribbon segment between two 3D points (yz plane when mostly vertical/longitudinal, xz plane when mostly horizontal)
+  function seg3(p0, p1, w, t, ci) {
+    const dx = p1[0] - p0[0], dy = p1[1] - p0[1], dz = p1[2] - p0[2];
+    const c = [(p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, (p0[2] + p1[2]) / 2], len = Math.hypot(dx, dy, dz) * 1.2 + .4;
+    if (Math.abs(dz) < Math.hypot(dx, dy) * .6) { m.tan("xy", c, [Math.hypot(dx, dy) * 1.2 + .4, w, t], Math.atan2(dy, dx) / D, ci); return; }
+    if (Math.abs(dy) < Math.hypot(dx, dz) * .5) { m.tan("xz", c, [len, w * .8, Math.max(t, w * .6)], Math.atan2(dz, dx) / D, ci); return; }
+    let ang = (((Math.atan2(dy, dz) / D) % 180) + 180) % 180; if (ang > 90) ang -= 180;
+    const swap = Math.abs(ang) > 45, q = qa(swap ? ang - 90 * Math.sign(ang) : ang);
+    const d = swap ? [w, len, t] : [w, t, len];
+    B([c[0] - d[0] / 2, c[1] - d[1] / 2, c[2] - d[2] / 2], [c[0] + d[0] / 2, c[1] + d[1] / 2, c[2] + d[2] / 2], ci, q ? { axis: "x", angle: -q, origin: c } : null);
+  }
+  function ribbon(pts, w0, th, cols, glow = 8) {
+    const n = pts.length - 1;
+    for (let i = 0; i < n; i++) {
+      const t = i / n, w = Math.max(.5, w0 * (1 - .8 * Math.pow(t, 1.4)));
+      seg3(pts[i], pts[i + 1], w, th, cols[Math.min(cols.length - 1, Math.floor(t * cols.length))]);
+      if (glow >= 0) seg3(pts[i], pts[i + 1], w * 1.9, th * .45, glow);
     }
-    B([8 + s * 2.2 - 1.2, 8.4, -1.5], [8 + s * 2.2 + 1.2, 11.2, 4], 1);
+    const e = pts[n]; B([e[0] - .3, e[1] - .3, e[2] - .3], [e[0] + .3, e[1] + .3, e[2] + .3], 5, { axis: "y", angle: 45 });
   }
-  const tails = [[8, [[8, 8], [7.2, 13], [6, 18], [6, 23], [8, 28], [11, 31]], 3.2, 2.4, 2, 3, 4], [5.2, [[8, 8], [6.8, 12], [5.6, 16], [5.2, 21], [6.4, 25]], 2.2, 1.8, 0, 2, 3], [10.8, [[8, 8], [6.8, 12], [5.6, 16], [5.2, 21], [6.4, 25]], 2.2, 1.8, 0, 2, 3]];
-  for (const [x, pts, wd, th, c1, c2, c3] of tails) {                                                       // tail streamers
-    limb(m, pts, th + .4, wd, c1, x);
-    limb(m, pts.map(([y, z]) => [y + .1, z]), th * .6, wd * .55, c2, x);
-    const [ey, ez] = pts[pts.length - 1]; B([x - wd * .45, ey - .8, ez - 1], [x + wd * .45, ey + 1.6, Math.min(ez + 3, 32)], c3);
+  // ---- wings: a fan of flame-shaped feathers rising in a V; tips point up and out
+  const FE = [[10, 15, 22, 0.0], [22, 17, 24, 0.5], [34, 20, 24, 0.0], [46, 22, 22, 0.5], [57, 22, 20, 0.0], [68, 20, 16, 0.5], [78, 17, 12, 0.0], [88, 13, 8, 0.5], [100, 9, 4, 0.0]];
+  for (const s of [-1, 1]) {
+    FE.forEach(([p0, len, bend, zo], i) => {
+      const n = 6, step = len / n; let x = 3 + i * .15, y = 10 + i * .25; const z0 = 1.4 + zo;
+      for (let k = 0; k < n; k++) {
+        const t = (k + .5) / n, phi = p0 + bend * t, r = phi * D, cx = x + Math.cos(r) * step / 2, cy = y + Math.sin(r) * step / 2;
+        const w = 4.2 * (1 - .8 * Math.pow(t, 1.4)), z = z0 + t * 2.2, ci = k === n - 1 ? 5 : t < .25 ? (i % 2 ? 0 : 1) : t < .55 ? (i % 2 ? 1 : 2) : t < .82 ? (i % 2 ? 2 : 3) : 4;
+        m.tan("xy", [8 + s * cx, cy, z], [step * 1.28, w, .9], s > 0 ? phi : 180 - phi, ci);
+        x += Math.cos(r) * step; y += Math.sin(r) * step;
+      }
+    });
+    // bright covert layer in front of the flight feathers
+    [[30, 11, 22], [52, 12, 20], [68, 11, 16], [88, 9, 10]].forEach(([p0, len, bend]) => {
+      const n = 4, step = len / n; let x = 3.2, y = 10.6;
+      for (let k = 0; k < n; k++) {
+        const t = (k + .5) / n, phi = p0 + bend * t, r = phi * D, cx = x + Math.cos(r) * step / 2, cy = y + Math.sin(r) * step / 2;
+        m.tan("xy", [8 + s * cx, cy, .6 + t * 1.2], [step * 1.3, 2.1 * (1 - .6 * t), .8], s > 0 ? phi : 180 - phi, [3, 4, 4, 5][k]);
+        x += Math.cos(r) * step; y += Math.sin(r) * step;
+      }
+    });
+    for (const [phi, d] of [[26, 9], [50, 13], [74, 12]]) m.tan("xy", [8 + s * (3 + Math.cos(phi * D) * d), 10.5 + Math.sin(phi * D) * d, 3.6], [9, 5, .5], s > 0 ? phi : 180 - phi, 8);   // glow behind
+    B([8 + s * 3 - 1.6, 9, -.4], [8 + s * 3 + 1.6, 12.4, 3.2], 0);   // shoulder
   }
-  for (const s of [-1, 1]) { B([8 + s * 1.6 - .4, 3, 3], [8 + s * 1.6 + .4, 5.8, 4], 4); B([8 + s * 1.6 - .7, 2.4, 1.6], [8 + s * 1.6 + .7, 3.2, 4.2], 4); }
-  B([5, 4.5, -2], [11, 11.5, 12], 8);
-  for (const [x, y, z, a] of [[-6, 6, 4, 45], [22, 7, 3, 22.5], [-3, 18, 9, 22.5], [19, 19, 8, 45], [8, 4, 16, 22.5], [1.5, 9, 14, 45], [14.5, 9, 14, -22.5], [8, 22, 2, 45]])
-    B(...sq([x, y, z], .75), a > 30 ? 5 : 4, { axis: "y", angle: a });
+  // ---- body: upright chest, proud
+  B([5.9, 9.5, -2.6], [10.1, 17.5, 3], 1);
+  B([6.4, 10, -3.6], [9.6, 16.5, -2.4], 3);
+  for (let j = 0; j < 5; j++) B([6.3, 10.2 + j * 1.35, -4.4], [9.7, 11.4 + j * 1.35, -2.7], j % 2 ? 3 : 4, { axis: "x", angle: 22.5 });
+  B([6.6, 6.4, .6], [9.4, 10.6, 5.6], 0); B([7, 5.4, 3], [9, 8.4, 7], 1);
+  B([6.8, 16.8, -3.4], [9.2, 21, .2], 2); B([7.2, 17, -4], [8.8, 20.4, -2.8], 4);   // neck
+  // ---- head: small, fierce, hooked beak, tall flame crest
+  B([6.9, 20.4, -5.4], [9.1, 23.2, -1.6], 1); B([7.2, 22.8, -5], [8.8, 23.5, -2], 2);
+  B([7.4, 20.8, -8.2], [8.6, 22.2, -5.2], 4); B([7.5, 19.6, -8.5], [8.5, 21.4, -7.4], 5); B([7.7, 19, -8.2], [8.3, 20, -7.5], 6);   // beak, hook
+  for (const s of [-1, 1]) {
+    // sharp bird-of-prey eye: narrow almond slanted down toward the beak, dark outline, gold sliver, slit pupil, angular brow ridge
+    const ex = 8 + s * .78, ey = 21.95, ez = -5.62, er = { axis: "z", angle: s * 22.5, origin: [ex, ey, ez] };
+    B([ex - .56, ey - .17, ez - .12], [ex + .56, ey + .17, ez + .2], 7, er);          // dark almond outline
+    B([ex - .4, ey - .09, ez - .22], [ex + .4, ey + .11, ez + .1], 4, er);         // gold iris sliver
+    B([ex - .46, ey - .04, ez - .3], [ex - .2, ey + .07, ez - .08], 6, er);         // bright inner corner
+    B([ex - .07, ey - .12, ez - .32], [ex + .07, ey + .14, ez - .1], 7, er);        // slit pupil
+    B([ex - .7, ey + .3, ez - .12], [ex + .7, ey + .52, ez + .2], 7, er);        // angular brow ridge
+    B([ex + s * .42 - .25, ey + .42, ez - .1], [ex + s * .42 + .25, ey + .72, ez + .2], 7, { axis: "z", angle: s * 45, origin: [ex + s * .42, ey + .57, ez] });   // brow tip
+    ribbon([[8 + s * 1.2, 21, -2], [8 + s * 2.4, 20.4, 0], [8 + s * 3, 18.6, 2.2], [8 + s * 3.4, 16.2, 3.6]], 1.1, .6, [2, 3, 4], 8);   // cheek wisps
+  }
+  ribbon([[8, 23, -4], [8, 26.5, -4.6], [8, 29.5, -3.6], [8, 31.2, -1.2], [8, 31, 1.8]], 2.2, 1.2, [2, 3, 4, 5], 9);   // tall flowing crest
+  ribbon([[8.9, 23, -3.4], [9.8, 26, -3.4], [10.6, 28.6, -1.8], [10.8, 29.6, 1]], 1.2, .8, [2, 3, 4], 9);
+  ribbon([[7.1, 23, -3.4], [6.2, 26, -3.4], [5.4, 28.6, -1.8], [5.2, 29.6, 1]], 1.2, .8, [2, 3, 4], 9);
+  ribbon([[8, 23, -2.4], [8, 25, .8], [8, 26.2, 4.2], [8, 25.8, 7]], 1.4, .8, [1, 2, 3], 8);
+  // ---- talons forward (-Z)
+  for (const s of [-1, 1]) {
+    const x = 8 + s * 1.6;
+    B([x - .6, 6.6, -.5], [x + .6, 9.4, 3.5], 1); B([x - .55, 4.8, -3.8], [x + .55, 6.8, .6], 3, { axis: "x", angle: 22.5 });
+    B([x - .5, 4.2, -4.4], [x + .5, 5.2, -1.6], 10);
+    for (const d of [-.8, 0, .8]) B([x + d - .22, 3.6, -6.4], [x + d + .22, 4.6, -3.4], 10, { axis: "x", angle: 22.5 });
+  }
+  B([6.4, 5.8, -4], [9.6, 11, 6], 8);   // body glow
+  // ---- long flowing tail: plumes sweep down and curl in an S / spiral below the body (spread in the XY plane so they read from the front)
+  const TL = (arr, z0, z1) => arr.map(([x, y], i) => [8 + x, y, z0 + (z1 - z0) * i / (arr.length - 1)]);
+  ribbon(TL([[0, 8], [-.6, 3.4], [-1.8, -1.6], [-3.6, -6.4], [-6.6, -10.4], [-10.6, -12.4], [-14, -10.6], [-14.6, -7]], 5, 9), 4.9, 1.4, [1, 2, 3, 4, 5], 8);
+  ribbon(TL([[0, 8], [1, 3], [2.6, -2.4], [5, -7.4], [8.8, -11], [13, -11.6], [16.4, -8.6], [17, -4.6]], 6, 11), 4.6, 1.4, [0, 1, 2, 3, 4], 8);
+  ribbon(TL([[1, 8], [5.4, 6.4], [10, 4.2], [14.6, 2.6], [18.4, 3.6], [20.4, 7], [19.4, 10.6]], 4.6, 9), 3.5, 1.1, [1, 2, 3, 4], 8);
+  ribbon(TL([[-1, 8], [-5.4, 6.4], [-10, 4.2], [-14.6, 2.6], [-18.4, 3.6], [-20.4, 7], [-19.4, 10.6]], 4.6, 9), 3.5, 1.1, [1, 2, 3, 4], 8);
+  ribbon(TL([[0, 7], [-.4, 2], [-.6, -3.4], [-.2, -8.6], [1.6, -13]], 4, 8), 2.9, 1, [2, 3, 4], 8);
+  ribbon(TL([[.4, 7.6], [4, 3], [7.6, -1.6], [10.4, -6.4], [13, -9.6]], 5, 9), 1.6, .9, [0, 2, 3], 8);
+  ribbon(TL([[-.4, 7.6], [-4, 3], [-7.6, -1.6], [-11, -5.4], [-14.6, -7.6]], 5, 9), 1.6, .9, [0, 2, 3], 8);
+  // ---- floating embers
+  for (const [x, y, z, a] of [[-4, 15, 4, 45], [20, 17, 3, 22.5], [-6, 26, 8, 22.5], [22, 27, 6, 45], [2, 5, 6, 45], [14, 4, 8, -22.5], [4, -4, 16, 22.5], [13, -6, 17, 45], [8, 27, -8, 45], [-2, 8, 12, 22.5], [19, 9, 10, 45], [12, 30, -2, 22.5]])
+    B(...sq([x, y, z], .6), a > 30 ? 5 : 4, { axis: "y", angle: a });
+  m.write();
+}
+// ------------------------------------------------------------------ mana cannon beam segment: HEXAGONAL prism along Z (z=-16..16, seamless)
+{
+  const m = new Model("mana_beam", ["#f6eeff", "#e9c8ff", "#b86bff", "#7a2fd6", { c: "#8a3fe8", a: 105 }, "#ff9cf0", { c: "#b86bff", a: 160 }, "#4a1f9a"]);
+  // pixel-art flat-top hexagon (across-corners width d) from stacked rows; rows are exactly adjacent
+  const hexRows = (d, n) => { const H = d * .866, rows = []; for (let i = 0; i < n; i++) { const y0 = -H / 2 + H * i / n, y1 = y0 + H / n, u = Math.abs((y0 + y1) / 2); rows.push([y0, y1, d * (1 - .5 * u / (H / 2))]); } return rows; };
+  const hex = (d, z0, z1, ci, n = 6) => { for (const [y0, y1, w] of hexRows(d, n)) m.box([8 - w / 2, 8 + y0, z0], [8 + w / 2, 8 + y1, z1], ci); };
+  const hexRing = (d, z0, z1, ci, t = .9) => { const rows = hexRows(d, 6);
+    rows.forEach(([y0, y1, w], i) => { if (i === 0 || i === 5) m.box([8 - w / 2, 8 + y0, z0], [8 + w / 2, 8 + y1, z1], ci);
+      else for (const s of [-1, 1]) m.box([8 + s * w / 2 - (s > 0 ? t : 0), 8 + y0, z0], [8 + s * w / 2 + (s < 0 ? t : 0), 8 + y1, z1], ci); }); };
+  hex(13, -16, 16, 4);       // translucent outer glow hex (~13px)
+  hex(8, -16, 16, 2);        // violet hex (~8px)
+  hex(4, -16, 16, 0, 4);     // white-lavender core hex (~4px)
+  // hexagonal rune rings spaced along the length
+  for (const z of [-12, -4, 4, 12]) { hexRing(11, z - .5, z + .5, 1, .8); hexRing(13.6, z - .35, z + .35, 6, .7); }
+  for (const z of [-8, 0, 8]) hexRing(9, z - .4, z + .4, 5, .6);
+  // rune dots on hex corners
+  for (let i = 0; i < 8; i++) { const z = -14 + i * 4, s = i % 2 ? -1 : 1; m.box(...sq([8 + s * 4.6, 8, z], .5), 7, { axis: "z", angle: 45 }); }
+  // sparkles
+  for (const [x, y, z, a] of [[13.4, 9, -12, 45], [3.2, 6.5, -6, 22.5], [11.6, 3.6, -1, 45], [2.8, 11.5, 4, 22.5], [13, 11.4, 9, 45], [5.5, 2.6, 13, 22.5], [10.6, 13.4, -15, 22.5], [4.6, 13.2, 0, 45]])
+    m.box(...sq([x, y, z], .5), 5, { axis: "z", angle: a });
+  m.write();
+}
+// ------------------------------------------------------------------ mana shell: compressed cannonball (centre 8,8,8, ~10px, comet trail toward +Z)
+{
+  const m = new Model("mana_shell", ["#ffffff", "#e9c8ff", "#b86bff", "#4a1f9a", { c: "#8a3fe8", a: 90 }, "#ff9cf0", { c: "#b86bff", a: 130 }, "#2a1166", "#7a2fd6"]);
+  seed = 5;
+  const sphere = (R, ci, step, rot45 = true) => { for (let y = -R + step / 2; y < R; y += step) { const r = Math.sqrt(Math.max(0, R * R - y * y)) * .97, h = step / 2;
+    m.box([8 - r, 8 + y - h, 8 - r], [8 + r, 8 + y + h, 8 + r], ci);
+    if (rot45) m.box([8 - r, 8 + y - h, 8 - r], [8 + r, 8 + y + h, 8 + r], ci, { axis: "y", angle: 45 }); } };
+  m.box(...sq([8, 8, 8], 2.4), 0); m.box(...sq([8, 8, 8], 3.2), 5, { axis: "y", angle: 45 });  // hot centre
+  sphere(4.4, 7, 1.4, false);          // darkest inner shell
+  sphere(5, 3, 1.25);                  // dense dark-violet outer shell
+  // glowing cracks: thin bright slivers on the surface
+  for (const [x, y, z, w, hh, d, ci, a, ax] of [[8, 11.6, 4.1, 2.4, .5, .5, 0, 22.5, "z"], [10.4, 7, 3.1, .5, 3, .5, 1, -22.5, "z"], [5.1, 9, 5.2, .5, 3.2, .6, 0, 22.5, "z"], [8, 4.6, 6.2, 3, .5, .6, 1, -22.5, "z"],
+    [12.9, 9, 8, .5, 2.6, .6, 0, 22.5, "x"], [3, 7, 9, .5, 2.8, .6, 1, -22.5, "x"], [8, 12.8, 9, 2.6, .5, .6, 0, 22.5, "y"], [8, 3.3, 8.5, 2.4, .5, .5, 1, 22.5, "y"],
+    [9.5, 8, 12.9, 3, .6, .5, 0, 22.5, "z"], [6, 9, 12.5, .5, 2.8, .5, 1, -22.5, "z"]])
+    m.box([x - w / 2, y - hh / 2, z - d / 2], [x + w / 2, y + hh / 2, z + d / 2], ci, { axis: ax, angle: a });
+  // two crossing glowing rune bands
+  const band = (plane, r, W, T, ci, ci2) => { for (let k = 0; k < 16; k++) { const th = k * 22.5, L = 2 * r * Math.tan(Math.PI / 16) + .5;
+    const c = plane === "xy" ? [8 + r * Math.cos(th * D), 8 + r * Math.sin(th * D), 8] : [8 + r * Math.cos(th * D), 8, 8 + r * Math.sin(th * D)];
+    m.tan(plane, c, [L, W, T], th + 90, k % 2 ? ci : ci2); } };
+  band("xy", 5.7, .9, 1.1, 1, 8); band("xz", 5.7, .9, 1.1, 5, 8);
+  band("xy", 5.9, .35, 1.4, 0, 0); band("xz", 5.9, .35, 1.4, 0, 0);
+  // orbiting shards
+  for (let i = 0; i < 8; i++) { const th = i * 45 * D, r = 7.4, c = [8 + r * Math.cos(th), 8 + r * Math.sin(th) * .6 + (i % 2 ? 1.5 : -1.5), 8 + r * Math.sin(th) * .8];
+    m.box(...sq(c, .55 + (i % 3) * .1), i % 2 ? 1 : 5, { axis: ["x", "y", "z"][i % 3], angle: [22.5, 45, -22.5][i % 3] }); }
+  sphere(7, 4, 2.2, false);            // translucent outer aura
+  // short comet trail toward +Z
+  for (let i = 0; i < 7; i++) { const z0 = 12.5 + i * 2.3, r = 3.2 - i * .38; m.box([8 - r, 8 - r, z0], [8 + r, 8 + r, z0 + 2.3], i < 3 ? 6 : 4, { axis: "z", angle: i % 2 ? 45 : 22.5 }); m.box([8 - r * .5, 8 - r * .5, z0], [8 + r * .5, 8 + r * .5, z0 + 2.3], 2, { axis: "z", angle: i % 2 ? 22.5 : 45 }); }
+  for (const [x, y, z] of [[5.5, 9.5, 18], [10.8, 6.6, 21], [9.4, 10.8, 25], [6.2, 6.2, 27]]) m.box(...sq([x, y, z], .45), 1, { axis: "z", angle: 45 });
+  m.write();
+}
+// ------------------------------------------------------------------ mana blast: explosion burst (centre 8,8,8), scaled up + tweened by the plugin
+{
+  const m = new Model("mana_blast", ["#ffffff", "#e9c8ff", "#b86bff", "#7a2fd6", { c: "#8a3fe8", a: 95 }, "#ff9cf0", { c: "#b86bff", a: 110 }, "#4a1f9a"]);
+  const dirPlane = (plane, k, r0, r1, w, t, ci) => { const th = k * 22.5, rc = (r0 + r1) / 2, L = (r1 - r0) * 1.04 + .4;
+    const c = plane === "xy" ? [8 + rc * Math.cos(th * D), 8 + rc * Math.sin(th * D), 8] : [8 + rc * Math.cos(th * D), 8, 8 + rc * Math.sin(th * D)];
+    m.tan(plane, c, [L, w, t], th, ci); };
+  // spiky star: long/short alternating spikes in the XY and XZ planes, each = thick base + thin tip
+  for (const plane of ["xy", "xz"]) for (let k = 0; k < 16; k++) {
+    const long = k % 2 === 0, len = long ? 14 : 8.5, big = k % 4 === 0;
+    dirPlane(plane, k, 1.5, len * .55, long ? 2.6 : 1.8, 1.8, long ? 3 : 2);
+    dirPlane(plane, k, len * .45, len, long ? 1.4 : 1, 1, big ? 1 : 2);
+    if (long) dirPlane(plane, k, len * .8, len + 1.5, .6, .6, 0);
+  }
+  // third plane (yz): spikes tilted about X, long axis along Z (|ang|<=45) or along Y
+  for (let k = 0; k < 16; k++) { const th = k * 22.5 * D, len = k % 2 ? 7.5 : 11, rc = len / 2 + 1.2;
+    const dy = Math.sin(th), dz = Math.cos(th); let ang = (k * 22.5) % 180; if (ang > 90) ang -= 180;
+    let a = ang, swap = false; if (Math.abs(a) > 45) { swap = true; a -= 90 * Math.sign(a); }
+    const c = [8, 8 + rc * dy, 8 + rc * dz], W = k % 2 ? 1.1 : 1.6;
+    const d = swap ? [W, len, W] : [W, W, len];
+    m.box([c[0] - d[0] / 2, c[1] - d[1] / 2, c[2] - d[2] / 2], [c[0] + d[0] / 2, c[1] + d[1] / 2, c[2] + d[2] / 2], k % 2 ? 2 : 1, a ? { axis: "x", angle: -a } : null);
+  }
+  // hot core
+  m.box(...sq([8, 8, 8], 2.2), 0); m.box(...sq([8, 8, 8], 2.9), 1, { axis: "y", angle: 45 }); m.box(...sq([8, 8, 8], 2.9), 5, { axis: "z", angle: 45 });
+  // translucent shock shell
+  for (let y = -8.5 + .85; y < 8.5; y += 1.7) { const r = Math.sqrt(Math.max(0, 8.5 * 8.5 - y * y)) * .97, h = .85;
+    m.box([8 - r, 8 + y - h, 8 - r], [8 + r, 8 + y + h, 8 + r], 6); m.box([8 - r, 8 + y - h, 8 - r], [8 + r, 8 + y + h, 8 + r], 4, { axis: "y", angle: 45 }); }
+  // debris shards
+  for (const [x, y, z, a] of [[1.5, 12, 9, 22.5], [14.5, 4, 6, 45], [12, 14.5, 4, 22.5], [3, 2.5, 12, 45], [8, 15, 13, 22.5], [13.5, 11, 13.5, 45], [2.5, 8, 1.5, 22.5], [10, 1.5, 2.5, 45]])
+    m.box(...sq([x, y, z], .5), a > 30 ? 5 : 0, { axis: "y", angle: a });
+  m.write();
+}
+// ------------------------------------------------------------------ mana cannon magic circle (XY plane)
+{
+  const m = new Model("mana_circle", ["#ffffff", "#e9c8ff", "#b86bff", "#7a2fd6", { c: "#7a2fd6", a: 110 }, "#ff9cf0", { c: "#b86bff", a: 150 }]);
+  const Z0 = 7.75, T = .5, C = [8, 8];
+  m.box([-2.5, -2.5, 7.3], [18.5, 18.5, 7.6], 4); // translucent glow plate behind
+  for (const a of [0, 22.5, 45, -22.5]) m.box([-2.5, -2.5, 7.3], [18.5, 18.5, 7.6], 4, { axis: "z", angle: a });
+  const ring = (r, w, ci) => { for (let k = 0; k < 16; k++) { const th = k * 22.5; const L = 2 * r * Math.tan(Math.PI / 16) + .5;
+    m.tan("xy", [C[0] + r * Math.cos(th * D), C[1] + r * Math.sin(th * D), 8], [L, w, T], th + 90, ci); } };
+  ring(14, .9, 2); ring(11.4, .8, 3);
+  // octagram: axis-aligned square + diagonal square
+  const h = 6.4;
+  for (const [dx, dy, ang] of [[0, h, 0], [0, -h, 0], [h, 0, 90], [-h, 0, 90], [h * .7071, h * .7071, 135], [-h * .7071, -h * .7071, 135], [h * .7071, -h * .7071, 45], [-h * .7071, h * .7071, 45]])
+    m.tan("xy", [C[0] + dx, C[1] + dy, 8], [2 * h + .6, .7, T], ang, 1);
+  // inner small ring-ish diamond
+  m.box([5.4, 5.4, Z0 + .05], [10.6, 10.6, Z0 + T + .05], 6, { axis: "z", angle: 45 });
+  // rune blocks between the rings and at the rim
+  for (let k = 0; k < 16; k++) { const th = (k * 22.5 + 11.25) * D, r = 12.7;
+    m.box([C[0] + r * Math.cos(th) - .6, C[1] + r * Math.sin(th) - (k % 2 ? .35 : .6), Z0], [C[0] + r * Math.cos(th) + .6, C[1] + r * Math.sin(th) + (k % 2 ? .35 : .6), Z0 + T], k % 2 ? 5 : 1, { axis: "z", angle: [0, 22.5, 45, -22.5][k % 4] }); }
+  for (let k = 0; k < 8; k++) { const th = (k * 45) * D, r = 15.3;
+    m.box(...[[C[0] + r * Math.cos(th) - .5, C[1] + r * Math.sin(th) - .5, Z0], [C[0] + r * Math.cos(th) + .5, C[1] + r * Math.sin(th) + .5, Z0 + T]], 5, { axis: "z", angle: 45 }); }
+  // glowing centre
+  m.box([6.3, 6.3, 7.6], [9.7, 9.7, 8.4], 2, { axis: "z", angle: 45 });
+  m.box([6.9, 6.9, 7.55], [9.1, 9.1, 8.45], 1);
+  m.box([7.3, 7.3, 7.5], [8.7, 8.7, 8.5], 0, { axis: "z", angle: 45 });
   m.write();
 }

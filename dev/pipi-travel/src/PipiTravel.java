@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
@@ -18,6 +19,7 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(CombatBar::receiveCooldown);
         NeoForge.EVENT_BUS.addListener(CombatBar::layerPre);
         NeoForge.EVENT_BUS.addListener(HudBar::receive);
+        NeoForge.EVENT_BUS.addListener(ChargeOverlay::receive);
         NeoForge.EVENT_BUS.addListener(CastAnim::receive);
         NeoForge.EVENT_BUS.addListener(CastAnim::hand);
         NeoForge.EVENT_BUS.addListener(HudBar::layerPre);
@@ -75,6 +77,7 @@ public final class PipiTravel {
     }
 
     private void registerHud(RegisterGuiLayersEvent event) {
+        event.registerBelow(VanillaGuiLayers.CROSSHAIR, ResourceLocation.fromNamespaceAndPath("pipitravel", "charge_circle"), (graphics, delta) -> ChargeOverlay.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "capture_aim"), (graphics, delta) -> CaptureInput.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "combat_bar"), (graphics, delta) -> HudBar.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "hud_info"), (graphics, delta) -> HudInfo.draw(graphics));

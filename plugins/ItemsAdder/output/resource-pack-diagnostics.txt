@@ -366,3 +366,70 @@ Texture 'minecraft:item/leather_horse_armor_overlay' not found; referenced by 1 
       Source classification: ORIGINAL_UNRESOLVED
       Validation reason: original model reference is unresolved; no selected pack entry
 
+
+[Pack] Found 17 model files with no static item or block reference.
+  Affected Versions: 1.21.11, 26.1.1, 26.1.2, 26.2
+  Technical details:
+    Fallback contexts: item 17, block 0
+    Source user content pack: 17
+
+  These files exist in the generated pack; they are not missing or invalid by themselves.
+  Check them only if a configured item or block was expected to use them.
+
+  Unreferenced model files from resource packs (17)
+    No item declaration or blockstate in the pack references these files.
+      pipi_blueprints (1):
+        - pipi_blueprints:item/blueprint_paper
+          File: contents/pipi_blueprints/models/item/blueprint_paper.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+      pipi_cores (2):
+        - pipi_cores:item/diamond_core
+          File: contents/pipi_cores/models/item/diamond_core.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_cores:item/iron_core
+          File: contents/pipi_cores/models/item/iron_core.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+      pipi_materials (14):
+        - pipi_materials:item/blue_diamond
+          File: contents/pipi_materials/models/item/blue_diamond.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/coated_plank
+          File: contents/pipi_materials/models/item/coated_plank.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/diamond_club
+          File: contents/pipi_materials/models/item/diamond_club.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/hammer
+          File: contents/pipi_materials/models/item/hammer.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/iron_club
+          File: contents/pipi_materials/models/item/iron_club.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/plank
+          File: contents/pipi_materials/models/item/plank.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/plate
+          File: contents/pipi_materials/models/item/plate.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/reinforced_plank
+          File: contents/pipi_materials/models/item/reinforced_plank.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/repair_kit
+          File: contents/pipi_materials/models/item/repair_kit.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/steel
+          File: contents/pipi_materials/models/item/steel.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/trap_diamond
+          File: contents/pipi_materials/models/item/trap_diamond.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/trap_iron
+          File: contents/pipi_materials/models/item/trap_iron.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/trap_wood
+          File: contents/pipi_materials/models/item/trap_wood.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+        - pipi_materials:item/wood_club
+          File: contents/pipi_materials/models/item/wood_club.json
+          Context: item; source: user content pack; reason: folder fallback; no item declaration root
+

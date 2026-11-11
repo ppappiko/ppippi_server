@@ -4,30 +4,32 @@ players:
     weapon:
       ==: org.bukkit.inventory.ItemStack
       v: 3955
-      type: BOW
+      type: BLAZE_ROD
       meta:
         ==: ItemMeta
         meta-type: UNSPECIFIC
-        display-name: '{"text":"","extra":[{"text":"0티어 활 +0","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"aqua","bold":false}]}'
+        display-name: '{"text":"","extra":[{"text":"0티어 지팡이 +0","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"aqua","bold":false}]}'
         lore:
         - '{"text":"","extra":[{"text":"아이템레벨 100","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gold","bold":false}]}'
         - '{"text":"","extra":[{"text":"공격력 +120","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"힘 +32","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"민첩 +60","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"잠재 슬롯 5개","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"인챈트","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"dark_purple","bold":false}]}'
-        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"힘 +60","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"민첩 +31","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"잠재 슬롯 4개","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"인챈트 ","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"dark_purple","bold":false},{"text":"등급
+          ","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false},{"text":"[에픽]","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"dark_purple","bold":false}]}'
+        - '{"text":"","extra":[{"text":"[에픽] 지능 증가 +6%","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"dark_purple","bold":false}]}'
+        - '{"text":"","extra":[{"text":"[레어] 공격력 증가 +3%","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"blue","bold":false}]}'
+        - '{"text":"","extra":[{"text":"[레어] 민첩 증가 +3%","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"blue","bold":false}]}'
+        - '{"text":"","extra":[{"text":"[레어] 지능 증가 +3%","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"blue","bold":false}]}'
         custom-model-data: 10000
         ItemFlags:
         - HIDE_UNBREAKABLE
         Unbreakable: true
         PublicBukkitValues: |-
           {
-              "pipilife:smith_catalog": "0티어 활",
+              "pipilife:smith_catalog": "0티어 지팡이",
               "pipilife:smith_combat_schema": 3,
-              "pipilife:smith_lines": 5
+              "pipilife:smith_enchant": "211:1,215:0,210:0,211:0",
+              "pipilife:smith_grade": 1,
+              "pipilife:smith_lines": 4
           }

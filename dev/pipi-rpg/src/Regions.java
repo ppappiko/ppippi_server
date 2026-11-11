@@ -28,6 +28,7 @@ import org.bukkit.event.player.*;
 final class Regions implements Listener {
     static final class Region {
         String id, world, name = "", pets = "none";
+        String owner; // plot region: this player's UUID may build/dig inside
         int minX, minY, minZ, maxX, maxY, maxZ;
         boolean enabled = true;
 
@@ -75,6 +76,7 @@ final class Regions implements Listener {
             r.name = s.getString("name", id);
             r.pets = s.getString("pets", "none");
             r.enabled = s.getBoolean("enabled", true);
+            r.owner = s.getString("owner");
             r.minX = s.getInt("min.x"); r.minY = s.getInt("min.y"); r.minZ = s.getInt("min.z");
             r.maxX = s.getInt("max.x"); r.maxY = s.getInt("max.y"); r.maxZ = s.getInt("max.z");
             regions.put(id, r);
@@ -88,6 +90,7 @@ final class Regions implements Listener {
             yml.set(r.id + ".name", r.name);
             yml.set(r.id + ".pets", r.pets);
             yml.set(r.id + ".enabled", r.enabled);
+            if (r.owner != null) yml.set(r.id + ".owner", r.owner);
             yml.set(r.id + ".min.x", r.minX); yml.set(r.id + ".min.y", r.minY); yml.set(r.id + ".min.z", r.minZ);
             yml.set(r.id + ".max.x", r.maxX); yml.set(r.id + ".max.y", r.maxY); yml.set(r.id + ".max.z", r.maxZ);
         }
@@ -113,6 +116,36 @@ final class Regions implements Listener {
         return null;
     }
 
+    /** Protected for this player here: inside a region, not creative/spectator, and not inside a plot region they own (own plot wins over other regions). */
+    private boolean locked(Player p, Location l) {
+        if (l == null || l.getWorld() == null || bypass(p)) return false;
+        String w = l.getWorld().getName(), me = p.getUniqueId().toString();
+        boolean inside = false;
+        for (Region r : regions.values()) if (r.contains(w, l.getBlockX(), l.getBlockY(), l.getBlockZ())) {
+            if (me.equals(r.owner)) return false;
+            inside = true;
+        }
+        return inside;
+    }
+
+    private boolean locked(Player p, Block b) { return locked(p, b.getLocation()); }
+
+    /** Deed claim: protect the whole 44x44 plot column; only the owner may build/dig there. */
+    void claimPlot(String plot, String ownerUuid, String ownerName, org.bukkit.World world, int x, int z) {
+        String id = "plot_" + plot.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "_");
+        Region r = regions.getOrDefault(id, new Region());
+        r.id = id;
+        r.world = world.getName();
+        r.name = (ownerName == null ? "누군가" : ownerName) + "의 거주지";
+        r.owner = ownerUuid;
+        r.minX = x; r.maxX = x + 43; r.minZ = z; r.maxZ = z + 43;
+        r.minY = world.getMinHeight(); r.maxY = world.getMaxHeight() - 1;
+        regions.put(id, r);
+        save();
+    }
+
+    boolean hasRegion(String plot) { return regions.containsKey("plot_" + plot.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "_")); }
+
     private static boolean bypass(Player p) {
         return p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR;
     }
@@ -127,24 +160,24 @@ final class Regions implements Listener {
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
-        if (bypass(e.getPlayer()) || at(e.getBlock()) == null) return;
+        if (!locked(e.getPlayer(), e.getBlock())) return;
         if (isResource(e.getBlock().getType())) return; // ResourceNodes handles these (HIGH)
         e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onPlace(BlockPlaceEvent e) {
-        if (!bypass(e.getPlayer()) && at(e.getBlock()) != null) e.setCancelled(true);
+        if (locked(e.getPlayer(), e.getBlock())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBucketEmpty(PlayerBucketEmptyEvent e) {
-        if (!bypass(e.getPlayer()) && (at(e.getBlock()) != null || at(e.getBlockClicked()) != null)) e.setCancelled(true);
+        if (locked(e.getPlayer(), e.getBlock()) || locked(e.getPlayer(), e.getBlockClicked())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBucketFill(PlayerBucketFillEvent e) {
-        if (!bypass(e.getPlayer()) && (at(e.getBlock()) != null || at(e.getBlockClicked()) != null)) e.setCancelled(true);
+        if (locked(e.getPlayer(), e.getBlock()) || locked(e.getPlayer(), e.getBlockClicked())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW)
@@ -153,7 +186,7 @@ final class Regions implements Listener {
         if (b == null || bypass(e.getPlayer())) return;
         if (e.getAction() == org.bukkit.event.block.Action.PHYSICAL) {
             Material t = b.getType();
-            if ((t == Material.FARMLAND || t == Material.TURTLE_EGG) && at(b) != null) e.setCancelled(true);
+            if ((t == Material.FARMLAND || t == Material.TURTLE_EGG) && locked(e.getPlayer(), b)) e.setCancelled(true);
             return;
         }
         if (e.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
@@ -162,12 +195,12 @@ final class Regions implements Listener {
         boolean worldChanging = BLOCKED_ITEMS.contains(item) || n.endsWith("_HOE") || n.endsWith("_AXE") || n.endsWith("_SHOVEL")
             || n.endsWith("_SPAWN_EGG") || n.endsWith("_BOAT") || n.endsWith("_MINECART") || n.equals("LAVA_BUCKET") || n.equals("WATER_BUCKET");
         if (!worldChanging) return;
-        if (at(b) != null || at(b.getRelative(e.getBlockFace())) != null) e.setUseItemInHand(Event.Result.DENY);
+        if (locked(e.getPlayer(), b) || locked(e.getPlayer(), b.getRelative(e.getBlockFace()))) e.setUseItemInHand(Event.Result.DENY);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onHangingBreak(HangingBreakByEntityEvent e) {
-        if (e.getRemover() instanceof Player p && !bypass(p) && at(e.getEntity().getLocation()) != null) e.setCancelled(true);
+        if (e.getRemover() instanceof Player p && locked(p, e.getEntity().getLocation())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
@@ -178,23 +211,23 @@ final class Regions implements Listener {
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onHangingPlace(HangingPlaceEvent e) {
         Player p = e.getPlayer();
-        if (p != null && !bypass(p) && at(e.getEntity().getLocation()) != null) e.setCancelled(true);
+        if (p != null && locked(p, e.getEntity().getLocation())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onArmorStand(PlayerArmorStandManipulateEvent e) {
-        if (!bypass(e.getPlayer()) && at(e.getRightClicked().getLocation()) != null) e.setCancelled(true);
+        if (locked(e.getPlayer(), e.getRightClicked().getLocation())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onFrameInteract(PlayerInteractEntityEvent e) {
         Entity t = e.getRightClicked();
-        if ((t instanceof ItemFrame || t instanceof ArmorStand) && !bypass(e.getPlayer()) && at(t.getLocation()) != null) e.setCancelled(true);
+        if ((t instanceof ItemFrame || t instanceof ArmorStand) && locked(e.getPlayer(), t.getLocation())) e.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onArmorStandHit(EntityDamageByEntityEvent e) {
-        if (e.getEntity() instanceof ArmorStand && e.getDamager() instanceof Player p && !bypass(p) && at(e.getEntity().getLocation()) != null)
+        if (e.getEntity() instanceof ArmorStand && e.getDamager() instanceof Player p && locked(p, e.getEntity().getLocation()))
             e.setCancelled(true);
     }
 

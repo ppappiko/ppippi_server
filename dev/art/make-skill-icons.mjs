@@ -141,13 +141,17 @@ const icons = {
     line(5, 23, 4, 28, 2, hex("#6ec8f0"));
     for (const [x, y] of [[10, 8], [22, 22], [26, 17]]) { line(x - 2, y, x + 2, y, 1, WH); line(x, y - 2, x, y + 2, 1, WH); }
   },
-  m_thunder() { // storm cloud with zig-zag bolt
-    const G1 = hex("#8d97ad"), G2 = hex("#c3cbdc"), G3 = hex("#5d667c");
-    disc(10, 9, 4, G3); disc(17, 7, 5, G3); disc(23, 10, 4, G3); rect(8, 9, 25, 12, G3);
-    disc(10, 8, 3, G1); disc(17, 6, 4, G2); disc(22, 9, 3, G1); rect(9, 9, 24, 11, G1);
-    poly([[18, 11], [11, 18], [15, 18], [9, 28], [23, 16], [18, 16], [22, 11]], hex("#ffd23a"));
-    poly([[18, 12], [13, 18], [17, 18], [12, 25], [20, 16], [16, 16], [19, 12]], WH);
-    for (const [x, y] of [[5, 20], [26, 24], [6, 26], [27, 17]]) { line(x - 1, y, x + 1, y, 1, YEL); line(x, y - 1, x, y + 1, 1, YEL); }
+  m_thunder() { // compressed mana cannonball with rune bands and a blast spark
+    const GL = hex("#4a2a8a"), GL2 = hex("#7a45d6"), LT = hex("#e6d2ff");
+    disc(15, 17, 12, GL); disc(15, 17, 11, GL2); disc(15, 17, 10, hex("#2a1550"));
+    disc(15, 17, 9, DPUR); disc(14, 16, 7, PUR); disc(13, 15, 4, LT); disc(12, 14, 2, WH);
+    ring(15, 17, 9, 1, hex("#1d0e3a"));
+    ring(15, 17, 7, 1, hex("#2a1550"), 20, 160); ring(15, 17, 9, 1, hex("#2a1550"), 200, 340);
+    for (const [x, y] of [[9, 21], [12, 23], [16, 24], [20, 22]]) { rect(x, y, x + 1, y + 1, YEL); }
+    for (const [x, y] of [[20, 13], [22, 16], [21, 19]]) { rect(x, y, x, y + 1, YEL); }
+    line(23, 9, 28, 4, 1, WH); line(23, 5, 25, 7, 1, YEL); line(27, 9, 29, 10, 1, YEL);
+    line(26, 2, 26, 6, 1, YEL); line(24, 4, 28, 4, 1, YEL); set(26, 4, WH);
+    for (const [x, y] of [[4, 6], [6, 28], [27, 26]]) { line(x - 1, y, x + 1, y, 1, LT); line(x, y - 1, x, y + 1, 1, LT); }
   },
   m_heal() {
     ring(16, 16, 12, 1, CY, 0, 360);
