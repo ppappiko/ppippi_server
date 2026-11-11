@@ -41,7 +41,7 @@ public final class PipiFacilities {
         ITEMS.registerSimpleItem("warp_stone_blueprint", new Item.Properties().stacksTo(16));
         ITEMS.registerSimpleItem("hammer", new Item.Properties().stacksTo(1).durability(250));
         // 3D skill-effect models for ItemDisplay (not obtainable, no recipes).
-        for (String fx : new String[]{"slash_arc","slash_red","whirl_ring","shockwave","giant_sword","arrow_big","wind_spiral","leaf","orb","ice_lance","meteor","heal_cross","crystal","tiger_claw","wind_bow","spirit_wolf","mana_hammer","mana_bow","dragon_head"})
+        for (String fx : new String[]{"slash_arc","slash_red","whirl_ring","shockwave","giant_sword","arrow_big","wind_spiral","leaf","orb","ice_lance","meteor","heal_cross","crystal","tiger_claw","wind_bow","spirit_wolf","mana_hammer","mana_bow","dragon_head","lightning_bolt","rock_arrow","water_arrow","phoenix"})
             ITEMS.registerSimpleItem("fx_" + fx, new Item.Properties().stacksTo(1));
         // Tier-4 region blocks: placeable by builders, no loot (the plugin handles drops/respawn).
         regionBlock("amber_rock", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(3.0f).requiresCorrectToolForDrops().sound(SoundType.STONE).noLootTable()));

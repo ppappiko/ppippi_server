@@ -107,15 +107,14 @@ const icons = {
   a_triple() {
     for (const dy of [-6, 0, 6]) { arrow(6, 16 + dy, 25, 16 + dy, 1, hex("#e8f4e0"), 5); line(5, 16 + dy - 1, 8, 16 + dy, 1, GRN); line(5, 16 + dy + 1, 8, 16 + dy, 1, GRN); }
   },
-  a_pierce() {
-    // firework arrow: diagonal shaft with a red rocket tube and a colourful burst
-    line(4, 27, 19, 12, 1, hex("#e8f4e0")); line(4, 27, 2, 29, 1, GRN);
-    line(6, 22, 9, 25, 1, GRN); line(9, 19, 12, 22, 1, GRN);
-    line(13, 18, 17, 14, 3, RED); line(15, 16, 17, 14, 1, WH);
-    poly([[20, 11], [17, 11], [20, 14]], STEEL);
-    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; const c = [YEL, OR, CY, GRN][k % 4]; line(24 + Math.cos(a) * 2, 8 + Math.sin(a) * 2, 24 + Math.cos(a) * 6, 8 + Math.sin(a) * 6, 1, c); }
-    disc(24, 8, 1, WH);
-    rect(27, 22, 28, 23, YEL); rect(8, 7, 9, 8, CY);
+  a_pierce() { // rock-covered arrow
+    const R1 = hex("#6b4a2a"), R2 = hex("#a07a4a"), R3 = hex("#c9a56e"), R4 = hex("#4a3320");
+    line(4, 27, 20, 11, 3, R4);
+    for (const [x, y, r] of [[8, 23, 2], [12, 19, 2], [16, 15, 2]]) { disc(x, y, r + 1, R1); disc(x, y, r, R2); rect(x - 1, y - 1, x, y - 1, R3); }
+    poly([[27, 5], [16, 8], [23, 15]], hex("#8a8a8a")); poly([[27, 4], [18, 8], [22, 11]], hex("#cfcfcf"));
+    line(4, 27, 2, 29, 1, GRN); line(6, 25, 3, 24, 1, GRN); line(7, 28, 9, 29, 1, GRN);
+    for (const [x, y] of [[24, 20], [27, 17], [21, 24], [8, 8], [12, 5]]) rect(x, y, x + 1, y + 1, R3);
+    rect(26, 24, 27, 25, R2); rect(5, 14, 6, 15, R2);
   },
   a_rain() {
     disc(11, 10, 5, hex("#c8d8e8")); disc(18, 8, 6, hex("#dce8f4")); disc(23, 11, 4, hex("#c8d8e8")); rect(8, 11, 25, 14, hex("#c8d8e8"));
@@ -142,15 +141,18 @@ const icons = {
     line(5, 23, 4, 28, 2, hex("#6ec8f0"));
     for (const [x, y] of [[10, 8], [22, 22], [26, 17]]) { line(x - 2, y, x + 2, y, 1, WH); line(x, y - 2, x, y + 2, 1, WH); }
   },
-  m_thunder() { // lightning bolt
-    poly([[19, 4], [9, 17], [15, 17], [12, 28], [24, 13], [17, 13], [21, 4]], hex("#ffe27a"));
-    poly([[19, 6], [12, 16], [17, 16], [14, 25], [22, 14], [16, 14], [19, 6]], WH);
-    for (const [x, y] of [[6, 8], [26, 22], [7, 24], [25, 7]]) { line(x - 1, y, x + 1, y, 1, PUR); line(x, y - 1, x, y + 1, 1, PUR); }
+  m_thunder() { // storm cloud with zig-zag bolt
+    const G1 = hex("#8d97ad"), G2 = hex("#c3cbdc"), G3 = hex("#5d667c");
+    disc(10, 9, 4, G3); disc(17, 7, 5, G3); disc(23, 10, 4, G3); rect(8, 9, 25, 12, G3);
+    disc(10, 8, 3, G1); disc(17, 6, 4, G2); disc(22, 9, 3, G1); rect(9, 9, 24, 11, G1);
+    poly([[18, 11], [11, 18], [15, 18], [9, 28], [23, 16], [18, 16], [22, 11]], hex("#ffd23a"));
+    poly([[18, 12], [13, 18], [17, 18], [12, 25], [20, 16], [16, 16], [19, 12]], WH);
+    for (const [x, y] of [[5, 20], [26, 24], [6, 26], [27, 17]]) { line(x - 1, y, x + 1, y, 1, YEL); line(x, y - 1, x, y + 1, 1, YEL); }
   },
   m_heal() {
     ring(16, 16, 12, 1, CY, 0, 360);
     rect(13, 7, 18, 24, WH); rect(7, 13, 24, 18, WH); rect(14, 8, 17, 23, CY); rect(8, 14, 23, 17, CY);
-  },
+  },
   w_shield() { // steel bubble with a shield emblem
     ring(16, 16, 12, 2, hex("#8c9bb0")); disc(16, 16, 10, hex("#2c3544")); ring(16, 16, 10, 1, hex("#c9d4e4"));
     poly([[10, 9], [22, 9], [22, 17], [16, 24], [10, 17]], hex("#b4c0d2")); poly([[12, 11], [20, 11], [20, 16], [16, 21], [12, 16]], hex("#e6edf6"));
@@ -165,7 +167,7 @@ const icons = {
     poly([[16, 4], [26, 10], [26, 22], [16, 28], [6, 22], [6, 10]], hex("#33205c")); hexa(16, 16, 12, 1, PUR);
     hexa(16, 16, 6, 1, hex("#e2cbff")); line(16, 4, 16, 10, 1, DPUR); line(26, 22, 21, 19, 1, DPUR); line(6, 22, 11, 19, 1, DPUR);
     disc(16, 16, 2, WH);
-  },
+  },
   w_heavy() { // big overhead cleave
     poly([[16, 3], [20, 6], [21, 24], [16, 28], [11, 24], [12, 6]], STEEL); poly([[16, 3], [20, 6], [21, 24], [16, 28]], hex("#aab8c8"));
     rect(8, 4, 23, 5, hex("#ffcf4a"));
@@ -197,14 +199,23 @@ const icons = {
     rect(14, 9, 17, 20, hex("#2c3544")); rect(10, 12, 21, 14, hex("#2c3544"));
     for (const [x, y] of [[8, 9], [23, 9], [16, 24]]) rect(x, y, x + 1, y + 1, WH);
   },
-  w_tiger() { // tiger claw swipes
-    poly([[5, 6], [8, 4], [12, 4], [14, 8], [10, 8]], OR);
-    for (const dx of [0, 7, 14]) { line(6 + dx, 6, 12 + dx, 26, 3, OR); line(6 + dx, 6, 12 + dx, 26, 1, WH); line(8 + dx, 8, 10 + dx, 18, 1, hex("#2a1010")); }
-    rect(4, 27, 27, 27, DRED);
+  w_tiger() { // white tiger claw streaks
+    const B = hex("#6ec8f0"), B2 = hex("#3a8fd0");
+    for (const dx of [0, 7, 14]) {
+      poly([[5 + dx, 5], [9 + dx, 5], [14 + dx, 27]], B2);
+      poly([[6 + dx, 5], [8 + dx, 5], [13 + dx, 26]], B);
+      line(7 + dx, 7, 11 + dx, 22, 1, WH);
+    }
+    line(4, 28, 28, 28, 1, B2);
+    rect(3, 12, 4, 13, WH); rect(27, 8, 28, 9, ICE); rect(24, 24, 25, 25, WH);
   },
-  a_spread() { // three arrows in a fan
-    for (const [dy, a] of [[-9, -0.38], [0, 0], [9, 0.38]]) { const x1 = 27, y1 = 16 + dy; arrow(5, 16, x1, y1, 1, hex("#e8f4e0"), 5); }
-    disc(5, 16, 2, GRN); line(4, 12, 4, 20, 1, DGRN);
+  a_spread() { // sharp high-pressure water arrow
+    const W1 = hex("#2f7fe0"), W2 = hex("#5cb8ff"), W3 = hex("#d6f2ff");
+    poly([[4, 14], [20, 13], [20, 19], [4, 18]], W1); poly([[5, 15], [20, 14], [20, 17], [5, 17]], W2); line(6, 15, 20, 15, 1, W3);
+    poly([[19, 10], [30, 16], [19, 22]], W1); poly([[20, 12], [28, 16], [20, 20]], W2); line(21, 16, 29, 16, 1, WH);
+    line(3, 11, 9, 12, 1, W3); line(2, 21, 8, 20, 1, W3); line(1, 16, 3, 16, 1, W2);
+    for (const [x, y] of [[5, 8], [10, 7], [14, 9], [4, 24], [10, 25], [15, 23], [24, 7], [25, 25]]) { rect(x, y, x, y + 1, W3); }
+    rect(12, 5, 12, 5, WH); rect(18, 26, 18, 26, WH);
   },
   a_shotgun() { // many pellets-arrows bursting from a bow
     ring(7, 16, 7, 2, BRN, 270, 90); line(7, 9, 7, 23, 1, hex("#e8f4e0"));
@@ -227,12 +238,14 @@ const icons = {
     rect(19, 4, 20, 5, WH); rect(23, 25, 24, 26, WH); line(4, 8, 8, 9, 1, SKY); line(4, 24, 8, 23, 1, SKY);
     disc(24, 9, 1, CY);
   },
-  a_wolf() { // wolf head howling
-    poly([[8, 26], [8, 14], [11, 4], [14, 12], [20, 12], [23, 4], [26, 14], [26, 26], [20, 28], [14, 28]], SKY);
-    poly([[10, 25], [10, 15], [12, 8], [14, 14], [20, 14], [22, 8], [24, 15], [24, 25]], ICE);
-    rect(12, 16, 14, 17, hex("#10304a")); rect(20, 16, 22, 17, hex("#10304a"));
-    poly([[15, 21], [19, 21], [17, 25]], hex("#10304a"));
-    line(4, 10, 7, 12, 1, WH); line(28, 10, 25, 12, 1, WH);
+  a_wolf() { // phoenix
+    const F1 = hex("#d8281a"), F2 = hex("#ff7a1f"), F3 = hex("#ffd23a");
+    poly([[14, 16], [3, 6], [5, 14], [2, 17], [7, 19], [5, 23], [14, 21]], F1); poly([[14, 16], [6, 9], [7, 15], [5, 18], [9, 19], [14, 19]], F2);
+    poly([[18, 16], [29, 6], [27, 14], [30, 17], [25, 19], [27, 23], [18, 21]], F1); poly([[18, 16], [26, 9], [25, 15], [27, 18], [23, 19], [18, 19]], F2);
+    poly([[12, 12], [20, 12], [21, 21], [16, 23], [11, 21]], F2); poly([[14, 13], [18, 13], [18, 20], [16, 21], [14, 20]], F3);
+    disc(16, 9, 3, F2); poly([[15, 10], [17, 10], [16, 14]], F3); poly([[14, 6], [16, 2], [18, 6]], F1); rect(14, 8, 14, 8, hex("#2a0a05"));
+    line(16, 22, 11, 27, 2, F1); line(16, 22, 16, 27, 2, F2); line(16, 22, 21, 27, 2, F1); line(16, 23, 16, 26, 1, F3);
+    rect(3, 26, 4, 27, F3); rect(27, 26, 28, 27, F3);
   },
   m_wave() { // vertical purple wave advancing
     for (const [x, c] of [[8, DPUR], [14, PUR], [20, hex("#e2cbff")]]) { ring(x, 16, 10, 2, c, 300, 60); }
@@ -266,10 +279,12 @@ const icons = {
     poly([[28, 9], [31, 16], [28, 23]], PUR);
     line(14, 6, 20, 8, 1, YEL); line(14, 26, 20, 24, 1, YEL);
   },
-  m_dragon() { // dragon head breathing fire
-    poly([[3, 8], [12, 6], [18, 10], [20, 18], [14, 24], [5, 22], [3, 14]], hex("#7a45d6")); poly([[5, 9], [12, 8], [16, 12], [17, 18], [13, 21], [6, 20]], PUR);
-    poly([[8, 6], [10, 2], [12, 6]], hex("#e2cbff")); rect(8, 12, 10, 13, YEL);
-    poly([[18, 12], [29, 6], [27, 16], [30, 24], [18, 20]], OR); poly([[19, 14], [27, 11], [26, 16], [28, 21], [19, 18]], YEL);
+  m_dragon() { // azure dragon head breathing blue breath
+    const D1 = hex("#2a62c8"), D2 = hex("#4f9bff"), D3 = hex("#9fd2ff");
+    poly([[3, 8], [12, 6], [18, 10], [20, 18], [14, 24], [5, 22], [3, 14]], D1); poly([[5, 9], [12, 8], [16, 12], [17, 18], [13, 21], [6, 20]], D2);
+    poly([[7, 7], [5, 2], [11, 6]], D3); poly([[12, 6], [14, 2], [16, 8]], D3); rect(8, 12, 10, 13, YEL);
+    poly([[18, 13], [28, 6], [26, 15], [28, 24], [18, 19]], hex("#3fc4ff")); poly([[19, 14], [26, 10], [25, 15], [26, 21], [19, 18]], hex("#bff0ff"));
+    line(20, 16, 26, 15, 1, WH);
     rect(15, 20, 16, 22, WH);
   },
   c_dash() { // winged boot
