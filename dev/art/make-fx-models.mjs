@@ -79,6 +79,11 @@ class Model {
     }
   }
   write() {
+    for (const e of this.els) {   // vanilla model rules: any violation => magenta missing cube
+      if (e.rotation && (![-45, -22.5, 0, 22.5, 45].includes(e.rotation.angle) || !["x", "y", "z"].includes(e.rotation.axis))) throw new Error(this.name + ": bad rotation");
+      for (const v of [...e.from, ...e.to]) if (!(v >= -16 && v <= 32)) throw new Error(this.name + ": coord out of -16..32");
+      for (const f of Object.values(e.faces)) for (const v of f.uv) if (!(v >= 0 && v <= 16)) throw new Error(this.name + ": uv out of 0..16");
+    }
     if (this.els.length > 400) throw new Error(this.name + " too many elements");
     const tex = "pipifacilities:item/fx_" + this.name;
     const id = { rotation: [0, 0, 0], translation: [0, 0, 0], scale: [1, 1, 1] };
@@ -321,5 +326,191 @@ function crescent(m, o) {
   };
   shard(8, 8, 2, 1, 0);
   shard(1, 10, -10, .5, 22.5); shard(15, 6, -10, .45, -22.5);
+  m.write();
+}
+
+// ================================================================== skill FX batch 2 (forward = model -Z)
+const SGN = 1;  // rotation-about-x direction for limb()/swept parts (verified in previews)
+/** curved chain of boxes in the YZ plane (rotation about X). pts = [[y,z],...]; th = z thickness, wd = x width. */
+function limb(m, pts, th, wd, ci, x = 8) {
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [y0, z0] = pts[i], [y1, z1] = pts[i + 1], dy = y1 - y0, dz = z1 - z0;
+    const len = Math.hypot(dy, dz) * 1.2, ang = Math.atan2(dz, dy) / D;
+    const q = Math.max(-45, Math.min(45, Math.round(ang / 22.5) * 22.5));
+    const cy = (y0 + y1) / 2, cz = (z0 + z1) / 2;
+    m.box([x - wd / 2, cy - len / 2, cz - th / 2], [x + wd / 2, cy + len / 2, cz + th / 2], ci, q ? { axis: "x", angle: SGN * q, origin: [x, cy, cz] } : null);
+  }
+}
+const noisy2 = (c, n = 10, a) => ({ c, noise: n, a });
+
+// ------------------------------------------------------------------ wind bow (mint/sky translucent, arrow direction -Z)
+{
+  const m = new Model("wind_bow", ["#ffffff", "#e0fff4", "#8ef0c8", { c: "#6fd0ff", a: 205 }, { c: "#b8fff0", a: 90 }, { c: "#9fffe0", a: 150 }]);
+  const cy = 8, half = 11, N = 12, pts = [];
+  for (let i = 0; i <= N; i++) { const u = -1 + 2 * i / N; pts.push([cy + half * u, 4 + 8 * u * u]); }
+  limb(m, pts, 3.4, 3.4, 4);                                                // translucent aura
+  limb(m, pts, 1.8, 1.8, 2); limb(m, pts.map(([y, z]) => [y, z - .5]), .9, 1.2, 0);
+  m.box([6.6, cy - 2.2, 0.8], [9.4, cy + 2.2, 4.6], 3);                      // grip wrap
+  m.box([6.9, cy - 2.2, 0.5], [9.1, cy + 2.2, 1.3], 1);
+  for (const s of [-1, 1]) {                                                 // curled wind tips
+    const ty = cy + s * (half - 1.5);
+    m.box([6.6, ty - 1.2, 11], [9.4, ty + 1.2, 14.5], 3, { axis: "x", angle: s * -22.5 * SGN });
+    m.box([7.2, ty + s * 1.8 - .8, 13], [8.8, ty + s * 1.8 + .8, 17], 0, { axis: "x", angle: s * -45 * SGN });
+  }
+  limb(m, [[cy - half, 12], [cy - half / 2, 12.5], [cy, 13], [cy + half / 2, 12.5], [cy + half, 12]], .7, .7, 0);   // string
+  for (const [x, y, z, a, ci] of [[3, cy + 7, 8, 22.5, 3], [13, cy - 6, 10, -22.5, 2], [2.5, cy - 3, 4, 45, 5], [13.5, cy + 3, 6, -45, 5], [5, cy + 12, 6, 22.5, 2], [11, cy - 12, 6, -22.5, 3]])
+    m.box([x - .4, y - 1, z - 2.2], [x + .4, y + 1, z + 2.2], ci, { axis: "y", angle: a });   // drifting wisps
+  m.write();
+}
+// ------------------------------------------------------------------ mana bow (huge purple bow, drawn with a glowing arrow)
+{
+  const m = new Model("mana_bow", ["#ffffff", "#f0d8ff", "#b86bff", "#7a2fd6", { c: "#c58bff", a: 90 }, "#ff9cf0", "#3a2060", "#ffe27a"]);
+  const N = 16, half = 20, cy = 8, pts = [];
+  for (let i = 0; i <= N; i++) { const u = -1 + 2 * i / N; pts.push([cy + half * u, -3 + 14 * u * u]); }
+  limb(m, pts, 5, 5, 4);
+  limb(m, pts, 3.2, 3, 3); limb(m, pts.map(([y, z]) => [y, z - 1]), 1.6, 1.6, 2); limb(m, pts.map(([y, z]) => [y, z - 1.4]), .8, 1, 1);
+  m.box([6.4, cy - 4, -6], [9.6, cy + 4, 1.5], 6); m.box([6.9, cy - 4.2, -6.4], [9.1, cy + 4.2, -5], 7);   // grip + gold trim
+  for (const dy of [-2.5, 0, 2.5]) m.box([6, cy + dy - .5, -2], [10, cy + dy + .5, 0], 3);
+  for (const s of [-1, 1]) {                       // tip crystals + curved horns
+    const ty = cy + s * (half - 3);
+    m.box([6, ty - 1.6 + s * 1.6, 8], [10, ty + 1.6 + s * 1.6, 14], 5, { axis: "x", angle: s * -22.5 * SGN });
+    m.box([6.8, ty + s * 3 - 1, 12], [9.2, ty + s * 3 + 1, 17], 1, { axis: "x", angle: s * -45 * SGN });
+    for (const k of [1, 2, 3]) { const dy = k * 6.2, zc = -4 + 14 * Math.pow(dy / half, 2); m.box([7, cy + s * dy - 1, zc - 2.5], [9, cy + s * dy + 1, zc + 2.5], 7); }
+  }
+  const ty0 = cy - half, ty1 = cy + half, pull = 24;
+  limb(m, [[ty0, 11], [(ty0 + cy) / 2, 17.5], [cy, pull], [(ty1 + cy) / 2, 17.5], [ty1, 11]], 1.1, 1.1, 0);   // drawn string
+  m.box([7.2, cy - .8, -11], [8.8, cy + .8, pull], 2); m.box([7.6, cy - .4, -11], [8.4, cy + .4, pull], 0);    // arrow
+  m.box([6.2, cy - 2.2, -14], [9.8, cy + 2.2, -10], 5, { axis: "z", angle: 45 }); m.box([6.2, cy - 2.2, -14], [9.8, cy + 2.2, -10], 1);
+  m.box([6.8, cy - 1, -16], [9.2, cy + 1, -13.5], 0);
+  m.box([7.3, cy - 3, 19], [8.7, cy + 3, 27], 5); m.box([2, cy - .5, 20], [14, cy + .5, 27], 2);               // fletching
+  m.box([6.2, cy - 2.2, -14], [9.8, cy + 2.2, 26], 4);                                                         // glow aura
+  m.write();
+}
+// ------------------------------------------------------------------ spirit wolf (translucent sky-blue, running, head at -Z)
+{
+  const m = new Model("spirit_wolf", [{ c: "#d8f4ff", a: 205 }, { c: "#9fdcff", a: 195 }, { c: "#5cb4f5", a: 190 }, { c: "#3a86e0", a: 185 }, { c: "#e8f8ff", a: 100 }, "#ffffff", { c: "#bfeaff", a: 150 }, "#7af0ff"]);
+  const B = (a, b, ci, r) => m.box(a, b, ci, r);
+  B([6.2, 5.5, 8], [9.8, 11.5, 19], 1);                 // torso
+  B([6.6, 6, 6], [9.4, 11.5, 11], 0);                   // chest
+  B([6.4, 11, 7.5], [9.6, 12.8, 17], 2);                // back fur ridge
+  B([6.2, 5.5, 17], [9.8, 11, 21], 1);                  // haunch
+  B([6.6, 9, 3], [9.4, 14, 8.5], 2, { axis: "x", angle: -22.5 * SGN });    // neck
+  for (let i = 0; i < 4; i++) B([5.6 + (i % 2) * .4, 9.2 + i * .4, 3.5 + i * 1.5], [10.4 - (i % 2) * .4, 13.8 + i * .4, 5.5 + i * 1.5], 0, { axis: "y", angle: i % 2 ? 22.5 : -22.5 });  // mane fluff
+  B([6, 8.5, -3], [10, 14, 3.5], 0);                    // head
+  B([6.8, 8.7, -9], [9.2, 11.8, -3], 6);                // snout
+  B([7, 7.6, -8.4], [9, 8.9, -3.6], 3);                 // lower jaw
+  B([7.4, 11.4, -10], [8.6, 12.4, -8.6], 3);            // nose
+  for (const s of [-1, 1]) {
+    B([8 + s * 2.4 - .8, 11.2, -2.2], [8 + s * 2.4 + .8, 12.4, -1], 7);   // eyes
+    B([8 + s * 2.4 - 1.2, 14, -1.5], [8 + s * 2.4 + 1.2, 17.6, .5], 2, { axis: "z", angle: s * 22.5 });  // ears
+    B([8 + s * 2.4 - .5, 14.2, -.6], [8 + s * 2.4 + .5, 16.2, -.1], 5, { axis: "z", angle: s * 22.5 });
+    B([8 + s * 1.2 - .3, 7.2, -8], [8 + s * 1.2 + .3, 8.4, -7.2], 5);   // fangs
+  }
+  // running legs (front pair stretched forward, rear pair back)
+  for (const [x, z, a] of [[6.1, 6.5, 22.5], [8.9, 7.5, -22.5], [6.1, 18.5, -22.5], [8.9, 19, 22.5]]) {
+    B([x, 0, z], [x + 1.8, 6, z + 2], 2, { axis: "x", angle: a * SGN, origin: [x + .8, 6, z + 1] });
+    B([x - .1, -1, z - .6], [x + 1.9, .6, z + 2.4], 3, { axis: "x", angle: a * SGN, origin: [x + .8, 6, z + 1] });
+  }
+  // tail streaming up and back
+  B([7.2, 9, 20], [8.8, 11.5, 25], 2, { axis: "x", angle: -22.5 * SGN }); B([7, 11.5, 24], [9, 14.5, 29], 1, { axis: "x", angle: -45 * SGN }); B([7.3, 14.5, 28], [8.7, 17, 31.5], 0, { axis: "x", angle: -45 * SGN });
+  for (const [x, y, z, w, h, l] of [[8, 3, 14, 7, 1.4, 10], [8, 4.5, 24, 5, 1.2, 7], [4.5, 7, 22, 1.4, 3, 8], [11.5, 8, 24, 1.4, 3, 7]])
+    B([x - w / 2, y - h / 2, z - l / 2], [x + w / 2, y + h / 2, z + l / 2], 4);   // spirit mist
+  B([5, 4.5, 6], [11, 13, 22], 4);                      // aura
+  m.write();
+}
+// ------------------------------------------------------------------ mana hammer (handle +Y, head at the bottom, faces along +-X)
+{
+  const m = new Model("mana_hammer", ["#ffffff", "#f0d8ff", "#b86bff", "#7a2fd6", { c: "#c58bff", a: 100 }, "#ff9cf0", "#3a2060", "#ffe27a", "#5a3a96"]);
+  const hy = -1;
+  m.box([-1, hy - 3, 1], [17, hy + 9, 15], 3);                         // head core
+  m.box([-1, hy - 3, 1], [17, hy - 1.5, 15], 8); m.box([-1, hy + 7.5, 1], [17, hy + 9, 15], 8);
+  for (const s of [-1, 1]) {
+    const lo = s < 0, ex = lo ? -1 : 17, d = lo ? -1 : 1;
+    const bx = (len) => lo ? [ex - len, ex] : [ex, ex + len];
+    m.box([bx(3.5)[0], hy - 3.6, .2], [bx(3.5)[1], hy + 9.6, 15.8], 6);         // metal end caps
+    m.box([bx(4.4)[0], hy - 1, 3], [bx(4.4)[1], hy + 7, 13], 2);                // striking faces
+    m.box([bx(5)[0], hy + 1, 5], [bx(5)[1], hy + 5, 11], 1);
+    m.box([bx(5.4)[0], hy + 2, 6.5], [bx(5.4)[1], hy + 4, 9.5], 0);
+  }
+  m.box([2.5, hy - 2.5, 0], [13.5, hy + 8.5, 16], 2);                  // mid band
+  m.box([6, hy + 1, -.4], [10, hy + 5, 1.2], 5, { axis: "z", angle: 45 }); m.box([6, hy + 1, 14.8], [10, hy + 5, 16.4], 5, { axis: "z", angle: 45 });
+  m.box([7, hy + 2, -.8], [9, hy + 4, .4], 0, { axis: "z", angle: 45 }); m.box([7, hy + 2, 15.6], [9, hy + 4, 16.8], 0, { axis: "z", angle: 45 });
+  m.box([6.7, 8, 6.7], [9.3, 29, 9.3], 8);                             // handle (+Y)
+  for (let y = 10; y < 28; y += 3.4) m.box([6.3, y, 6.3], [9.7, y + 1.2, 9.7], 6);
+  m.box([6, 17, 6], [10, 22, 10], 7);
+  m.box([5.8, 28, 5.8], [10.2, 31, 10.2], 7, { axis: "y", angle: 45 }); m.box([6.6, 30, 6.6], [9.4, 32, 9.4], 5, { axis: "y", angle: 45 });
+  for (const [x, y, z] of [[-2, 16, 8], [18, 20, 8], [8, 14, 0], [8, 12, 16]]) { m.box(...sq([x, y, z], 1.4), 5, { axis: "y", angle: 45 }); m.box(...sq([x, y, z], 1), 0, { axis: "x", angle: 45 }); }
+  m.box([-4, hy - 4.5, -1.5], [20, hy + 10.5, 17.5], 4);               // aura
+  m.write();
+}
+// ------------------------------------------------------------------ dragon head (purple scales, orange glow, mouth open toward -Z)
+{
+  const m = new Model("dragon_head", [noisy2("#7a2fd6"), noisy2("#b86bff"), noisy2("#4b1a8c"), "#ff7a1f", "#ffd23a", "#ffffff", "#e9c8ff", { c: "#ff9a30", a: 150 }, noisy2("#2a1245"), { c: "#ffd23a", a: 120 }]);
+  seed = 33;
+  const B = (a, b, ci, r) => m.box(a, b, ci, r);
+  B([4, 5, 9], [12, 14, 21], 0);                       // skull
+  B([4.4, 13.4, 9], [11.6, 15, 21], 1);                // crown plate
+  B([5.4, 8.5, 0], [10.6, 13, 9.5], 0);                // upper snout
+  B([6.2, 9, -7], [9.8, 12.4, 0.5], 1);                // snout front
+  B([6.8, 11.8, -7.6], [9.2, 13, -3], 2);              // nose ridge
+  B([5.4, 7.3, 0], [10.6, 8.8, 9], 8);                 // upper-jaw underside
+  const jaw = { axis: "x", angle: -22.5 * SGN, origin: [8, 6, 10] };
+  B([5.6, 3.6, -5], [10.4, 6, 10], 2, jaw); B([6.4, 4.8, -5.8], [9.6, 6, -2], 0, jaw);   // open lower jaw
+  B([6.2, 6.2, -3], [9.8, 8, 8], 3); B([6.8, 6.6, -2], [9.2, 7.6, 5], 4);                // throat glow
+  B([6, 4, -16], [10, 8, -8], 7); B([6.8, 5, -12], [9.2, 7.2, -4], 9); B([7.4, 5.6, -16], [8.6, 6.8, -9], 9, { axis: "y", angle: 22.5 });   // flame
+  for (const [x, z] of [[6.4, -5.5], [9.1, -5.5], [6.4, -2.5], [9.1, -2.5], [6.4, 0.5], [9.1, 0.5]]) B([x, 6.2, z], [x + .5, 7.8, z + 1], 5);
+  for (const s of [-1, 1]) {
+    B([8 + s * 2.3 - .5, 10.6, -6.8], [8 + s * 2.3 + .5, 11.4, -6], 8);              // nostrils
+    B([8 + s * 2.6 - .8, 12, 3], [8 + s * 2.6 + .8, 13.6, 6.5], 4);                  // eyes
+    B([8 + s * 2.6 - .4, 12.2, 3], [8 + s * 2.6 + .4, 13.4, 4], 8);
+    B([8 + s * 4.4 - .6, 8, 11], [8 + s * 4.4 + .6, 14, 20], 2, { axis: "y", angle: s * 22.5 });   // cheek fins
+    B([8 + s * 5.4 - .5, 9, 13], [8 + s * 5.4 + .5, 15, 22], 6, { axis: "y", angle: s * 45 });
+    const hx = 8 + s * 3.4;                                                          // horns sweep back and up
+    B([hx - 1.1, 13, 14], [hx + 1.1, 17.5, 18.5], 1, { axis: "x", angle: -22.5 * SGN });
+    B([hx - .9, 16.5, 17.5], [hx + .9, 21.5, 22.5], 6, { axis: "x", angle: -45 * SGN });
+    B([hx - .6, 20.5, 21.5], [hx + .6, 24, 26], 5, { axis: "x", angle: -45 * SGN });
+  }
+  for (const [z, h] of [[12, 2.6], [16, 3.2], [20, 3.4], [24, 3], [28, 2.4]]) { const y = 14.2 - (z > 21 ? (z - 21) * .6 : 0); B([7.2, y, z], [8.8, y + h, z + 2], 3, { axis: "x", angle: 22.5 * SGN }); }  // dorsal spikes
+  B([4.6, 5, 21], [11.4, 13.4, 26], 0); B([5, 3, 26], [11, 11.5, 31], 2); B([5.6, 4, 24], [10.4, 7, 31], 1);   // neck
+  for (const z of [22.5, 27]) B([4.2, 4.8, z], [11.8, 6.6, z + 1.4], 8);
+  m.write();
+}
+// ------------------------------------------------------------------ tiger claw (striped tiger head at the back, three claw rakes in front)
+{
+  const m = new Model("tiger_claw", ["#ff9a1f", "#ffc14a", "#fff3e0", "#2a1a10", { c: "#ff7a1f", a: 150 }, { c: "#ffe0a0", a: 130 }, "#ffd23a", "#ffffff", "#e0701a"]);
+  const B = (a, b, ci, r) => m.box(a, b, ci, r);
+  const hz = 16;
+  B([2, 3, hz - 2], [14, 13.5, hz + 8], 0);               // head
+  B([3, 12.8, hz - 1], [13, 14, hz + 7], 8);
+  B([4.4, 2, hz - 5], [11.6, 8.5, hz - 1.5], 2);          // muzzle
+  B([6.8, 6.6, hz - 5.6], [9.2, 8, hz - 4.2], 3);         // nose
+  B([4.6, 1.2, hz - 4.2], [11.4, 3.2, hz - 1], 8);        // lower jaw
+  for (const s of [-1, 1]) {
+    B([8 + s * 2.2 - .5, 2.8, hz - 5], [8 + s * 2.2 + .5, 5, hz - 4], 7);                         // fangs
+    B([8 + s * 3.8 - 1.1, 8.6, hz - 2.6], [8 + s * 3.8 + 1.1, 10.4, hz - 1.6], 6);                // eyes
+    B([8 + s * 3.8 - .4, 8.8, hz - 2.9], [8 + s * 3.8 + .4, 10.2, hz - 2.5], 3);
+    B([8 + s * 5 - 1.8, 13, hz + 1], [8 + s * 5 + 1.8, 17, hz + 3.5], 0, { axis: "z", angle: s * 22.5 });   // ears
+    B([8 + s * 5 - .8, 13.4, hz + .8], [8 + s * 5 + .8, 16, hz + 1.1], 2, { axis: "z", angle: s * 22.5 });
+    const sx = s > 0 ? 14 : 2;                                                                    // cheek stripes on the sides
+    for (const [y, z] of [[10, hz + 1], [10, hz + 4.5], [5.5, hz + 2.5]]) B([sx - (s > 0 ? .4 : 1.2), y, z], [sx + (s > 0 ? 1.2 : .4), y + 2.4, z + 1.2], 3);
+  }
+  for (const dx of [-3, 0, 3]) B([8 + dx - .5, 13.4, hz - 1], [8 + dx + .5, 14.4, hz + 5], 3);    // forehead stripes
+  B([7.6, 9.2, hz - 2.2], [8.4, 12.5, hz - 1.7], 3);
+  B([-1, 1, hz + 6], [17, 12, hz + 12], 8);               // mane toward the back
+  B([1, 3, hz + 10], [15, 11, hz + 15], 4);
+  // three claw rakes: tapering streaks along a line leaning 22.5 deg (each box pivots about its own centre so they join cleanly)
+  const ca = Math.sin(22.5 * D), cb = Math.cos(22.5 * D);
+  for (let k = 0; k < 3; k++) {
+    const x0 = 0 + k * 7, z0 = -11 + k * 1.2, top = 20;
+    let t = 0;
+    for (const [len, w, ci] of [[7, 3.4, 8], [7, 3.0, 0], [6, 2.2, 0], [5, 1.4, 1], [4, .8, 7]]) {
+      const c = [x0 + (t + len / 2) * ca, top - (t + len / 2) * cb];
+      const rot = { axis: "z", angle: 22.5, origin: [c[0], c[1], z0 + 2] };
+      m.box([c[0] - w / 2, c[1] - len / 2 * 1.1, z0 + .6], [c[0] + w / 2, c[1] + len / 2 * 1.1, z0 + 3.4], ci, rot);
+      m.box([c[0] - w / 4, c[1] - len / 2 * 1.1, z0], [c[0] + w / 4, c[1] + len / 2 * 1.1, z0 + 4], ci === 8 ? 5 : 7, rot);   // bright core
+      m.box([c[0] - w / 2 - 1, c[1] - len / 2 * 1.1, z0 - .4], [c[0] + w / 2 + 1, c[1] + len / 2 * 1.1, z0 + 4.4], 4, rot);   // translucent edge
+      t += len;
+    }
+  }
   m.write();
 }
