@@ -27,34 +27,45 @@ public final class CombatBar {
 
     private CombatBar() {}
 
-    // ---- skill loadout (server: PIPI_LOADOUT:<w|a|m>:<id1>,<id2>,<id3>)
+    // ---- skill loadout (server: PIPI_LOADOUT:<w|a|m>:<g1>,<g2>,<g3>,<buff>,<ult>; the old 3-id form keeps buff / ult at defaults)
     /** Equippable general skills per class (index 0 = warrior, 1 = archer, 2 = mage). */
     static final String[][] GENERAL = {
-        {"w_rush", "w_whirl", "w_split", "w_leap", "w_flurry"},
-        {"a_triple", "a_pierce", "a_rain", "a_venom", "a_retreat"},
-        {"m_seek", "m_frost", "m_thunder", "m_vortex", "m_prison"}};
+        {"w_rush", "w_whirl", "w_split", "w_heavy", "w_impale", "w_iai"},
+        {"a_triple", "a_rain", "a_pierce", "a_spread", "a_shotgun", "a_gale"},
+        {"m_seek", "m_frost", "m_thunder", "m_wave", "m_hammer", "m_bow"}};
+    /** Buff choices (key 4, one equipped) and ultimate choices (key 5, one equipped) per class. */
+    static final String[][] BUFF = {{"w_heal", "w_rage", "w_fort"}, {"a_heal", "a_focus", "a_spirit"}, {"m_heal", "m_focus", "m_reset"}};
+    static final String[][] ULT = {{"w_ult", "w_tiger"}, {"a_ult", "a_wolf"}, {"m_cannon", "m_dragon"}};
     private static final String LOADOUT_PREFIX = "PIPI_LOADOUT:";
     private static final String[][] loadouts = {
-        {"w_rush", "w_whirl", "w_split"}, {"a_triple", "a_pierce", "a_rain"}, {"m_seek", "m_frost", "m_thunder"}};
+        {"w_rush", "w_whirl", "w_split", "w_heal", "w_ult"}, {"a_triple", "a_rain", "a_pierce", "a_heal", "a_ult"}, {"m_seek", "m_frost", "m_thunder", "m_heal", "m_cannon"}};
     private static long suppressCooldownUntil;
 
     static int classIndex(String cls) { return switch (cls) { case "a" -> 1; case "m" -> 2; default -> 0; }; }
 
-    /** Currently equipped skill ids for keys 1-3 of the class index (0 w, 1 a, 2 m). */
+    /** Currently equipped ids of the class index (0 w, 1 a, 2 m): keys 1-3 general, [3] buff (key 4), [4] ultimate (key 5). */
     static String[] loadout(int cls) { return loadouts[cls].clone(); }
 
-    private static boolean isCharged(String id) { return id.equals("w_rush") || id.equals("a_pierce") || id.equals("m_seek"); }
+    private static boolean isCharged(String id) { return id.equals("w_rush") || id.equals("a_triple") || id.equals("m_seek"); }
 
     private static void receiveLoadout(String text) {
         String[] parts = text.substring(LOADOUT_PREFIX.length()).split(":");
         if (parts.length != 2) return;
         int c = classIndex(parts[0]);
         String[] ids = parts[1].split(",");
-        if (ids.length != 3) return;
-        for (String id : ids) if (!java.util.Arrays.asList(GENERAL[c]).contains(id)) return;
+        if (ids.length != 3 && ids.length != 5) return;
+        for (int i = 0; i < 3; i++) if (!java.util.Arrays.asList(GENERAL[c]).contains(ids[i])) return;
+        String buff = BUFF[c][0], ult = ULT[c][0];
+        if (ids.length == 5) {
+            if (!java.util.Arrays.asList(BUFF[c]).contains(ids[3]) || !java.util.Arrays.asList(ULT[c]).contains(ids[4])) return;
+            buff = ids[3];
+            ult = ids[4];
+        }
         System.arraycopy(ids, 0, loadouts[c], 0, 3);
+        loadouts[c][3] = buff;
+        loadouts[c][4] = ult;
         // the skills in keys 1-3 may have changed: forget their cooldown state, the server re-sends the running ones right after
-        for (int s = 1; s <= 3; s++) { cooldownEnd[s] = 0; cooldownLength[s] = 0; chargeMax[s] = 0; chargeCur[s] = 0; }
+        for (int s = 1; s <= 5; s++) { cooldownEnd[s] = 0; cooldownLength[s] = 0; chargeMax[s] = 0; chargeCur[s] = 0; }
         suppressCooldownUntil = System.nanoTime() / 1_000_000L + 1500;
     }
 
@@ -314,7 +325,7 @@ public final class CombatBar {
             gauge(graphics, 0, x, y, 16);
             return;
         }
-        // 2-charge skills: 전사 돌진 베기, 궁수 관통 화살, 마법사 유도 마탄 (wherever they are equipped)
+        // 2-charge skills: 전사 돌진 베기, 궁수 삼연사, 마법사 유도 마탄 (wherever they are equipped)
         String equipped = pos >= 1 && pos <= 3 ? loadouts[classIndex(cls)][pos - 1] : null;
         if (equipped != null) {
             if (!isCharged(equipped)) chargeMax[pos] = 0;
@@ -323,8 +334,8 @@ public final class CombatBar {
         String id = switch (pos) {
             case 6 -> cls + "_shield";
             case 1, 2, 3 -> equipped;
-            case 4 -> cls + "_heal";
-            case 5 -> cls + "_ult";
+            case 4 -> loadouts[classIndex(cls)][3];
+            case 5 -> loadouts[classIndex(cls)][4];
             case 0 -> "c_dash";
             default -> null;
         };
