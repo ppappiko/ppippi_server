@@ -263,20 +263,20 @@ final class ClassSkills implements Listener {
     public void quit(PlayerQuitEvent event) {
         Player p = event.getPlayer();
         UUID id = p.getUniqueId();
-        lastGround.remove(id); phoenixUntil.remove(id); fortress.remove(id); atkBuff.remove(id); will.remove(id); dashInputs.remove(id);
+        lastGround.remove(id); phoenixUntil.remove(id); fortress.remove(id); atkBuff.remove(id); will.remove(id); dashInputs.remove(id); kill(shells.remove(id));
         clearSpeedMod(p);
     }
 
     @EventHandler
     public void died(org.bukkit.event.entity.PlayerDeathEvent event) {
         UUID id = event.getEntity().getUniqueId();
-        fortress.remove(id); atkBuff.remove(id); will.remove(id); phoenixUntil.remove(id);
+        fortress.remove(id); atkBuff.remove(id); will.remove(id); phoenixUntil.remove(id); kill(shells.remove(id));
         clearSpeedMod(event.getEntity());
     }
 
     @EventHandler
     public void worldChanged(org.bukkit.event.player.PlayerChangedWorldEvent event) {
-        phoenixUntil.remove(event.getPlayer().getUniqueId());
+        phoenixUntil.remove(event.getPlayer().getUniqueId()); kill(shells.remove(event.getPlayer().getUniqueId()));
     }
 
     private static final NamespacedKey SPEED_KEY = new NamespacedKey("pipilife", "breath_speed");
@@ -446,6 +446,7 @@ final class ClassSkills implements Listener {
             case K_SHOTGUN: return 40;
             case K_BOW: return 30;
             case K_M_CANNON: case K_M_DRAGON: return 60;
+            case K_THUNDER: return 12;
             default: break;
         }
         if (key >= 26 && key < 35) return 4; // buffs
@@ -455,6 +456,8 @@ final class ClassSkills implements Listener {
     /** Wind-up visuals / restrictions that run from cast until the effect fires. */
     private void prepare(Player p, Job job, int slot, int key, int windup) {
         if (key == K_SPLIT || key == K_HEAVY) chargeFx(p, windup);
+        if (key == K_M_CANNON) cannonChargeFx(p, windup);
+        if (key == K_THUNDER) thunderChargeFx(p, windup);
         if (job == Job.MAGE && slot != 0) staffCharge(p, windup, key == K_BOW ? 1 : key == K_M_DRAGON ? 2 : 0);
         if (key == K_HEAVY) p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, windup + 2, 3, false, false));
         if (key == K_IAI || key == K_SHOTGUN) {
@@ -1001,55 +1004,107 @@ final class ClassSkills implements Listener {
         });
     }
 
-    /** 뇌운: for 4 s, every 0.5 s a lightning effect (display model, no vanilla lightning) drops on up to 3 nearby enemies within 8 for 60% attack each (8 hits). */
-    private void thunder(Player p) {
+    /** Compressed mana shells being formed per caster (created by the wind-up, taken over by the shot). */
+    private final Map<UUID, ItemDisplay> shells = new HashMap<>();
+
+    private Location shellSpot(Player p) {
+        return staffTip(p).add(p.getEyeLocation().getDirection().normalize().multiply(.7));
+    }
+
+    /** 마력 포탄 wind-up: mana motes are pulled into the staff tip and pressed into a spinning, squeezing shell. */
+    private void thunderChargeFx(Player p, int ticks) {
         World w = p.getWorld();
-        double dmg = power(p, Job.MAGE) * .6;
-        run(10, 8, i -> {
-            if (!ready(p, w)) return true;
-            Location c = p.getLocation();
-            List<LivingEntity> targets = near(p, c, 8);
-            targets.sort(Comparator.comparingDouble(t -> t.getLocation().distanceSquared(c)));
-            if (targets.isEmpty()) {
-                Location at = c.clone().add(0, 1, 0);
-                w.spawnParticle(Particle.ELECTRIC_SPARK, at, 25, 1.2, .8, 1.2, .1);
-                w.spawnParticle(Particle.END_ROD, at, 6, 1, .8, 1, .05);
-                w.playSound(c, Sound.BLOCK_BEEHIVE_SHEAR, .4f, 2f);
-                return false;
+        UUID id = p.getUniqueId();
+        kill(shells.remove(id));
+        ItemDisplay shell = fx("mana_shell", shellSpot(p), new Quaternionf(), vec(.4f), null, ticks + 30);
+        if (shell != null) shells.put(id, shell);
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        run(1, ticks, i -> {
+            if (!ready(p, w)) { kill(shell); shells.remove(id, shell); return true; }
+            Vector d = p.getEyeLocation().getDirection().normalize();
+            Location at = shellSpot(p);
+            double frac = (i + 1) / (double) ticks;
+            float s = (float) (.4 + .9 * frac);
+            double sq = Math.sin(i * 1.3) * .14 * frac;
+            poseFx(shell, at, facing(d, (float) (i * .5)), new Vector3f((float) (s * (1 + sq)), (float) (s * (1 - sq)), (float) (s * (1 + sq))), 2);
+            for (int n = 0; n < 3; n++) {
+                Vector off = new Vector(rnd.nextDouble(-1, 1), rnd.nextDouble(-1, 1), rnd.nextDouble(-1, 1));
+                if (off.lengthSquared() < 1e-4) continue;
+                off.normalize().multiply(2.0 * (1 - frac) + .4);
+                w.spawnParticle(Particle.DUST, at.clone().add(off), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(176, 90, 255), 1.1f));
             }
-            for (int n = 0; n < Math.min(3, targets.size()); n++) lightningBolt(p, targets.get(n), dmg);
+            if (shell == null) w.spawnParticle(Particle.DUST, at, 3, .1 + .2 * frac, .1 + .2 * frac, .1 + .2 * frac, 0, new Particle.DustOptions(Color.fromRGB(150, 60, 230), (float) (1 + 1.6 * frac)));
+            if (i % 3 == 0) w.playSound(at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, .5f, (float) (.6 + frac * 1.2));
             return false;
         }, null);
     }
 
-    /** Lightning effect: the bolt model drops ~8 blocks onto the target in 3 ticks (particle line when the model is missing), then damage + sparks. */
-    private void lightningBolt(Player p, LivingEntity t, double dmg) {
-        World w = t.getWorld();
-        Location at = t.getLocation();
-        float s = 3.2f;
-        double off = .5 * s; // the model spans 0..32 px, its centre (display origin) is half a unit above the bottom
-        Location from = at.clone().add(0, 8 + off, 0), to = at.clone().add(0, off, 0);
-        ItemDisplay bolt = fx("lightning_bolt", from, new Quaternionf().rotateY((float) (ThreadLocalRandom.current().nextDouble() * Math.PI * 2)), vec(s), null, 24);
-        run(1, 3, i -> {
-            moveFx(bolt, from.clone().add(to.clone().subtract(from).toVector().multiply((i + 1) / 3.0)));
-            return false;
-        }, () -> {
-            Location hitAt = t.isValid() ? t.getLocation() : at;
-            if (bolt == null) {
-                ThreadLocalRandom rnd = ThreadLocalRandom.current();
-                for (double y = 0; y <= 8; y += .5) {
-                    Location pt = hitAt.clone().add(rnd.nextDouble(-.25, .25), y, rnd.nextDouble(-.25, .25));
-                    w.spawnParticle(Particle.ELECTRIC_SPARK, pt, 2, .05, .05, .05, 0);
-                    w.spawnParticle(Particle.END_ROD, pt, 1, 0, 0, 0, 0);
-                }
+    /** 마력 포탄: the pressed mana shell is fired at the aimed enemy (nearest near the crosshair within 20) or the looked-at point, homes slightly, and explodes (420% within 3.5, small knock-up). */
+    private void thunder(Player p) {
+        World w = p.getWorld();
+        UUID id = p.getUniqueId();
+        double dmg = power(p, Job.MAGE) * 4.2;
+        Location eye = p.getEyeLocation();
+        Vector look = eye.getDirection().normalize();
+        ItemDisplay held = shells.remove(id);
+        Location pos = held != null && held.isValid() ? held.getLocation().clone() : shellSpot(p);
+        LivingEntity lock = aimTarget(p, eye, look, 20, false);
+        Vector dir;
+        if (lock != null) dir = lock.getBoundingBox().getCenter().subtract(pos.toVector());
+        else {
+            var rh = w.rayTraceBlocks(eye, look, 20, FluidCollisionMode.NEVER, true);
+            Vector point = rh == null ? eye.toVector().add(look.clone().multiply(20)) : rh.getHitPosition();
+            dir = point.subtract(pos.toVector());
+        }
+        final Vector d = dir.lengthSquared() < 1e-6 ? look.clone() : dir.normalize();
+        final Location start = pos.clone();
+        final ItemDisplay ball = held != null ? held : fx("mana_shell", pos, facing(d, 0), vec(1.3f), null, 50);
+        w.playSound(pos, Sound.ENTITY_BLAZE_SHOOT, 1f, .5f);
+        w.playSound(pos, Sound.ENTITY_ENDER_DRAGON_SHOOT, .6f, 1.8f);
+        final double speed = 1.1;
+        Color purple = Color.fromRGB(176, 90, 255);
+        run(1, 24, i -> {
+            if (lock != null && lock.isValid() && lock.getWorld() == w) {
+                Vector want = lock.getBoundingBox().getCenter().subtract(pos.toVector());
+                if (want.lengthSquared() > 1e-6) d.multiply(.85).add(want.normalize().multiply(.15)).normalize();
             }
-            w.spawnParticle(Particle.ELECTRIC_SPARK, hitAt.clone().add(0, 1, 0), 30, .5, 1, .5, .15);
-            w.spawnParticle(Particle.END_ROD, hitAt.clone().add(0, 1, 0), 10, .3, 1.2, .3, .08);
-            w.playSound(hitAt, Sound.BLOCK_AMETHYST_BLOCK_HIT, .8f, 1.8f);
-            w.playSound(hitAt, Sound.ENTITY_FIREWORK_ROCKET_BLAST, .2f, 1.7f);
-            hit(p, t, dmg);
-            Bukkit.getScheduler().runTaskLater(plugin, () -> kill(bolt), 2);
+            var rh = w.rayTraceBlocks(pos, d, speed, FluidCollisionMode.NEVER, true);
+            if (rh != null) {
+                pos.setX(rh.getHitPosition().getX()); pos.setY(rh.getHitPosition().getY()); pos.setZ(rh.getHitPosition().getZ());
+                return true;
+            }
+            pos.add(d.clone().multiply(speed));
+            if (ball != null && ball.isValid()) poseFx(ball, pos, facing(d, (float) (i * .6)), vec(1.3f), 1);
+            w.spawnParticle(Particle.DUST, pos, 4, .15, .15, .15, 0, new Particle.DustOptions(purple, 1.5f));
+            w.spawnParticle(Particle.DUST, pos, 2, .25, .25, .25, 0, new Particle.DustOptions(Color.fromRGB(110, 40, 190), 1.1f));
+            w.spawnParticle(Particle.ENCHANT, pos, 2, .3, .3, .3, .1);
+            if (!near(p, pos, 1.0).isEmpty()) return true;
+            return pos.distanceSquared(start) >= 400;
+        }, () -> {
+            kill(ball);
+            explodeShell(p, pos, dmg);
         });
+    }
+
+    private void explodeShell(Player p, Location at, double dmg) {
+        World w = at.getWorld();
+        ItemDisplay blast = fx("mana_blast", at, new Quaternionf(), vec(2f), null, 16);
+        tween(blast, 1, 5, new Vector3f(), new Quaternionf().rotateY(.8f), vec(4f));
+        tween(blast, 6, 4, new Vector3f(), new Quaternionf().rotateY(1.4f), vec(.1f));
+        w.spawnParticle(Particle.EXPLOSION, at, 3, 1, 1, 1, 0);
+        w.spawnParticle(Particle.EXPLOSION_EMITTER, at, 1, 0, 0, 0, 0);
+        w.spawnParticle(Particle.DUST, at, 60, 1.6, 1.6, 1.6, 0, new Particle.DustOptions(Color.fromRGB(176, 90, 255), 2f));
+        w.spawnParticle(Particle.DUST, at, 30, 2.2, 2.2, 2.2, 0, new Particle.DustOptions(Color.fromRGB(110, 40, 190), 1.6f));
+        w.spawnParticle(Particle.END_ROD, at, 20, 1.2, 1.2, 1.2, .2);
+        w.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, .55f);
+        w.playSound(at, Sound.ENTITY_DRAGON_FIREBALL_EXPLODE, 1f, .6f);
+        w.playSound(at, Sound.ENTITY_WARDEN_SONIC_BOOM, .5f, 1.4f);
+        for (LivingEntity t : near(p, at, 3.5)) {
+            hit(p, t, dmg);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (t.isValid() && !t.isDead()) t.setVelocity(t.getVelocity().setY(.55));
+            }, 2);
+        }
     }
 
     private void light(Player p) { // 치유의 빛
@@ -1305,32 +1360,28 @@ final class ClassSkills implements Listener {
         w.playSound(base, Sound.ENTITY_PLAYER_ATTACK_STRONG, 1f, .6f);
         double dmg = power(p, Job.WARRIOR) * .9;
         double cos = Math.cos(Math.toRadians(80));
-        Vector[] last = {dir};
+        // the tiger stays fixed where it appeared; every sweep originates from this spot and direction
+        final Location o = base.clone().add(0, 1, 0).add(dir.clone().multiply(3));
+        final Vector d = dir.clone();
         run(1, 104, i -> {
             if (!ready(p, w)) return true;
-            Location o = p.getLocation().add(0, 1, 0);
-            Vector d = flatLook(p);
-            if (d == null) d = last[0];
-            last[0] = d;
-            if (i >= 4 && i % 2 == 0) {
-                moveFx(beast, o.clone().add(0, .6, 0).add(d.clone().multiply(3)));
-                if (i >= 6) tween(beast, 1, 2, new Vector3f(), facing(d, 0), vec(3.2f));
-            }
+            if (i >= 4 && i % 10 == 4 && beast != null && beast.isValid())
+                tween(beast, 1, 2, new Vector3f(), facing(d, 0), vec(3.2f));
             if (i < 4 || (i - 4) % 10 != 0) return false;
             int n = (i - 4) / 10; // sweep 0..9
             boolean big = n == 9;
             float scale = big ? 4.8f : 3.6f;
             float roll = big ? 0f : (n % 2 == 0 ? .7f : -.7f);
-            Location pt = o.clone().add(d.clone().multiply(3.2)).add(0, .3, 0);
+            Location pt = o.clone().add(d.clone().multiply(1.8)).add(0, .3, 0);
             Vector rs = new Vector(-d.getZ(), 0, d.getX()); // three thin parallel claw streaks
             for (int lane = -1; lane <= 1; lane++)
-                slashQuick(lane == 0 ? "slash_red" : "slash_arc", pt.clone().add(rs.clone().multiply(lane * .55)).add(0, lane * .12, 0), d, scale, roll, 1.0f);
+                clawStreak("slash_arc", pt.clone().add(rs.clone().multiply(lane * .5)).add(0, lane * .18, 0), d, scale, roll * 1.3f + lane * .22f, .8f);
             w.playSound(o, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.1f, .6f + (n % 3) * .2f);
             if (n % 3 == 0) w.playSound(o, Sound.ENTITY_CAT_HISS, .7f, .5f);
-            for (double a = -80; a <= 80; a += 32) {
+            for (double a = -80; a <= 80; a += 40) {
                 Vector dd = d.clone().rotateAroundY(Math.toRadians(a));
-                for (double r = 2.5; r <= 8; r += 2.75)
-                    w.spawnParticle(big ? Particle.CRIT : Particle.SWEEP_ATTACK, o.clone().add(dd.clone().multiply(r)), 1, .1, .1, .1, 0);
+                for (double r = 3; r <= 8; r += 2.5)
+                    w.spawnParticle(big ? Particle.END_ROD : Particle.CRIT, o.clone().add(dd.clone().multiply(r)), 1, .05, .05, .05, 0);
             }
             for (LivingEntity t : near(p, o, 8)) if (inCone(o, d, t, cos, true)) hit(p, t, dmg);
             return false;
@@ -1584,7 +1635,7 @@ final class ClassSkills implements Listener {
         phoenixUntil.put(id, until);
         Vector look0 = p.getEyeLocation().getDirection().normalize();
         Location[] cur = {phoenixSpot(p, look0, 0)};
-        ItemDisplay bird = fx("phoenix", cur[0], facing(look0, 0), vec(1.6f), null, (int) Math.min(260, ms / 50 + 6));
+        ItemDisplay bird = fx("phoenix", cur[0], facing(look0, 0), vec(2.7f), null, (int) Math.min(260, ms / 50 + 6));
         if (bird != null) bird.setTeleportDuration(3);
         w.playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1.2f, .6f);
         w.playSound(p.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1f, .7f);
@@ -1596,13 +1647,13 @@ final class ClassSkills implements Listener {
             Vector look = p.getEyeLocation().getDirection().normalize();
             Location goal = phoenixSpot(p, look, i);
             Location now = cur[0];
-            now.add(goal.clone().subtract(now).toVector().multiply(.3));
+            now.add(goal.clone().subtract(now).toVector().multiply(.22));
             moveFx(bird, now);
             if (bird != null && bird.isValid() && i % 2 == 0)
-                tween(bird, 1, 2, new Vector3f(), facing(look, (float) Math.sin(i * .45) * .12f), vec(1.6f * (1f + (float) Math.sin(i * .6) * .06f)));
-            if (i % 2 == 0) {
-                w.spawnParticle(Particle.FLAME, now, 1, .25, .2, .25, .01);
-                w.spawnParticle(Particle.DUST, now, 1, .3, .25, .3, 0, new Particle.DustOptions(orange, 1.1f));
+                tween(bird, 1, 2, new Vector3f(), facing(look, (float) Math.sin(i * .25) * .08f), vec(2.7f * (1f + (float) Math.sin(i * .3) * .035f)));
+            if (i % 3 == 0) {
+                w.spawnParticle(Particle.FLAME, now, 2, .7, .5, .7, .01);
+                w.spawnParticle(Particle.DUST, now, 2, .8, .6, .8, 0, new Particle.DustOptions(orange, .9f));
             }
             if (i % 20 == 19) {
                 Location pl = p.getLocation();
@@ -1617,11 +1668,11 @@ final class ClassSkills implements Listener {
         });
     }
 
-    /** Right shoulder spot (1.2 right, 0.6 above the shoulder) with a gentle bob. */
+    /** Behind the right shoulder (1.4 right, 1.3 above, 0.4 back) with a slow, smooth bob. */
     private Location phoenixSpot(Player p, Vector look, int tick) {
         Vector right = new Vector(-look.getZ(), 0, look.getX());
         if (right.lengthSquared() < 1e-6) right = new Vector(1, 0, 0); else right.normalize();
-        return p.getLocation().add(0, 2.0 + Math.sin(tick * .2) * .1, 0).add(right.multiply(1.2));
+        return p.getLocation().add(0, 2.6 + Math.sin(tick * .1) * .12, 0).add(right.multiply(1.4)).add(new Vector(-right.getZ(), 0, right.getX()).multiply(.4 / 1.4));
     }
 
     private void phoenixFireball(Player p, Location from, LivingEntity target, double dmg) {
@@ -1874,23 +1925,97 @@ final class ClassSkills implements Listener {
         return eye.clone().add(d.clone().multiply(1.6)).add(side.multiply(-.25)).add(0, -.35, 0);
     }
 
-    /** 마력포: after the 3 s charge a thick beam (20 blocks, follows the aim) pulses 50% every 0.25 s for 5 s. */
+    /** Position on the beam axis `off` blocks in front of the staff tip (low / right of the eye so the view stays clear). */
+    private Location cannonSpot(Player p, double off) {
+        return staffTip(p).add(p.getEyeLocation().getDirection().normalize().multiply(off));
+    }
+
+    /** Teleports a display and tweens its transformation over dur ticks (no scheduler delay). */
+    private void poseFx(ItemDisplay d, Location at, Quaternionf rot, Vector3f scale, int dur) {
+        if (d == null || !d.isValid()) return;
+        d.setTeleportDuration(Math.max(1, Math.min(dur, 59)));
+        d.teleport(flat(at));
+        d.setInterpolationDelay(0);
+        d.setInterpolationDuration(dur);
+        d.setTransformation(new Transformation(new Vector3f(), rot, scale, new Quaternionf()));
+    }
+
+    /** Fixed muzzle point of the cannon: in front of where the caster stood, about 1.5 blocks above the feet. */
+    private static Location cannonMuzzle(Location feet, Vector dir) {
+        Vector f = dir.clone().setY(0);
+        if (f.lengthSquared() < 1e-6) f = new Vector(0, 0, 1); else f.normalize();
+        return feet.clone().add(0, 1.5, 0).add(f.multiply(1.2));
+    }
+
+    /** 마력포 wind-up: a spinning magic circle (plus a smaller counter-rotating one) grows in front of the caster; the client also draws a screen overlay (PIPI_CHARGE). */
+    private void cannonChargeFx(Player p, int ticks) {
+        World w = p.getWorld();
+        p.sendMessage("PIPI_CHARGE:m_cannon:" + ticks);
+        Location eye0 = p.getEyeLocation();
+        Vector d0 = eye0.getDirection().normalize();
+        ItemDisplay c1 = fx("mana_circle", bowSpot(eye0, d0), facing(d0, 0), vec(.3f), null, ticks + 6);
+        ItemDisplay c2 = fx("mana_circle", bowSpot(eye0, d0).add(d0.clone().multiply(.5)), facing(d0, 0), vec(.2f), null, ticks + 6);
+        run(1, ticks, i -> {
+            if (!ready(p, w)) return true;
+            Location eye = p.getEyeLocation();
+            Vector d = eye.getDirection().normalize();
+            double frac = Math.min(1, i / (double) Math.max(1, ticks - 2));
+            double k = Math.max(0, Math.min(1, (frac - .8) / .2));
+            Location a = bowSpot(eye, d), b = cannonMuzzle(p.getLocation(), d);
+            Location at = a.clone().add(b.clone().subtract(a).toVector().multiply(k));
+            float s1 = (float) ((.3 + 2.2 * frac) * (1 - .4 * k));
+            poseFx(c1, at, facing(d, (float) (i * .12 * (1 + frac * 2))), vec(s1), 2);
+            poseFx(c2, at.clone().add(d.clone().multiply(.5 + k * .8)), facing(d, (float) (-i * .2 * (1 + frac * 2))), vec(s1 * .6f), 2);
+            if (c1 == null && i % 2 == 0) {
+                Vector side = new Vector(-d.getZ(), 0, d.getX());
+                if (side.lengthSquared() < 1e-6) side = new Vector(1, 0, 0); else side.normalize();
+                Vector up = side.clone().crossProduct(d).normalize();
+                double r = .3 + 1.1 * frac, ang = i * .3;
+                for (int n = 0; n < 6; n++) {
+                    double aa = ang + n * Math.PI / 3;
+                    w.spawnParticle(Particle.DUST, at.clone().add(side.clone().multiply(Math.cos(aa) * r)).add(up.clone().multiply(Math.sin(aa) * r)), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(176, 90, 255), 1.2f));
+                }
+            }
+            if (i % 4 == 0) w.spawnParticle(Particle.END_ROD, at, 1, .6 * s1, .6 * s1, .6 * s1, 0);
+            return false;
+        }, () -> { kill(c1); kill(c2); p.sendMessage("PIPI_CHARGE:m_cannon:0"); });
+    }
+
+    /** 마력포: after the 3 s charge a fixed magic circle at the cast spot fires a hexagonal mana beam (20 blocks, fixed cast direction) that pulses 50% every 0.25 s for 5 s. */
     private void cannon(Player p) {
         World w = p.getWorld();
         double dmg = power(p, Job.MAGE) * .5;
         Color purple = Color.fromRGB(176, 90, 255);
         w.playSound(p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, .8f, 1.6f);
+        final Vector dir = p.getEyeLocation().getDirection().normalize();
+        final Location tip = cannonMuzzle(p.getLocation(), dir);
+        // beam model: 32 px (2 blocks at scale 1) along model Z, centred; stretched to the beam length with scale z = length / 2
+        ItemDisplay beam = fx("mana_beam", tip, facing(dir, 0), new Vector3f(1.6f, 1.6f, .05f), null, 110);
+        ItemDisplay c1 = fx("mana_circle", tip, facing(dir, 0), vec(1.5f), null, 110);
+        ItemDisplay c2 = fx("mana_circle", tip.clone().add(dir.clone().multiply(1.0)), facing(dir, 0), vec(.9f), null, 110);
+        final boolean model = beam != null;
         run(1, 100, i -> {
             if (!ready(p, w)) return true;
-            Location tip = staffTip(p);
-            Vector dir = p.getEyeLocation().getDirection().normalize();
             double len = blockLen(p, tip, dir, 20);
-            for (double s = 0; s <= len; s += .6) {
-                Location at = tip.clone().add(dir.clone().multiply(s));
-                w.spawnParticle(Particle.DUST, at, 2, .18, .18, .18, 0, new Particle.DustOptions(purple, 2f));
-                if (((int) (s / .6)) % 3 == 0) w.spawnParticle(Particle.END_ROD, at, 1, .05, .05, .05, 0);
+            double grow = Math.min(1, (i + 1) / 4.0), fade = i >= 95 ? Math.max(.04, (99 - i) / 5.0) : 1;
+            if (model) {
+                double vis = Math.max(.1, len * grow * fade);
+                float th = (float) (1.6 * (1 + .1 * Math.sin(i * .9)) * (.3 + .7 * fade));
+                poseFx(beam, tip.clone().add(dir.clone().multiply(vis / 2)), facing(dir, (float) (i * .1)), new Vector3f(th, th, (float) (vis / 2)), 2);
+                if (i % 2 == 0) {
+                    for (double s = 1; s <= len; s += 1.8) w.spawnParticle(Particle.END_ROD, tip.clone().add(dir.clone().multiply(s)), 1, .35, .35, .35, .01);
+                }
+            } else {
+                for (double s = 0; s <= len; s += .6) {
+                    Location at = tip.clone().add(dir.clone().multiply(s));
+                    w.spawnParticle(Particle.DUST, at, 2, .18, .18, .18, 0, new Particle.DustOptions(purple, 2f));
+                    if (((int) (s / .6)) % 3 == 0) w.spawnParticle(Particle.END_ROD, at, 1, .05, .05, .05, 0);
+                }
             }
-            w.spawnParticle(Particle.DUST, tip, 6, .3, .3, .3, 0, new Particle.DustOptions(Color.fromRGB(240, 220, 255), 2.4f));
+            float cs = (float) (Math.min(1, (i + 1) / 6.0) * fade);
+            poseFx(c1, tip, facing(dir, (float) (i * .35)), vec(Math.max(.05f, 1.5f * cs)), 2);
+            poseFx(c2, tip.clone().add(dir.clone().multiply(1.0)), facing(dir, (float) (-i * .5)), vec(Math.max(.05f, .9f * cs)), 2);
+            if (i % 2 == 0) w.spawnParticle(Particle.DUST, tip, 2, .3, .3, .3, 0, new Particle.DustOptions(Color.fromRGB(240, 220, 255), 1.6f));
             if (i % 10 == 0) w.playSound(tip, Sound.BLOCK_BEACON_AMBIENT, 1f, 1.8f);
             if (i % 5 == 0) {
                 for (LivingEntity t : along(p, tip, dir, len, 1.5)) {
@@ -1899,7 +2024,7 @@ final class ClassSkills implements Listener {
                 }
             }
             return false;
-        }, null);
+        }, () -> { kill(beam); kill(c1); kill(c2); });
     }
 
     /** Dragon head spot: 1.2 blocks above the eye, slightly forward (horizontal), so nothing sits in front of the camera. */
@@ -1925,12 +2050,30 @@ final class ClassSkills implements Listener {
         Location mouth = dragonMouth(eye0, d0);
         Vector aim = aimFrom(mouth, eye0, d0);
         ItemDisplay head = fx("dragon_head", mouth, facing(aim, 0), vec(2.4f), null, 110);
+        // breath plume model: narrow origin at model z=+4 (4/16 block*scale ahead of the display centre), widens toward the mouth direction; assumed ~32 model units long
+        final float[] bs = {12.8f, 11.5f};
+        final Location lip = mouth.clone().add(aim.clone().multiply(2.4 * 15.5 / 16.0)).add(0, .08, 0);
+        ItemDisplay[] breath = new ItemDisplay[2];
+        for (int k = 0; k < 2; k++) {
+            breath[k] = fx("dragon_breath", lip.clone().subtract(aim.clone().multiply(4.0 * bs[k] / 16.0)), facing(aim, k * .8f), new Vector3f(bs[k] * .2f, bs[k] * .2f, bs[k] * .05f), null, 110);
+            if (breath[k] != null) breathFx(breath[k], aim, bs[k], 1, bs[k] * .5f, bs[k] * .5f, bs[k] * .5f, k * .8f, 6);
+        }
         w.playSound(eye0, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.1f);
         double cos = Math.cos(Math.toRadians(30));
         Color blue = Color.fromRGB(60, 150, 255), cyan = Color.fromRGB(110, 235, 255);
         run(1, 100, i -> {
             if (!ready(p, w)) return true;
-            for (int n = 0; n < 10; n++) {
+            if (i % 3 == 0 && i >= 6 && i < 94) {
+                double ph = i * .45;
+                for (int k = 0; k < 2; k++) {
+                    float sxy = bs[k] * (float) (.95 + .08 * Math.sin(ph + k * 1.7)), sz = bs[k] * (float) (.97 + .05 * Math.sin(ph * 1.3 + k));
+                    breathFx(breath[k], aim, bs[k], 1, sxy, sxy, sz, (float) (k * .8 + Math.sin(ph + k) * .35 + i * .12), 3);
+                }
+            } else if (i == 94) {
+                for (int k = 0; k < 2; k++) breathFx(breath[k], aim, bs[k], 1, bs[k] * .15f, bs[k] * .15f, bs[k] * .05f, k * .8f, 6);
+            }
+            int np = fxOk(breath) ? 4 : 10;
+            for (int n = 0; n < np; n++) {
                 Vector d = aim.clone().rotateAroundY(Math.toRadians(rnd.nextDouble(-30, 30)));
                 Vector right = d.clone().crossProduct(new Vector(0, 1, 0));
                 if (right.lengthSquared() > 1e-6) d.rotateAroundAxis(right.normalize(), Math.toRadians(rnd.nextDouble(-20, 20)));
@@ -1947,7 +2090,16 @@ final class ClassSkills implements Listener {
                 }
             }
             return false;
-        }, () -> kill(head));
+        }, () -> { kill(head); kill(breath[0]); kill(breath[1]); });
+    }
+
+    private static boolean fxOk(ItemDisplay[] a) { return a[0] != null && a[0].isValid(); }
+
+    /** Tweens a breath plume display (non-uniform scale, origin kept pinned at the mouth). */
+    private void breathFx(ItemDisplay d, Vector aim, float base, int after, float sx, float sy, float sz, float roll, int dur) {
+        if (d == null) return;
+        Vector t = aim.clone().multiply(4.0 * (base - sz) / 16.0);
+        tween(d, after, dur, new Vector3f((float) t.getX(), (float) t.getY(), (float) t.getZ()), facing(aim, roll), new Vector3f(sx, sy, sz));
     }
 
     // ---------------------------------------------------------------- dash jump
@@ -2242,6 +2394,14 @@ final class ClassSkills implements Listener {
         ItemDisplay d = fx(id, at, new Quaternionf(base).rotateY(-sweep), new Vector3f(scale * .45f, scale * .45f, scale * .45f), null, 6);
         tween(d, 1, 2, new Vector3f(), new Quaternionf(base).rotateY(sweep * .6f), vec(scale));
         tween(d, 3, 2, new Vector3f(), new Quaternionf(base).rotateY(sweep), new Vector3f(scale * 1.05f, scale * .2f, scale * 1.05f));
+    }
+
+    /** Razor-thin claw streak: long along the sweep, very thin in height, tilted to rake diagonally, gone in ~5 ticks. */
+    private void clawStreak(String id, Location at, Vector dir, float scale, float roll, float sweep) {
+        Quaternionf base = facing(dir, roll);
+        ItemDisplay d = fx(id, at, new Quaternionf(base).rotateY(-sweep), new Vector3f(scale * .5f, scale * .03f, scale * .5f), null, 5);
+        tween(d, 1, 2, new Vector3f(), new Quaternionf(base).rotateY(sweep * .6f), new Vector3f(scale, scale * .07f, scale * 1.15f));
+        tween(d, 3, 2, new Vector3f(), new Quaternionf(base).rotateY(sweep), new Vector3f(scale * 1.05f, scale * .02f, scale * 1.3f));
     }
 
     /** Big arrow flying from the start along dir for dist blocks over the given ticks, then gone. */

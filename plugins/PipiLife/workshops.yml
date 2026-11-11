@@ -20,6 +20,24 @@ plots:
   plot07:
     z: 36
     x: -72
+    owner: 3743feba-4aba-4ecc-a9cf-481e6e1553ec
+    facilities:
+      LUMBER:
+      - - -71
+        - 64
+        - 37
+      PET_STORAGE:
+      - - -68
+        - 64
+        - 37
+      RESEARCH:
+      - - -65
+        - 64
+        - 37
+      CRAFT:
+      - - -62
+        - 64
+        - 37
   plot08:
     z: 36
     x: -22
@@ -33,9 +51,6 @@ plots:
       - - 13
         - 64
         - 49
-      - - -15
-        - 64
-        - 46
       CRAFT:
       - - 12
         - 64
@@ -81,7 +96,6 @@ plots:
         stations:
           '6_64_55':
             level: 4
-            paused: 1794402029901
       GOLD_MINE:
         paused: 1793958560037
         anchor: '-3_64_38'
@@ -109,6 +123,10 @@ tutorial:
     class: mage
     done: true
     starter-kit: true
+    installable-starter-kit: true
+    warp-blueprint: true
+  3743feba-4aba-4ecc-a9cf-481e6e1553ec:
+    done: true
     installable-starter-kit: true
     warp-blueprint: true
 players:
@@ -151,9 +169,9 @@ players:
       aptitudes:
         FARM: 2
         PET_STORAGE: 2
-      food: 40
-      stock: 408
-      since: 1794402023966
+      food: 25
+      stock: 405
+      since: 1794411795232
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -303,28 +321,27 @@ players:
       lumber-slot: 4
       facility-bound: true
     sunlizard:
-      food: 0
+      food: 90
       stock: 0
-      since: 1794402023966
+      since: 1794411795232
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 5
       facility-bound: true
-      refilling: true
     ferret:
-      food: 40
-      stock: 1
-      since: 1794402023966
+      food: 25
+      stock: 0
+      since: 1794411795232
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 3
       facility-bound: true
     angelpig:
-      food: 46
-      stock: 0
-      since: 1794402023966
+      food: 31
+      stock: 6
+      since: 1794411795232
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -460,7 +477,7 @@ pet-storage:
     - MOLE:ede299a7-6fa1-44a8-8921-03080df80d36
     - HORNRABBIT:ef3ae9cc-4be2-4f86-91c4-e74c42835954
     - CAT:44bc06ff-b436-4a93-b015-eb71f7464179
-    - ''
+    - THUNDERSHEEP:7ff0b631-7dc8-4521-a791-7cbb0e409546
     - ''
     - ''
     - ''
@@ -551,9 +568,9 @@ pet-storage:
         production-anchor: '6_64_55'
         lumber-slot: 2
         facility-bound: true
-        food: 40
+        food: 25
         stock: 0
-        since: 1794402023966
+        since: 1794411795232
         active: true
       44867329-bc34-4972-b522-6fa5361c88fa:
         production-facility: LUMBER
@@ -609,10 +626,6 @@ facility-views:
       wide: true
     '3_64_45':
       wide: true
-    '-15_64_46':
-      width: 2
-      depth: 2
-      wide: true
     '12_64_44':
       width: 3
       depth: 1
@@ -627,7 +640,20 @@ facility-views:
       - null
       - null
       - null
-      - null
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 46
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
       - null
       - null
       - null
@@ -656,4 +682,20 @@ facility-views:
     '2_64_56':
       width: 2
       depth: 2
+      wide: true
+    '-71_64_37':
+      width: 3
+      depth: 3
+      wide: true
+    '-68_64_37':
+      width: 3
+      depth: 3
+      wide: true
+    '-65_64_37':
+      width: 3
+      depth: 1
+      wide: true
+    '-62_64_37':
+      width: 3
+      depth: 1
       wide: true

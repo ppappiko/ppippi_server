@@ -2265,22 +2265,25 @@ final class TownSystems implements Listener {
         if (meta instanceof org.bukkit.inventory.meta.Damageable d && d.hasDamage()) d.setDamage(0);
     }
 
+    /** Runs every 5 ticks per player: only writes a slot back when something actually changed (re-setting items every pass resent inventory + attribute packets and stuttered the client). */
     void refreshCombatGear(Player player) {
         for (int i=0;i<player.getInventory().getSize();i++) {
             ItemStack item=player.getInventory().getItem(i);
-            if (item != null && CaptureSystem.refreshClub(item)) player.getInventory().setItem(i, item);
-            if (item != null && item.hasItemMeta() && CombatStats.eligible(item)
+            if (item == null || item.getType().isAir()) continue;
+            ItemStack before=item.clone();
+            CaptureSystem.refreshClub(item);
+            if (item.hasItemMeta() && CombatStats.eligible(item)
                 && (!item.getItemMeta().isUnbreakable() || (item.getItemMeta() instanceof org.bukkit.inventory.meta.Damageable dm && dm.hasDamage()))) {
-                var m = item.getItemMeta(); makeUnbreakable(m); item.setItemMeta(m); player.getInventory().setItem(i, item);
+                var m = item.getItemMeta(); makeUnbreakable(m); item.setItemMeta(m);
             }
-            if (item != null && item.hasItemMeta()) {
+            if (item.hasItemMeta()) {
                 ItemStack converted=convertOld(item);
-                if(converted!=null){player.getInventory().setItem(i,converted);item=converted;}
+                if(converted!=null)item=converted;
             }
-            if(gearFor(item)!=null && !item.getItemMeta().hasCustomModelData()){GearModels.apply(item);player.getInventory().setItem(i,item);}
-            if (gearFor(item)!=null && item.getItemMeta().getPersistentDataContainer().has(gearKey("rolls"), PersistentDataType.STRING)) { updateGear(item,gearFor(item)); player.getInventory().setItem(i,item); }
-            if (gearFor(item)!=null && hasVanillaEnchants(item)) { updateGear(item,gearFor(item)); player.getInventory().setItem(i,item); }
-            if (gearFor(item)!=null && CombatStats.needsMigration(item)) { updateGear(item,gearFor(item)); player.getInventory().setItem(i,item); }
+            if(gearFor(item)!=null && !item.getItemMeta().hasCustomModelData())GearModels.apply(item);
+            if (gearFor(item)!=null && (item.getItemMeta().getPersistentDataContainer().has(gearKey("rolls"), PersistentDataType.STRING)
+                || hasVanillaEnchants(item) || CombatStats.needsMigration(item))) updateGear(item,gearFor(item));
+            if (!item.equals(before)) player.getInventory().setItem(i,item);
         }
     }
     private Enchantment enhancement(ItemStack hand) {

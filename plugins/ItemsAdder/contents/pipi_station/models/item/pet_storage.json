@@ -1,1 +1,5789 @@
-{"gui_light": "side", "textures": {"wood": "minecraft:block/spruce_planks", "beam": "minecraft:block/stripped_spruce_log", "dark": "minecraft:block/dark_oak_planks", "straw": "minecraft:block/hay_block_top", "wall": "minecraft:block/white_terracotta", "leaf": "minecraft:block/oak_leaves", "red": "minecraft:block/red_wool", "white": "minecraft:block/white_wool", "gold": "minecraft:block/gold_block", "page": "minecraft:block/birch_planks", "book": "minecraft:block/red_terracotta", "bark": "minecraft:block/oak_log", "end": "minecraft:block/oak_log_top", "ground": "minecraft:block/coarse_dirt", "light": "minecraft:block/glowstone", "stone": "minecraft:block/stone_bricks"}, "elements": [{"from": [-16.0, -8.0, -16.0], "to": [32.0, -6.0, 32.0], "faces": {"north": {"texture": "#ground", "uv": [0, 0, 16, 16]}, "south": {"texture": "#ground", "uv": [0, 0, 16, 16]}, "east": {"texture": "#ground", "uv": [0, 0, 16, 16]}, "west": {"texture": "#ground", "uv": [0, 0, 16, 16]}, "up": {"texture": "#ground", "uv": [0, 0, 16, 16]}, "down": {"texture": "#ground", "uv": [0, 0, 16, 16]}}}, {"from": [-13.0, -6.0, -13.0], "to": [29.0, -4.0, 29.0], "faces": {"north": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wood", "uv": [0, 0, 16, 16]}}}, {"from": [-13.0, -4.0, 25.0], "to": [29.0, 17.0, 28.0], "faces": {"north": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wall", "uv": [0, 0, 16, 16]}}}, {"from": [-13.0, -4.0, -10.0], "to": [-10.0, 17.0, 26.0], "faces": {"north": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wall", "uv": [0, 0, 16, 16]}}}, {"from": [26.0, -4.0, -10.0], "to": [29.0, 17.0, 26.0], "faces": {"north": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wall", "uv": [0, 0, 16, 16]}}}, {"from": [-13.0, -4.0, -11.0], "to": [-10.0, 19.0, -8.0], "faces": {"north": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "south": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "east": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "west": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "up": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "down": {"texture": "#beam", "uv": [0, 0, 16, 16]}}}, {"from": [-13.0, -4.0, 25.0], "to": [-10.0, 19.0, 28.0], "faces": {"north": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "south": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "east": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "west": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "up": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "down": {"texture": "#beam", "uv": [0, 0, 16, 16]}}}, {"from": [26.0, -4.0, -11.0], "to": [29.0, 19.0, -8.0], "faces": {"north": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "south": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "east": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "west": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "up": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "down": {"texture": "#beam", "uv": [0, 0, 16, 16]}}}, {"from": [26.0, -4.0, 25.0], "to": [29.0, 19.0, 28.0], "faces": {"north": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "south": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "east": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "west": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "up": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "down": {"texture": "#beam", "uv": [0, 0, 16, 16]}}}, {"from": [-12.0, -4.0, -11.0], "to": [-6.0, 17.0, -8.0], "faces": {"north": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wall", "uv": [0, 0, 16, 16]}}}, {"from": [-11.0, 6.0, -12.0], "to": [-8.0, 10.0, -10.0], "faces": {"north": {"texture": "#light", "uv": [0, 0, 16, 16]}, "south": {"texture": "#light", "uv": [0, 0, 16, 16]}, "east": {"texture": "#light", "uv": [0, 0, 16, 16]}, "west": {"texture": "#light", "uv": [0, 0, 16, 16]}, "up": {"texture": "#light", "uv": [0, 0, 16, 16]}, "down": {"texture": "#light", "uv": [0, 0, 16, 16]}}}, {"from": [21.0, -4.0, -11.0], "to": [27.0, 17.0, -8.0], "faces": {"north": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wall", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wall", "uv": [0, 0, 16, 16]}}}, {"from": [22.0, 6.0, -12.0], "to": [25.0, 10.0, -10.0], "faces": {"north": {"texture": "#light", "uv": [0, 0, 16, 16]}, "south": {"texture": "#light", "uv": [0, 0, 16, 16]}, "east": {"texture": "#light", "uv": [0, 0, 16, 16]}, "west": {"texture": "#light", "uv": [0, 0, 16, 16]}, "up": {"texture": "#light", "uv": [0, 0, 16, 16]}, "down": {"texture": "#light", "uv": [0, 0, 16, 16]}}}, {"from": [-13.0, 16.0, -11.0], "to": [29.0, 19.0, -8.0], "faces": {"north": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "south": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "east": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "west": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "up": {"texture": "#beam", "uv": [0, 0, 16, 16]}, "down": {"texture": "#beam", "uv": [0, 0, 16, 16]}}}, {"from": [-16.0, 18.0, -16.0], "to": [32.0, 20.0, 32.0], "faces": {"north": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "south": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "east": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "west": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "up": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "down": {"texture": "#straw", "uv": [0, 0, 16, 16]}}}, {"from": [-16.0, 20.0, -12.0], "to": [32.0, 22.0, 28.0], "faces": {"north": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "south": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "east": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "west": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "up": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "down": {"texture": "#straw", "uv": [0, 0, 16, 16]}}}, {"from": [-16.0, 22.0, -8.0], "to": [32.0, 24.0, 24.0], "faces": {"north": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "south": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "east": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "west": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "up": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "down": {"texture": "#straw", "uv": [0, 0, 16, 16]}}}, {"from": [-16.0, 24.0, -4.0], "to": [32.0, 26.0, 20.0], "faces": {"north": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "south": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "east": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "west": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "up": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "down": {"texture": "#straw", "uv": [0, 0, 16, 16]}}}, {"from": [-16.0, 26.0, 0.0], "to": [32.0, 28.0, 16.0], "faces": {"north": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "south": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "east": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "west": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "up": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "down": {"texture": "#straw", "uv": [0, 0, 16, 16]}}}, {"from": [-12.0, -6.0, -15.0], "to": [-5.0, -2.0, -11.0], "faces": {"north": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wood", "uv": [0, 0, 16, 16]}}}, {"from": [-12.0, -2.0, -15.0], "to": [-5.0, 1.0, -11.0], "faces": {"north": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "south": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "east": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "west": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "up": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "down": {"texture": "#leaf", "uv": [0, 0, 16, 16]}}}, {"from": [-10.0, 1.0, -14.0], "to": [-8.0, 3.0, -12.0], "faces": {"north": {"texture": "#red", "uv": [0, 0, 16, 16]}, "south": {"texture": "#red", "uv": [0, 0, 16, 16]}, "east": {"texture": "#red", "uv": [0, 0, 16, 16]}, "west": {"texture": "#red", "uv": [0, 0, 16, 16]}, "up": {"texture": "#red", "uv": [0, 0, 16, 16]}, "down": {"texture": "#red", "uv": [0, 0, 16, 16]}}}, {"from": [22.0, -6.0, -15.0], "to": [29.0, -2.0, -11.0], "faces": {"north": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "south": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "east": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "west": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "up": {"texture": "#wood", "uv": [0, 0, 16, 16]}, "down": {"texture": "#wood", "uv": [0, 0, 16, 16]}}}, {"from": [22.0, -2.0, -15.0], "to": [29.0, 1.0, -11.0], "faces": {"north": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "south": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "east": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "west": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "up": {"texture": "#leaf", "uv": [0, 0, 16, 16]}, "down": {"texture": "#leaf", "uv": [0, 0, 16, 16]}}}, {"from": [24.0, 1.0, -14.0], "to": [26.0, 3.0, -12.0], "faces": {"north": {"texture": "#red", "uv": [0, 0, 16, 16]}, "south": {"texture": "#red", "uv": [0, 0, 16, 16]}, "east": {"texture": "#red", "uv": [0, 0, 16, 16]}, "west": {"texture": "#red", "uv": [0, 0, 16, 16]}, "up": {"texture": "#red", "uv": [0, 0, 16, 16]}, "down": {"texture": "#red", "uv": [0, 0, 16, 16]}}}, {"from": [18.0, -4.0, 16.0], "to": [25.0, 2.0, 23.0], "faces": {"north": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "south": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "east": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "west": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "up": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "down": {"texture": "#straw", "uv": [0, 0, 16, 16]}}}, {"from": [-8.0, -4.0, 20.0], "to": [0.0, 1.0, 25.0], "faces": {"north": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "south": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "east": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "west": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "up": {"texture": "#straw", "uv": [0, 0, 16, 16]}, "down": {"texture": "#straw", "uv": [0, 0, 16, 16]}}}], "display": {"fixed": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.5, 0.5, 0.5]}, "gui": {"rotation": [25, 35, 0], "translation": [0, 0, 0], "scale": [0.3, 0.3, 0.3]}}}
+{
+ "credit": "PipiLife pet storage - pet apartment",
+ "gui_light": "side",
+ "textures": {
+  "wood": "minecraft:block/spruce_planks",
+  "beam": "minecraft:block/stripped_spruce_log",
+  "dark": "minecraft:block/dark_oak_planks",
+  "light_wood": "minecraft:block/birch_planks",
+  "stone": "minecraft:block/stone_bricks",
+  "roof": "minecraft:block/red_terracotta",
+  "hole": "minecraft:block/black_concrete",
+  "paw": "minecraft:block/brown_wool",
+  "light": "minecraft:block/glowstone",
+  "iron": "minecraft:block/iron_block",
+  "water": "minecraft:block/light_blue_concrete",
+  "food": "minecraft:block/hay_block_top",
+  "c_red": "minecraft:block/red_wool",
+  "c_blue": "minecraft:block/light_blue_wool",
+  "c_yellow": "minecraft:block/yellow_wool",
+  "c_lime": "minecraft:block/lime_wool",
+  "c_pink": "minecraft:block/pink_wool",
+  "c_purple": "minecraft:block/purple_wool"
+ },
+ "elements": [
+  {
+   "name": "기초",
+   "from": [
+    -13,
+    -8,
+    -7
+   ],
+   "to": [
+    29,
+    -6,
+    27
+   ],
+   "faces": {
+    "north": {
+     "texture": "#stone",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "south": {
+     "texture": "#stone",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "east": {
+     "texture": "#stone",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "west": {
+     "texture": "#stone",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "up": {
+     "texture": "#stone",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#stone",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 벽",
+   "from": [
+    -12,
+    -6,
+    -6
+   ],
+   "to": [
+    28,
+    9,
+    26
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      15
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      15
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      15
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      15
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "name": "층 구분 띠",
+   "from": [
+    -12.5,
+    9,
+    -6.5
+   ],
+   "to": [
+    28.5,
+    10.5,
+    26.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 벽",
+   "from": [
+    -12,
+    10.5,
+    -6
+   ],
+   "to": [
+    28,
+    25,
+    26
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      14.5
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      14.5
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      14.5
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      14.5
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "name": "모서리 기둥",
+   "from": [
+    -13,
+    -6,
+    -7
+   ],
+   "to": [
+    -11,
+    25,
+    -5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    },
+    "down": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "name": "모서리 기둥",
+   "from": [
+    -13,
+    -6,
+    25
+   ],
+   "to": [
+    -11,
+    25,
+    27
+   ],
+   "faces": {
+    "north": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    },
+    "down": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "name": "모서리 기둥",
+   "from": [
+    27,
+    -6,
+    -7
+   ],
+   "to": [
+    29,
+    25,
+    -5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    },
+    "down": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "name": "모서리 기둥",
+   "from": [
+    27,
+    -6,
+    25
+   ],
+   "to": [
+    29,
+    25,
+    27
+   ],
+   "faces": {
+    "north": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    },
+    "down": {
+     "texture": "#beam",
+     "uv": [
+      0,
+      0,
+      2,
+      2
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 1번 방 테두리",
+   "from": [
+    -10.333,
+    -6.5,
+    -6.5
+   ],
+   "to": [
+    -0.333,
+    3,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 1번 방 입구",
+   "from": [
+    -9.333,
+    -6,
+    -6.7
+   ],
+   "to": [
+    -1.333,
+    1,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 1번 방 입구 아치",
+   "from": [
+    -8.333,
+    1,
+    -6.7
+   ],
+   "to": [
+    -2.333,
+    2,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 1번 방 입구 아치 끝",
+   "from": [
+    -6.833,
+    2,
+    -6.7
+   ],
+   "to": [
+    -3.833,
+    2.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 1번 방 쿠션",
+   "from": [
+    -8.333,
+    -6,
+    -8.5
+   ],
+   "to": [
+    -2.333,
+    -4.8,
+    -6.7
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c_red",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#c_red",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#c_red",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#c_red",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#c_red",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    },
+    "down": {
+     "texture": "#c_red",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 1번 방 이름표",
+   "from": [
+    -7.833,
+    3.5,
+    -6.6
+   ],
+   "to": [
+    -2.833,
+    5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 2번 방 테두리",
+   "from": [
+    3.0,
+    -6.5,
+    -6.5
+   ],
+   "to": [
+    13.0,
+    3,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 2번 방 입구",
+   "from": [
+    4.0,
+    -6,
+    -6.7
+   ],
+   "to": [
+    12.0,
+    1,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 2번 방 입구 아치",
+   "from": [
+    5.0,
+    1,
+    -6.7
+   ],
+   "to": [
+    11.0,
+    2,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 2번 방 입구 아치 끝",
+   "from": [
+    6.5,
+    2,
+    -6.7
+   ],
+   "to": [
+    9.5,
+    2.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 2번 방 쿠션",
+   "from": [
+    5.0,
+    -6,
+    -8.5
+   ],
+   "to": [
+    11.0,
+    -4.8,
+    -6.7
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c_blue",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#c_blue",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#c_blue",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#c_blue",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#c_blue",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    },
+    "down": {
+     "texture": "#c_blue",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 2번 방 이름표",
+   "from": [
+    5.5,
+    3.5,
+    -6.6
+   ],
+   "to": [
+    10.5,
+    5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 3번 방 테두리",
+   "from": [
+    16.333,
+    -6.5,
+    -6.5
+   ],
+   "to": [
+    26.333,
+    3,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 3번 방 입구",
+   "from": [
+    17.333,
+    -6,
+    -6.7
+   ],
+   "to": [
+    25.333,
+    1,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 3번 방 입구 아치",
+   "from": [
+    18.333,
+    1,
+    -6.7
+   ],
+   "to": [
+    24.333,
+    2,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 3번 방 입구 아치 끝",
+   "from": [
+    19.833,
+    2,
+    -6.7
+   ],
+   "to": [
+    22.833,
+    2.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 3번 방 쿠션",
+   "from": [
+    18.333,
+    -6,
+    -8.5
+   ],
+   "to": [
+    24.333,
+    -4.8,
+    -6.7
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c_yellow",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#c_yellow",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#c_yellow",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#c_yellow",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#c_yellow",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    },
+    "down": {
+     "texture": "#c_yellow",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    }
+   }
+  },
+  {
+   "name": "1층 3번 방 이름표",
+   "from": [
+    18.833,
+    3.5,
+    -6.6
+   ],
+   "to": [
+    23.833,
+    5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 1번 방 테두리",
+   "from": [
+    -10.333,
+    10.0,
+    -6.5
+   ],
+   "to": [
+    -0.333,
+    19.5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 1번 방 입구",
+   "from": [
+    -9.333,
+    10.5,
+    -6.7
+   ],
+   "to": [
+    -1.333,
+    17.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7.0
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7.0
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7.0
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7.0
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 1번 방 입구 아치",
+   "from": [
+    -8.333,
+    17.5,
+    -6.7
+   ],
+   "to": [
+    -2.333,
+    18.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.0
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.0
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.0
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.0
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 1번 방 입구 아치 끝",
+   "from": [
+    -6.833,
+    18.5,
+    -6.7
+   ],
+   "to": [
+    -3.833,
+    19.0,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 1번 방 쿠션",
+   "from": [
+    -8.333,
+    10.5,
+    -8.5
+   ],
+   "to": [
+    -2.333,
+    11.7,
+    -6.7
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c_lime",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#c_lime",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#c_lime",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#c_lime",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#c_lime",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    },
+    "down": {
+     "texture": "#c_lime",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 1번 방 이름표",
+   "from": [
+    -7.833,
+    20.0,
+    -6.6
+   ],
+   "to": [
+    -2.833,
+    21.5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 2번 방 테두리",
+   "from": [
+    3.0,
+    10.0,
+    -6.5
+   ],
+   "to": [
+    13.0,
+    19.5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 2번 방 입구",
+   "from": [
+    4.0,
+    10.5,
+    -6.7
+   ],
+   "to": [
+    12.0,
+    17.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7.0
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7.0
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7.0
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7.0
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 2번 방 입구 아치",
+   "from": [
+    5.0,
+    17.5,
+    -6.7
+   ],
+   "to": [
+    11.0,
+    18.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.0
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.0
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.0
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.0
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 2번 방 입구 아치 끝",
+   "from": [
+    6.5,
+    18.5,
+    -6.7
+   ],
+   "to": [
+    9.5,
+    19.0,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 2번 방 쿠션",
+   "from": [
+    5.0,
+    10.5,
+    -8.5
+   ],
+   "to": [
+    11.0,
+    11.7,
+    -6.7
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c_pink",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#c_pink",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#c_pink",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#c_pink",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#c_pink",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    },
+    "down": {
+     "texture": "#c_pink",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 2번 방 이름표",
+   "from": [
+    5.5,
+    20.0,
+    -6.6
+   ],
+   "to": [
+    10.5,
+    21.5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 3번 방 테두리",
+   "from": [
+    16.333,
+    10.0,
+    -6.5
+   ],
+   "to": [
+    26.333,
+    19.5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      9.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      9.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 3번 방 입구",
+   "from": [
+    17.333,
+    10.5,
+    -6.7
+   ],
+   "to": [
+    25.333,
+    17.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7.0
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      7.0
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7.0
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      7.0
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      8.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 3번 방 입구 아치",
+   "from": [
+    18.333,
+    17.5,
+    -6.7
+   ],
+   "to": [
+    24.333,
+    18.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.0
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.0
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.0
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.0
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      6.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 3번 방 입구 아치 끝",
+   "from": [
+    19.833,
+    18.5,
+    -6.7
+   ],
+   "to": [
+    22.833,
+    19.0,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#hole",
+     "uv": [
+      0,
+      0,
+      3.0,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 3번 방 쿠션",
+   "from": [
+    18.333,
+    10.5,
+    -8.5
+   ],
+   "to": [
+    24.333,
+    11.7,
+    -6.7
+   ],
+   "faces": {
+    "north": {
+     "texture": "#c_purple",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#c_purple",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#c_purple",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#c_purple",
+     "uv": [
+      0,
+      0,
+      1.8,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#c_purple",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    },
+    "down": {
+     "texture": "#c_purple",
+     "uv": [
+      0,
+      0,
+      6.0,
+      1.8
+     ]
+    }
+   }
+  },
+  {
+   "name": "2층 3번 방 이름표",
+   "from": [
+    18.833,
+    20.0,
+    -6.6
+   ],
+   "to": [
+    23.833,
+    21.5,
+    -6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      5.0,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "발코니 바닥",
+   "from": [
+    -12,
+    9,
+    -10
+   ],
+   "to": [
+    28,
+    10.5,
+    -6.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      3.5,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      3.5,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      3.5
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      16,
+      3.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "발코니 난간",
+   "from": [
+    -12,
+    12,
+    -10
+   ],
+   "to": [
+    28,
+    12.8,
+    -9.4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      0.8
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      0.8
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.8
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.8
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "난간 기둥",
+   "from": [
+    -12,
+    10.5,
+    -10
+   ],
+   "to": [
+    -11.4,
+    12,
+    -9.4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "난간 기둥",
+   "from": [
+    1,
+    10.5,
+    -10
+   ],
+   "to": [
+    1.6,
+    12,
+    -9.4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "난간 기둥",
+   "from": [
+    14.5,
+    10.5,
+    -10
+   ],
+   "to": [
+    15.1,
+    12,
+    -9.4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "난간 기둥",
+   "from": [
+    27.4,
+    10.5,
+    -10
+   ],
+   "to": [
+    28.0,
+    12,
+    -9.4
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.6,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 왼쪽",
+   "from": [
+    29,
+    -6,
+    -9.5
+   ],
+   "to": [
+    29.7,
+    13,
+    -8.8
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      0.7
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      0.7
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 오른쪽",
+   "from": [
+    31.3,
+    -6,
+    -9.5
+   ],
+   "to": [
+    32,
+    13,
+    -8.8
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      16
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      0.7
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.7,
+      0.7
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 발판",
+   "from": [
+    29.7,
+    -4,
+    -9.4
+   ],
+   "to": [
+    31.3,
+    -3.4,
+    -8.9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 발판",
+   "from": [
+    29.7,
+    -1,
+    -9.4
+   ],
+   "to": [
+    31.3,
+    -0.4,
+    -8.9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 발판",
+   "from": [
+    29.7,
+    2,
+    -9.4
+   ],
+   "to": [
+    31.3,
+    2.6,
+    -8.9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 발판",
+   "from": [
+    29.7,
+    5,
+    -9.4
+   ],
+   "to": [
+    31.3,
+    5.6,
+    -8.9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 발판",
+   "from": [
+    29.7,
+    8,
+    -9.4
+   ],
+   "to": [
+    31.3,
+    8.6,
+    -8.9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "사다리 발판",
+   "from": [
+    29.7,
+    11,
+    -9.4
+   ],
+   "to": [
+    31.3,
+    11.6,
+    -8.9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "south": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.6
+     ]
+    },
+    "east": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "west": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.6
+     ]
+    },
+    "up": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#wood",
+     "uv": [
+      0,
+      0,
+      1.6,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "지붕 1단",
+   "from": [
+    -14,
+    25,
+    -9
+   ],
+   "to": [
+    30,
+    27,
+    29
+   ],
+   "faces": {
+    "north": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "south": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "east": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "west": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "up": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "name": "지붕 2단",
+   "from": [
+    -14,
+    27,
+    -5
+   ],
+   "to": [
+    30,
+    29,
+    25
+   ],
+   "faces": {
+    "north": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "south": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "east": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "west": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "up": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "name": "지붕 3단",
+   "from": [
+    -14,
+    29,
+    -1
+   ],
+   "to": [
+    30,
+    31,
+    21
+   ],
+   "faces": {
+    "north": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "south": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "east": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "west": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      2
+     ]
+    },
+    "up": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    },
+    "down": {
+     "texture": "#roof",
+     "uv": [
+      0,
+      0,
+      16,
+      16
+     ]
+    }
+   }
+  },
+  {
+   "name": "용마루",
+   "from": [
+    -14,
+    31,
+    3
+   ],
+   "to": [
+    30,
+    32,
+    17
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      1
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      1
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      14,
+      1
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      14,
+      1
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      14
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      16,
+      14
+     ]
+    }
+   }
+  },
+  {
+   "name": "간판",
+   "from": [
+    3,
+    25.5,
+    -9.6
+   ],
+   "to": [
+    13,
+    31.5,
+    -9.0
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10,
+      6.0
+     ]
+    },
+    "south": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10,
+      6.0
+     ]
+    },
+    "east": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      6.0
+     ]
+    },
+    "west": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      0.6,
+      6.0
+     ]
+    },
+    "up": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10,
+      0.6
+     ]
+    },
+    "down": {
+     "texture": "#light_wood",
+     "uv": [
+      0,
+      0,
+      10,
+      0.6
+     ]
+    }
+   }
+  },
+  {
+   "name": "간판 테두리 위",
+   "from": [
+    2.5,
+    31.5,
+    -9.7
+   ],
+   "to": [
+    13.5,
+    32,
+    -8.9
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      11.0,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      11.0,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.8,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.8,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      11.0,
+      0.8
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      11.0,
+      0.8
+     ]
+    }
+   }
+  },
+  {
+   "name": "발바닥",
+   "from": [
+    6,
+    26.5,
+    -9.9
+   ],
+   "to": [
+    10,
+    29,
+    -9.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      4,
+      2.5
+     ]
+    },
+    "south": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      4,
+      2.5
+     ]
+    },
+    "east": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      2.5
+     ]
+    },
+    "west": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      2.5
+     ]
+    },
+    "up": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      4,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      4,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "발가락",
+   "from": [
+    4.6,
+    29.2,
+    -9.9
+   ],
+   "to": [
+    5.8,
+    30.4,
+    -9.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "발가락",
+   "from": [
+    6.3,
+    29.9,
+    -9.9
+   ],
+   "to": [
+    7.5,
+    31.1,
+    -9.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "발가락",
+   "from": [
+    8.1,
+    29.9,
+    -9.9
+   ],
+   "to": [
+    9.3,
+    31.1,
+    -9.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "발가락",
+   "from": [
+    9.8,
+    29.2,
+    -9.9
+   ],
+   "to": [
+    11.0,
+    30.4,
+    -9.6
+   ],
+   "faces": {
+    "north": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "south": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      1.2
+     ]
+    },
+    "east": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "west": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      0.5,
+      1.2
+     ]
+    },
+    "up": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    },
+    "down": {
+     "texture": "#paw",
+     "uv": [
+      0,
+      0,
+      1.2,
+      0.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "옆 창문",
+   "from": [
+    -12.3,
+    1,
+    6
+   ],
+   "to": [
+    -12,
+    5,
+    14
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "south": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "east": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "west": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "up": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    },
+    "down": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    }
+   }
+  },
+  {
+   "name": "창틀",
+   "from": [
+    -12.4,
+    2.8,
+    5.8
+   ],
+   "to": [
+    -11.9,
+    3.2,
+    14.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    }
+   }
+  },
+  {
+   "name": "옆 창문",
+   "from": [
+    -12.3,
+    16,
+    6
+   ],
+   "to": [
+    -12,
+    20,
+    14
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "south": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "east": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "west": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "up": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    },
+    "down": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    }
+   }
+  },
+  {
+   "name": "창틀",
+   "from": [
+    -12.4,
+    17.8,
+    5.8
+   ],
+   "to": [
+    -11.9,
+    18.2,
+    14.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    }
+   }
+  },
+  {
+   "name": "옆 창문",
+   "from": [
+    28,
+    1,
+    6
+   ],
+   "to": [
+    28.3,
+    5,
+    14
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "south": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "east": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "west": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "up": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    },
+    "down": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    }
+   }
+  },
+  {
+   "name": "창틀",
+   "from": [
+    27.9,
+    2.8,
+    5.8
+   ],
+   "to": [
+    28.4,
+    3.2,
+    14.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    }
+   }
+  },
+  {
+   "name": "옆 창문",
+   "from": [
+    28,
+    16,
+    6
+   ],
+   "to": [
+    28.3,
+    20,
+    14
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "south": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      4
+     ]
+    },
+    "east": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "west": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      8,
+      4
+     ]
+    },
+    "up": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    },
+    "down": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8
+     ]
+    }
+   }
+  },
+  {
+   "name": "창틀",
+   "from": [
+    27.9,
+    17.8,
+    5.8
+   ],
+   "to": [
+    28.4,
+    18.2,
+    14.2
+   ],
+   "faces": {
+    "north": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      8.4,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    },
+    "down": {
+     "texture": "#dark",
+     "uv": [
+      0,
+      0,
+      0.5,
+      8.4
+     ]
+    }
+   }
+  },
+  {
+   "name": "벽등",
+   "from": [
+    -12.5,
+    4,
+    -8.5
+   ],
+   "to": [
+    -11.5,
+    6,
+    -7.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "south": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "east": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "west": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "up": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ]
+    },
+    "down": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ]
+    }
+   }
+  },
+  {
+   "name": "벽등",
+   "from": [
+    27.5,
+    4,
+    -8.5
+   ],
+   "to": [
+    28.5,
+    6,
+    -7.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "south": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "east": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "west": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      2
+     ]
+    },
+    "up": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ]
+    },
+    "down": {
+     "texture": "#light",
+     "uv": [
+      0,
+      0,
+      1.0,
+      1.0
+     ]
+    }
+   }
+  },
+  {
+   "name": "밥그릇",
+   "from": [
+    -15,
+    -8,
+    -15
+   ],
+   "to": [
+    -10.5,
+    -6.5,
+    -10.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      4.5
+     ]
+    },
+    "down": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      4.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "밥그릇 내용물",
+   "from": [
+    -14.4,
+    -6.5,
+    -14.4
+   ],
+   "to": [
+    -11.1,
+    -6.2,
+    -11.1
+   ],
+   "faces": {
+    "north": {
+     "texture": "#food",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#food",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#food",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#food",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#food",
+     "uv": [
+      0,
+      0,
+      3.3,
+      3.3
+     ]
+    },
+    "down": {
+     "texture": "#food",
+     "uv": [
+      0,
+      0,
+      3.3,
+      3.3
+     ]
+    }
+   }
+  },
+  {
+   "name": "물그릇",
+   "from": [
+    -9.5,
+    -8,
+    -15
+   ],
+   "to": [
+    -5.0,
+    -6.5,
+    -10.5
+   ],
+   "faces": {
+    "north": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "south": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "east": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "west": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      1.5
+     ]
+    },
+    "up": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      4.5
+     ]
+    },
+    "down": {
+     "texture": "#iron",
+     "uv": [
+      0,
+      0,
+      4.5,
+      4.5
+     ]
+    }
+   }
+  },
+  {
+   "name": "물그릇 내용물",
+   "from": [
+    -8.9,
+    -6.5,
+    -14.4
+   ],
+   "to": [
+    -5.6,
+    -6.2,
+    -11.1
+   ],
+   "faces": {
+    "north": {
+     "texture": "#water",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "south": {
+     "texture": "#water",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "east": {
+     "texture": "#water",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "west": {
+     "texture": "#water",
+     "uv": [
+      0,
+      0,
+      3.3,
+      0.5
+     ]
+    },
+    "up": {
+     "texture": "#water",
+     "uv": [
+      0,
+      0,
+      3.3,
+      3.3
+     ]
+    },
+    "down": {
+     "texture": "#water",
+     "uv": [
+      0,
+      0,
+      3.3,
+      3.3
+     ]
+    }
+   }
+  }
+ ],
+ "display": {
+  "fixed": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.5,
+    0.5,
+    0.5
+   ]
+  },
+  "gui": {
+   "rotation": [
+    25,
+    35,
+    0
+   ],
+   "translation": [
+    0,
+    0,
+    0
+   ],
+   "scale": [
+    0.3,
+    0.3,
+    0.3
+   ]
+  }
+ }
+}

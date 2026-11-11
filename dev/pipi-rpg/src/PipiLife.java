@@ -173,6 +173,19 @@ public final class PipiLife extends JavaPlugin implements Listener {
         try {
             regions = new Regions(this);
             getServer().getPluginManager().registerEvents(regions, this);
+            // plots claimed before deed protection existed get their owner region once the village world is up
+            getServer().getScheduler().runTaskLater(this, () -> {
+                var plots = data.getConfigurationSection("plots");
+                org.bukkit.World village = Bukkit.getWorld(getConfig().getString("village-world", "village"));
+                if (regions == null || plots == null || village == null) return;
+                for (String name : plots.getKeys(false)) {
+                    String owner = plots.getString(name + ".owner");
+                    if (owner == null || regions.hasRegion(name)) continue;
+                    String ownerName;
+                    try { ownerName = Bukkit.getOfflinePlayer(UUID.fromString(owner)).getName(); } catch (IllegalArgumentException ex) { continue; }
+                    regions.claimPlot(name, owner, ownerName, village, plots.getInt(name + ".x"), plots.getInt(name + ".z"));
+                }
+            }, 120L);
         } catch (RuntimeException ex) {
             regions = null;
             getLogger().warning("보호 구역을 시작하지 못했습니다: " + ex);
@@ -522,7 +535,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (!persist()) {
             data.set(path, null);
             player.sendMessage("선점 저장 실패.");
-        } else player.sendMessage(plot + " 부지를 선점했습니다.");
+        } else {
+            player.sendMessage(plot + " 부지를 선점했습니다. 이제 내 땅이라 다른 사람은 건드릴 수 없어요.");
+            if (regions != null) regions.claimPlot(plot, uuid, player.getName(), player.getWorld(), data.getInt("plots." + plot + ".x"), data.getInt("plots." + plot + ".z"));
+        }
         return true;
     }
 
@@ -1076,17 +1092,41 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (data != null) refreshStationModels(event.getChunk());
     }
 
+    private final Map<String, Integer> stationRetries = new HashMap<>();
+
+    /** True when every chunk touching the box around c (radius r) is loaded with its entities. */
+    private boolean stationEntitiesReady(Location c, int r) {
+        World w = c.getWorld();
+        for (int cx = (c.getBlockX() - r) >> 4; cx <= (c.getBlockX() + r) >> 4; cx++)
+            for (int cz = (c.getBlockZ() - r) >> 4; cz <= (c.getBlockZ() + r) >> 4; cz++)
+                if (!w.isChunkLoaded(cx, cz) || !w.getChunkAt(cx, cz).isEntitiesLoaded()) return false;
+        return true;
+    }
+
     private void showStationModel(org.bukkit.block.Block anchor, Facility facility) {
         Material modItem = stationModelItem(facility);
         if (modItem == null && !Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) return;
         boolean wide = facility == Facility.FEEDER ? wideFeeder(anchor) : wideStation(anchor);
         Location center = anchor.getLocation().add(wide ? facility.width()/2.0 : .5, 1, wide ? facility.depth()/2.0 : .5);
         String tag = feederModelTag(anchor);
+        // The display can sit in a neighbouring chunk. If any chunk of the search box has not loaded its entities yet, the old
+        // display is invisible to getNearbyEntities and a duplicate would be spawned on every visit (618 stacked lumber trees).
+        if (!stationEntitiesReady(center, 8)) {
+            int tries = stationRetries.merge(tag, 1, Integer::sum);
+            if (tries <= 20) Bukkit.getScheduler().runTaskLater(this, () -> {
+                if (facilityAt(anchor) == facility) showStationModel(anchor, facility);
+            }, 40L);
+            return;
+        }
+        stationRetries.remove(tag);
         var existing = center.getWorld().getNearbyEntities(center, 8, 8, 8).stream()
             .filter(entity -> entity.getScoreboardTags().contains(tag)).toList();
         if (!existing.isEmpty()) {
             String need = facility.isQuarry() ? STATION_V3_TAG : STATION_V2_TAG;
-            if (modItem == null || existing.stream().allMatch(entity -> entity.getScoreboardTags().contains(need))) return;
+            if (modItem == null || existing.stream().allMatch(entity -> entity.getScoreboardTags().contains(need))) {
+                for (int i = 1; i < existing.size(); i++) existing.get(i).remove(); // drop stacked duplicates, keep one
+                return;
+            }
             existing.forEach(Entity::remove); // old ItemsAdder model -> replaced below
         }
         if (modItem != null) {
