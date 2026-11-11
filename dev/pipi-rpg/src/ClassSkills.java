@@ -46,10 +46,11 @@ final class ClassSkills implements Listener {
     private final Map<UUID, Long> will = new HashMap<>();        // 투지: -10% damage until
     private final Map<UUID, Long> atkBuff = new HashMap<>();     // 공격력 버프: +20% damage until
     private final Map<UUID, Long> fortress = new HashMap<>();    // 불굴: invulnerable + frozen until
-    private final Map<UUID, Long> wolfUntil = new HashMap<>();   // 늑대 정령: archer basic is a wolf spirit until
     private final Map<UUID, Long> speedMods = new HashMap<>();     // 숲의 숨결 speed modifier: player -> expiry millis
     private final Map<UUID, Long> fallImmune = new HashMap<>();  // dash: no fall damage until
     private final Map<UUID, Long> lastGround = new HashMap<>();
+    private final Map<UUID, Long> phoenixUntil = new HashMap<>();  // 피닉스의 강림: fire-arrow basic attacks until
+
     private final Set<Display> displays = new HashSet<>();
     private boolean flip;
     private double beamLen = 20;
@@ -223,8 +224,8 @@ final class ClassSkills implements Listener {
         for (UUID id : new ArrayList<>(speedMods.keySet())) { Player pl = Bukkit.getPlayer(id); if (pl != null) clearSpeedMod(pl); }
         speedMods.clear();
         charges.clear(); marks.clear(); markCasts.clear(); dashInputs.clear();
-        cooldowns.clear(); if (current == this) current = null; will.clear(); atkBuff.clear(); fortress.clear(); wolfUntil.clear();
-        fallImmune.clear(); lastGround.clear();
+        cooldowns.clear(); if (current == this) current = null; will.clear(); atkBuff.clear(); fortress.clear();
+        fallImmune.clear(); lastGround.clear(); phoenixUntil.clear();
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -262,15 +263,20 @@ final class ClassSkills implements Listener {
     public void quit(PlayerQuitEvent event) {
         Player p = event.getPlayer();
         UUID id = p.getUniqueId();
-        lastGround.remove(id); fortress.remove(id); wolfUntil.remove(id); atkBuff.remove(id); will.remove(id); dashInputs.remove(id);
+        lastGround.remove(id); phoenixUntil.remove(id); fortress.remove(id); atkBuff.remove(id); will.remove(id); dashInputs.remove(id);
         clearSpeedMod(p);
     }
 
     @EventHandler
     public void died(org.bukkit.event.entity.PlayerDeathEvent event) {
         UUID id = event.getEntity().getUniqueId();
-        fortress.remove(id); wolfUntil.remove(id); atkBuff.remove(id); will.remove(id);
+        fortress.remove(id); atkBuff.remove(id); will.remove(id); phoenixUntil.remove(id);
         clearSpeedMod(event.getEntity());
+    }
+
+    @EventHandler
+    public void worldChanged(org.bukkit.event.player.PlayerChangedWorldEvent event) {
+        phoenixUntil.remove(event.getPlayer().getUniqueId());
     }
 
     private static final NamespacedKey SPEED_KEY = new NamespacedKey("pipilife", "breath_speed");
@@ -438,7 +444,8 @@ final class ClassSkills implements Listener {
             case K_HEAVY: return 20;
             case K_IAI: return 60;
             case K_SHOTGUN: return 40;
-            case K_BOW: case K_M_CANNON: case K_M_DRAGON: return 60;
+            case K_BOW: return 30;
+            case K_M_CANNON: case K_M_DRAGON: return 60;
             default: break;
         }
         if (key >= 26 && key < 35) return 4; // buffs
@@ -448,7 +455,7 @@ final class ClassSkills implements Listener {
     /** Wind-up visuals / restrictions that run from cast until the effect fires. */
     private void prepare(Player p, Job job, int slot, int key, int windup) {
         if (key == K_SPLIT || key == K_HEAVY) chargeFx(p, windup);
-        if (job == Job.MAGE && slot != 0) staffCharge(p, windup);
+        if (job == Job.MAGE && slot != 0) staffCharge(p, windup, key == K_BOW ? 1 : key == K_M_DRAGON ? 2 : 0);
         if (key == K_HEAVY) p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, windup + 2, 3, false, false));
         if (key == K_IAI || key == K_SHOTGUN) {
             boolean iai = key == K_IAI;
@@ -485,18 +492,25 @@ final class ClassSkills implements Listener {
         if (key == K_BOW) manaBowFx(p, windup);
     }
 
+    /** Bow display position: low, to the right and well in front so the view stays clear. */
+    private static Location bowSpot(Location eye, Vector d) {
+        Vector side = new Vector(-d.getZ(), 0, d.getX());
+        if (side.lengthSquared() < 1e-6) side = new Vector(1, 0, 0); else side.normalize();
+        return eye.clone().add(d.clone().multiply(3.6)).add(side.multiply(1.5)).add(0, -1.1, 0);
+    }
+
     /** 마력 대궁 wind-up: a giant purple bow forms in front of the caster and is drawn back. */
     private void manaBowFx(Player p, int ticks) {
         World w = p.getWorld();
         Location eye0 = p.getEyeLocation();
         Vector d0 = eye0.getDirection().normalize();
-        ItemDisplay bow = fx("mana_bow", eye0.clone().add(d0.clone().multiply(2.8)).add(0, -.2, 0), facing(d0, 0), vec(.4f), null, ticks + 6);
+        ItemDisplay bow = fx("mana_bow", bowSpot(eye0, d0), facing(d0, 0), vec(.25f), null, ticks + 6);
         run(1, ticks, i -> {
             if (!ready(p, w)) return true;
             Location eye = p.getEyeLocation();
             Vector d = eye.getDirection().normalize();
-            moveFx(bow, eye.clone().add(d.clone().multiply(2.8)).add(0, -.2, 0));
-            if (bow != null && bow.isValid()) tween(bow, 1, 1, new Vector3f(), facing(d, 0), vec((float) (.4 + 2.8 * Math.min(1, i / (double) (ticks - 2)))));
+            moveFx(bow, bowSpot(eye, d));
+            if (bow != null && bow.isValid()) tween(bow, 1, 1, new Vector3f(), facing(d, 0), vec((float) (.25 + 1.15 * Math.min(1, i / (double) Math.max(1, ticks - 2)))));
             return false;
         }, () -> kill(bow));
     }
@@ -528,7 +542,7 @@ final class ClassSkills implements Listener {
     }
 
     /** Mage wind-up: purple motes spiral into the staff tip (held straight out front) with a growing glow and rising pitch. */
-    private void staffCharge(Player p, int ticks) {
+    private void staffCharge(Player p, int ticks, int mode) { // mode 1: low and to the side (bow), 2: above the head (dragon)
         World w = p.getWorld();
         run(1, ticks, i -> {
             if (!ready(p, w)) return true;
@@ -538,6 +552,8 @@ final class ClassSkills implements Listener {
             if (side.lengthSquared() < 1e-6) side = new Vector(1, 0, 0); else side.normalize();
             Vector up = side.clone().crossProduct(d).normalize();
             Location tip = eye.clone().add(d.clone().multiply(1.6)).add(side.clone().multiply(-.25)).add(0, -.35, 0);
+            if (mode == 1) tip = eye.clone().add(d.clone().multiply(2.4)).add(side.clone().multiply(1.0)).add(0, -1.0, 0);
+            else if (mode == 2) tip = eye.clone().add(d.clone().setY(0).normalize().multiply(.6)).add(0, 1.4, 0);
             double frac = i / (double) ticks;
             double r = .9 * (1 - frac) + .1;
             for (int k = 0; k < 4; k++) {
@@ -546,7 +562,7 @@ final class ClassSkills implements Listener {
                 w.spawnParticle(Particle.DUST, tip.clone().add(off), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(176, 110, 255), 1.1f));
                 if (k % 2 == 0) w.spawnParticle(Particle.ENCHANT, tip.clone().add(off), 1, 0, 0, 0, 0);
             }
-            w.spawnParticle(Particle.DUST, tip, 1, .05, .05, .05, 0, new Particle.DustOptions(Color.fromRGB(230, 200, 255), (float) (.7 + frac * 1.6)));
+            w.spawnParticle(Particle.DUST, tip, 1, .05, .05, .05, 0, new Particle.DustOptions(Color.fromRGB(230, 200, 255), (float) (.7 + frac * (mode == 0 ? 1.6 : .5))));
             if (i % 2 == 0) w.playSound(tip, Sound.BLOCK_AMETHYST_BLOCK_CHIME, .5f, (float) (.8 + frac * 1.1));
             return false;
         }, null);
@@ -582,7 +598,7 @@ final class ClassSkills implements Listener {
     private void basic(Player p, Job job) {
         switch (job) {
             case WARRIOR -> warriorBasic(p);
-            case ARCHER -> { if (wolfUntil.getOrDefault(p.getUniqueId(), 0L) > System.currentTimeMillis()) wolfRun(p); else arrowShot(p, 1.0, null); }
+            case ARCHER -> { if (phoenixOn(p)) fireArrow(p); else arrowShot(p, 1.0, null); }
             case MAGE -> mageOrb(p, 1.0);
         }
     }
@@ -687,7 +703,7 @@ final class ClassSkills implements Listener {
             case K_W_ULT -> swordFall(p);
             case K_W_TIGER -> tiger(p);
             case K_A_ULT -> arrowStorm(p);
-            case K_A_WOLF -> wolfSpirit(p);
+            case K_A_WOLF -> phoenix(p);
             case K_M_CANNON -> cannon(p);
             case K_M_DRAGON -> dragon(p);
             default -> { }
@@ -703,13 +719,13 @@ final class ClassSkills implements Listener {
         w.spawnParticle(Particle.SWEEP_ATTACK, eye.clone().add(dir.clone().multiply(2.2)).add(0, -.3, 0), 1, 0, 0, 0, 0);
         Vector side = new Vector(-dir.getZ(), 0, dir.getX());
         if (side.lengthSquared() > 0) side.normalize();
-        for (double a = -1.1; a <= 1.1; a += .22) { // white arc
+        for (double a = -1.1; a <= 1.1; a += .33) { // white arc
             Vector point = dir.clone().multiply(Math.cos(a) * 2.9).add(side.clone().multiply(Math.sin(a) * 2.9));
             w.spawnParticle(Particle.DUST, eye.clone().add(point).add(0, -.4, 0), 1, .03, .03, .03, 0,
-                new Particle.DustOptions(Color.WHITE, .7f));
+                new Particle.DustOptions(Color.WHITE, .5f));
         }
         flip = !flip;
-        slashQuick("slash_arc", eye.clone().add(dir.clone().multiply(2.3)).add(0, -.4, 0), dir, 1.8f, flip ? .45f : -.45f, .8f);
+        slashQuick("slash_arc", eye.clone().add(dir.clone().multiply(2.3)).add(0, -.4, 0), dir, 1.0f, flip ? .45f : -.45f, .8f);
         double dmg = power(p, Job.WARRIOR);
         for (LivingEntity target : near(p, eye, 3.84)) { // reach 3.2 x 1.2
             Vector rel = target.getBoundingBox().getCenter().subtract(eye.toVector());
@@ -730,7 +746,7 @@ final class ClassSkills implements Listener {
         Vector heading = dir;
         fallImmune.put(p.getUniqueId(), System.currentTimeMillis() + 2_000);
         w.playSound(origin, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, .7f);
-        slash("slash_red", origin.clone().add(0, 1, 0).add(heading.clone().multiply(1.6)), heading, 2.7f, -.5f, .8f);
+        slash("slash_red", origin.clone().add(0, 1, 0).add(heading.clone().multiply(1.6)), heading, 1.4f, -.5f, .8f);
         // 6 ticks x ~1.35 blocks = ~8 blocks forward; velocity is re-applied each tick so ground friction cannot eat it
         run(1, 6, i -> {
             if (!ready(p, w)) return true;
@@ -747,9 +763,9 @@ final class ClassSkills implements Listener {
                 if (done.add(t)) chargeHit(p, t, dmg, gen(Job.WARRIOR, 0), cast);
             }
             Location c = now.clone().add(0, 1, 0);
-            w.spawnParticle(Particle.DUST, c, 6, .3, .4, .3, 0, new Particle.DustOptions(Color.fromRGB(220, 30, 30), 1.4f));
-            w.spawnParticle(Particle.CRIT, c, 3, .3, .4, .3, .05);
-            w.spawnParticle(Particle.CLOUD, now.clone().add(0, .2, 0), 2, .2, .1, .2, .02);
+            w.spawnParticle(Particle.DUST, c, 3, .25, .35, .25, 0, new Particle.DustOptions(Color.fromRGB(220, 30, 30), .8f));
+            w.spawnParticle(Particle.CRIT, c, 2, .25, .35, .25, .05);
+            if (i % 2 == 0) w.spawnParticle(Particle.CLOUD, now.clone().add(0, .2, 0), 1, .2, .1, .2, .02);
             if (i % 2 == 0) w.spawnParticle(Particle.SWEEP_ATTACK, c.clone().add(heading.clone().multiply(1.2)), 1, 0, 0, 0, 0);
             return false;
         }, () -> { if (p.isOnline()) p.setVelocity(p.getVelocity().multiply(.3)); });
@@ -759,16 +775,16 @@ final class ClassSkills implements Listener {
         World w = p.getWorld();
         double dmg = power(p, Job.WARRIOR) * 1.6;
         for (LivingEntity target : near(p, p.getLocation().add(0, 1, 0), 5.25)) hit(p, target, dmg);
-        ItemDisplay ring = fx("whirl_ring", p.getLocation().add(0, 1, 0), new Quaternionf(), vec(1.8f), null, 24);
-        float[] sizes = {3.6f, 4.5f, 4.65f};
+        ItemDisplay ring = fx("whirl_ring", p.getLocation().add(0, 1, 0), new Quaternionf(), new Vector3f(1.2f, .35f, 1.2f), null, 14);
+        float[] sizes = {2.4f, 3.0f, 3.1f};
         for (int s = 1; s <= 3; s++)
-            tween(ring, s * 3 - 2, 3, new Vector3f(), new Quaternionf().rotateY((float) Math.toRadians(120 * s)), vec(sizes[s - 1]));
-        tween(ring, 10, 3, new Vector3f(), new Quaternionf().rotateY((float) Math.toRadians(420)), vec(.45f));
+            tween(ring, s * 3 - 2, 3, new Vector3f(), new Quaternionf().rotateY((float) Math.toRadians(120 * s)), new Vector3f(sizes[s - 1], sizes[s - 1] * .3f, sizes[s - 1]));
+        tween(ring, 10, 3, new Vector3f(), new Quaternionf().rotateY((float) Math.toRadians(420)), new Vector3f(.3f, .05f, .3f));
         run(1, 8, i -> {
             Location c = p.getLocation().add(0, 1, 0);
             moveFx(ring, c);
-            for (int k = 0; k < 12; k++) {
-                double a = i * .8 + k * Math.PI / 6;
+            for (int k = 0; k < 6; k++) {
+                double a = i * .8 + k * Math.PI / 3;
                 Location at = c.clone().add(Math.cos(a) * 4.5, Math.sin(i) * .3 - .2, Math.sin(a) * 4.5);
                 w.spawnParticle(k % 3 == 0 ? Particle.SWEEP_ATTACK : Particle.CRIT, at, 1, 0, 0, 0, 0);
             }
@@ -787,8 +803,8 @@ final class ClassSkills implements Listener {
         double dmg = power(p, Job.WARRIOR) * 2.2;
         // sword-aura wave: same reach as the mage basic orb (1.2 blocks/tick × 12 = 14.4 blocks), chest height, big upright crescents
         Location start = base.clone().add(0, 1.2, 0);
-        ItemDisplay arc = fx("slash_arc", start.clone().add(heading.clone().multiply(1.2)), facing(heading, 1.45f), vec(2.5f), null, 18);
-        ItemDisplay red = fx("slash_red", start.clone().add(heading.clone().multiply(1.0)), facing(heading, 1.45f), vec(2.5f), null, 18);
+        ItemDisplay arc = fx("slash_arc", start.clone().add(heading.clone().multiply(1.2)), facing(heading, 1.45f), new Vector3f(1.4f, .9f, 1.4f), null, 12);
+        ItemDisplay red = fx("slash_red", start.clone().add(heading.clone().multiply(1.0)), facing(heading, 1.45f), new Vector3f(1.3f, .8f, 1.3f), null, 12);
         w.playSound(base, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, .6f);
         run(1, 12, i -> {
             Location c = start.clone().add(heading.clone().multiply((i + 1) * 14.4 / 12 + .2));
@@ -796,8 +812,8 @@ final class ClassSkills implements Listener {
             moveFx(arc, c);
             moveFx(red, c.clone().subtract(heading.clone().multiply(.5)));
             w.spawnParticle(Particle.SWEEP_ATTACK, c, 1, .6, .6, .6, 0);
-            w.spawnParticle(Particle.CRIT, c, 10, .8, .8, .8, .1);
-            w.spawnParticle(Particle.DUST, c, 8, .8, .8, .8, 0, new Particle.DustOptions(Color.fromRGB(255, 80, 60), 1.5f));
+            w.spawnParticle(Particle.CRIT, c, 4, .5, .5, .5, .1);
+            w.spawnParticle(Particle.DUST, c, 3, .5, .5, .5, 0, new Particle.DustOptions(Color.fromRGB(255, 80, 60), .8f));
             for (LivingEntity target : near(p, c, 2.2)) {
                 if (!done.add(target)) continue;
                 hit(p, target, dmg);
@@ -843,13 +859,13 @@ final class ClassSkills implements Listener {
             if (!p.isOnline() || p.isDead()) return true;
             Location c = p.getLocation().add(0, 1, 0);
             ThreadLocalRandom rnd = ThreadLocalRandom.current();
-            for (int k = 0; k < 3; k++) {
+            for (int k = 0; k < 2; k++) {
                 double a = rnd.nextDouble() * Math.PI * 2, r = 1.5 + rnd.nextDouble() * 3.5;
                 Vector d = new Vector(Math.cos(a), 0, Math.sin(a));
                 Location at = c.clone().add(d.clone().multiply(r)).add(0, rnd.nextDouble() - .5, 0);
-                slashQuick(k == 0 ? "slash_red" : "slash_arc", at, new Vector(-d.getZ(), 0, d.getX()), 2.2f + rnd.nextFloat(), (rnd.nextFloat() - .5f) * 1.6f, .8f);
+                slashQuick(k == 0 ? "slash_red" : "slash_arc", at, new Vector(-d.getZ(), 0, d.getX()), 1.2f + rnd.nextFloat() * .5f, (rnd.nextFloat() - .5f) * 1.6f, .8f);
                 w.spawnParticle(Particle.SWEEP_ATTACK, at, 1, 0, 0, 0, 0);
-                w.spawnParticle(Particle.CRIT, at, 4, .4, .3, .4, .05);
+                w.spawnParticle(Particle.CRIT, at, 2, .3, .2, .3, .05);
             }
             w.playSound(c, Sound.ENTITY_PLAYER_ATTACK_SWEEP, .6f, .9f + rnd.nextFloat() * .4f);
             for (LivingEntity t : near(p, c, 5.25)) hit(p, t, dmg);
@@ -985,7 +1001,7 @@ final class ClassSkills implements Listener {
         });
     }
 
-    /** 뇌운: for 4 s, every 0.5 s lightning (visual only) strikes up to 3 nearby enemies within 8 for 60% attack each (8 hits). */
+    /** 뇌운: for 4 s, every 0.5 s a lightning effect (display model, no vanilla lightning) drops on up to 3 nearby enemies within 8 for 60% attack each (8 hits). */
     private void thunder(Player p) {
         World w = p.getWorld();
         double dmg = power(p, Job.MAGE) * .6;
@@ -998,20 +1014,42 @@ final class ClassSkills implements Listener {
                 Location at = c.clone().add(0, 1, 0);
                 w.spawnParticle(Particle.ELECTRIC_SPARK, at, 25, 1.2, .8, 1.2, .1);
                 w.spawnParticle(Particle.END_ROD, at, 6, 1, .8, 1, .05);
-                w.playSound(c, Sound.BLOCK_BEEHIVE_SHEAR, .6f, 2f);
+                w.playSound(c, Sound.BLOCK_BEEHIVE_SHEAR, .4f, 2f);
                 return false;
             }
-            for (int n = 0; n < Math.min(3, targets.size()); n++) {
-                LivingEntity t = targets.get(n);
-                Location at = t.getLocation();
-                w.strikeLightningEffect(at);
-                w.spawnParticle(Particle.ELECTRIC_SPARK, at.clone().add(0, 1, 0), 30, .5, 1, .5, .15);
-                w.spawnParticle(Particle.END_ROD, at.clone().add(0, 1, 0), 10, .3, 1.2, .3, .08);
-                w.playSound(at, Sound.ENTITY_LIGHTNING_BOLT_THUNDER, .6f, 1.4f);
-                hit(p, t, dmg);
-            }
+            for (int n = 0; n < Math.min(3, targets.size()); n++) lightningBolt(p, targets.get(n), dmg);
             return false;
         }, null);
+    }
+
+    /** Lightning effect: the bolt model drops ~8 blocks onto the target in 3 ticks (particle line when the model is missing), then damage + sparks. */
+    private void lightningBolt(Player p, LivingEntity t, double dmg) {
+        World w = t.getWorld();
+        Location at = t.getLocation();
+        float s = 3.2f;
+        double off = .5 * s; // the model spans 0..32 px, its centre (display origin) is half a unit above the bottom
+        Location from = at.clone().add(0, 8 + off, 0), to = at.clone().add(0, off, 0);
+        ItemDisplay bolt = fx("lightning_bolt", from, new Quaternionf().rotateY((float) (ThreadLocalRandom.current().nextDouble() * Math.PI * 2)), vec(s), null, 24);
+        run(1, 3, i -> {
+            moveFx(bolt, from.clone().add(to.clone().subtract(from).toVector().multiply((i + 1) / 3.0)));
+            return false;
+        }, () -> {
+            Location hitAt = t.isValid() ? t.getLocation() : at;
+            if (bolt == null) {
+                ThreadLocalRandom rnd = ThreadLocalRandom.current();
+                for (double y = 0; y <= 8; y += .5) {
+                    Location pt = hitAt.clone().add(rnd.nextDouble(-.25, .25), y, rnd.nextDouble(-.25, .25));
+                    w.spawnParticle(Particle.ELECTRIC_SPARK, pt, 2, .05, .05, .05, 0);
+                    w.spawnParticle(Particle.END_ROD, pt, 1, 0, 0, 0, 0);
+                }
+            }
+            w.spawnParticle(Particle.ELECTRIC_SPARK, hitAt.clone().add(0, 1, 0), 30, .5, 1, .5, .15);
+            w.spawnParticle(Particle.END_ROD, hitAt.clone().add(0, 1, 0), 10, .3, 1.2, .3, .08);
+            w.playSound(hitAt, Sound.BLOCK_AMETHYST_BLOCK_HIT, .8f, 1.8f);
+            w.playSound(hitAt, Sound.ENTITY_FIREWORK_ROCKET_BLAST, .2f, 1.7f);
+            hit(p, t, dmg);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> kill(bolt), 2);
+        });
     }
 
     private void light(Player p) { // 치유의 빛
@@ -1082,6 +1120,8 @@ final class ClassSkills implements Listener {
     }
 
     // ---------------------------------------------------------------- reworked skills (6 general + 3 buff + 2 ultimate per class)
+
+    private boolean phoenixOn(Player p) { return phoenixUntil.getOrDefault(p.getUniqueId(), 0L) > System.currentTimeMillis(); }
 
     private boolean atkBuffOn(Player p) { return atkBuff.getOrDefault(p.getUniqueId(), 0L) > System.currentTimeMillis(); }
 
@@ -1154,14 +1194,14 @@ final class ClassSkills implements Listener {
         Location at = base.clone().add(0, 1.2, 0).add(dir.clone().multiply(2.4));
         w.playSound(base, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, .5f);
         w.playSound(base, Sound.ITEM_MACE_SMASH_GROUND, 1f, 1.1f);
-        slash("slash_red", at, dir, 7.5f, -.35f, 1.1f);
-        slash("slash_arc", at.clone().add(dir.clone().multiply(.4)), dir, 6.2f, -.35f, 1.1f);
-        for (int k = 0; k < 3; k++) spikes(base.clone().add(dir.clone().multiply(1.8 + k * 1.3)).add(0, .05, 0), dir, 3f);
+        slash("slash_red", at, dir, 4.2f, -.35f, 1.1f);
+        slash("slash_arc", at.clone().add(dir.clone().multiply(.4)), dir, 3.4f, -.35f, 1.1f);
+        for (int k = 0; k < 2; k++) spikes(base.clone().add(dir.clone().multiply(2.2 + k * 1.6)).add(0, .05, 0), dir, 1.5f);
         for (double a = -70; a <= 70; a += 10) {
             Vector d = dir.clone().rotateAroundY(Math.toRadians(a));
-            for (double r = 1.5; r <= 5; r += 1.25) {
+            for (double r = 1.5; r <= 5; r += 1.75) {
                 Location pt = base.clone().add(0, 1, 0).add(d.clone().multiply(r));
-                w.spawnParticle(Particle.DUST, pt, 1, .05, .05, .05, 0, new Particle.DustOptions(Color.fromRGB(255, 70, 50), 1.5f));
+                w.spawnParticle(Particle.DUST, pt, 1, .05, .05, .05, 0, new Particle.DustOptions(Color.fromRGB(255, 70, 50), .9f));
                 if (r > 4.5) w.spawnParticle(Particle.SWEEP_ATTACK, pt, 1, 0, 0, 0, 0);
             }
         }
@@ -1177,8 +1217,8 @@ final class ClassSkills implements Listener {
         World w = p.getWorld();
         Location c = p.getLocation().add(dir.clone().multiply(3));
         double power = power(p, Job.WARRIOR);
-        Location top = c.clone().add(0, 11, 0), low = c.clone().add(0, 3.4, 0);
-        ItemDisplay sword = fx("giant_sword", top, new Quaternionf(), vec(2.4f), null, 80);
+        Location top = c.clone().add(0, 9, 0), low = c.clone().add(0, .85, 0); // origin .85 above ground: everything below model y=0 (the whole point) is buried
+        ItemDisplay sword = fx("giant_sword", top, new Quaternionf(), vec(1.7f), null, 80);
         w.playSound(c, Sound.ITEM_TRIDENT_THROW, 1f, .6f);
         run(1, 4, i -> {
             moveFx(sword, top.clone().add(low.clone().subtract(top).toVector().multiply((i + 1) / 4.0)));
@@ -1186,17 +1226,17 @@ final class ClassSkills implements Listener {
         }, () -> {
             w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 1f, .8f);
             w.playSound(c, Sound.ITEM_MACE_SMASH_GROUND, 1.2f, .8f);
-            w.spawnParticle(Particle.BLOCK, c.clone().add(0, .2, 0), 50, 1.8, .2, 1.8, 0, c.clone().subtract(0, .5, 0).getBlock().getBlockData());
-            for (int k = 0; k < 4; k++) spikes(c.clone().add(0, .05, 0), new Vector(Math.cos(k * Math.PI / 4), 0, Math.sin(k * Math.PI / 4)), 3.4f);
+            w.spawnParticle(Particle.BLOCK, c.clone().add(0, .2, 0), 24, 1.5, .2, 1.5, 0, c.clone().subtract(0, .5, 0).getBlock().getBlockData());
+            for (int k = 0; k < 4; k++) spikes(c.clone().add(0, .05, 0), new Vector(Math.cos(k * Math.PI / 4), 0, Math.sin(k * Math.PI / 4)), 2f);
             run(1, 4, i -> {
-                ring(c.clone().add(0, .2, 0), 1 + i, (int) ((1 + i) * 8), at -> w.spawnParticle(Particle.DUST, at, 1, 0, .1, 0, 0, new Particle.DustOptions(Color.fromRGB(110, 220, 255), 1.4f)));
+                ring(c.clone().add(0, .2, 0), 1 + i, (int) ((1 + i) * 8), at -> w.spawnParticle(Particle.DUST, at, 1, 0, .1, 0, 0, new Particle.DustOptions(Color.fromRGB(110, 220, 255), .9f)));
                 return false;
             }, null);
             run(10, 5, i -> {
                 if (!ready(p, w)) return true;
                 if (i > 0) {
-                    ring(c.clone().add(0, .2, 0), 3.8, 30, at -> w.spawnParticle(Particle.DUST, at, 1, 0, .1, 0, 0, new Particle.DustOptions(Color.fromRGB(110, 220, 255), 1.1f)));
-                    w.spawnParticle(Particle.CRIT, c.clone().add(0, .6, 0), 14, 2, .4, 2, .1);
+                    ring(c.clone().add(0, .2, 0), 3.8, 30, at -> w.spawnParticle(Particle.DUST, at, 1, 0, .1, 0, 0, new Particle.DustOptions(Color.fromRGB(110, 220, 255), .8f)));
+                    w.spawnParticle(Particle.CRIT, c.clone().add(0, .6, 0), 6, 2, .4, 2, .1);
                 }
                 for (LivingEntity t : near(p, c, 4)) {
                     hit(p, t, power * (i == 0 ? 1.2 : .4));
@@ -1227,7 +1267,7 @@ final class ClassSkills implements Listener {
         for (double s = 0; s <= reach; s += .5) {
             Location c = mid.clone().add(dir.clone().multiply(s));
             w.spawnParticle(Particle.SWEEP_ATTACK, c, 1, .3, .4, .3, 0);
-            w.spawnParticle(Particle.DUST, c, 4, .3, .5, .3, 0, new Particle.DustOptions(Color.fromRGB(235, 245, 255), 1.5f));
+            w.spawnParticle(Particle.DUST, c, 2, .2, .4, .2, 0, new Particle.DustOptions(Color.fromRGB(235, 245, 255), .8f));
             w.spawnParticle(Particle.END_ROD, c, 1, .2, .4, .2, .02);
         }
         w.playSound(start, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, .5f);
@@ -1245,45 +1285,56 @@ final class ClassSkills implements Listener {
         run(2, 3, i -> { // afterimage slashes along the path
             for (int k = 0; k < 3; k++) {
                 Location at = mid.clone().add(dir.clone().multiply(len * (k + .5) / 3));
-                slashQuick(k == 1 ? "slash_red" : "slash_arc", at, dir, 5.5f, i % 2 == 0 ? .6f : -.6f, .9f);
+                slashQuick(k == 1 ? "slash_red" : "slash_arc", at, dir, 3.0f, i % 2 == 0 ? .6f : -.6f, .9f);
             }
             return false;
         }, null);
     }
 
-    /** 맹호참: a spectral tiger sweeps its claws three times (300% each, 8 block 160 degree cone). */
+    /** 백호참: a white tiger stays for 5 s and rakes its claws every 0.5 s (10 sweeps, 90% each, 8 block 160 degree cone, the last one bigger). */
     private void tiger(Player p) {
         Vector dir = flatLook(p);
         if (dir == null) return;
         World w = p.getWorld();
         Location base = p.getLocation();
         Location at = base.clone().add(0, 1.6, 0).add(dir.clone().multiply(3));
-        ItemDisplay beast = fx("tiger_claw", at, facing(dir, 0), vec(.8f), null, 60);
-        tween(beast, 1, 4, new Vector3f(), facing(dir, 0), vec(4.6f));
+        ItemDisplay beast = fx("tiger_claw", at, facing(dir, 0), vec(.8f), null, 120);
+        tween(beast, 1, 4, new Vector3f(), facing(dir, 0), vec(3.2f));
+        if (beast != null) beast.setTeleportDuration(3);
         w.playSound(base, Sound.ENTITY_RAVAGER_ROAR, 1.2f, .9f);
         w.playSound(base, Sound.ENTITY_PLAYER_ATTACK_STRONG, 1f, .6f);
-        double dmg = power(p, Job.WARRIOR) * 3.0;
+        double dmg = power(p, Job.WARRIOR) * .9;
         double cos = Math.cos(Math.toRadians(80));
-        Bukkit.getScheduler().runTaskLater(plugin, () -> run(6, 3, i -> {
+        Vector[] last = {dir};
+        run(1, 104, i -> {
             if (!ready(p, w)) return true;
             Location o = p.getLocation().add(0, 1, 0);
-            float scale = i == 2 ? 9f : 6.5f;
-            float roll = i == 0 ? .7f : i == 1 ? -.7f : 0f;
             Vector d = flatLook(p);
-            if (d == null) d = dir;
+            if (d == null) d = last[0];
+            last[0] = d;
+            if (i >= 4 && i % 2 == 0) {
+                moveFx(beast, o.clone().add(0, .6, 0).add(d.clone().multiply(3)));
+                if (i >= 6) tween(beast, 1, 2, new Vector3f(), facing(d, 0), vec(3.2f));
+            }
+            if (i < 4 || (i - 4) % 10 != 0) return false;
+            int n = (i - 4) / 10; // sweep 0..9
+            boolean big = n == 9;
+            float scale = big ? 4.8f : 3.6f;
+            float roll = big ? 0f : (n % 2 == 0 ? .7f : -.7f);
             Location pt = o.clone().add(d.clone().multiply(3.2)).add(0, .3, 0);
-            slash("slash_red", pt, d, scale, roll, 1.2f);
-            slash("slash_arc", pt, d, scale * .85f, -roll, 1.2f);
-            w.playSound(o, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.2f, .6f + i * .2f);
-            w.playSound(o, Sound.ENTITY_CAT_HISS, .8f, .5f);
-            for (double a = -80; a <= 80; a += 16) {
+            Vector rs = new Vector(-d.getZ(), 0, d.getX()); // three thin parallel claw streaks
+            for (int lane = -1; lane <= 1; lane++)
+                slashQuick(lane == 0 ? "slash_red" : "slash_arc", pt.clone().add(rs.clone().multiply(lane * .55)).add(0, lane * .12, 0), d, scale, roll, 1.0f);
+            w.playSound(o, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.1f, .6f + (n % 3) * .2f);
+            if (n % 3 == 0) w.playSound(o, Sound.ENTITY_CAT_HISS, .7f, .5f);
+            for (double a = -80; a <= 80; a += 32) {
                 Vector dd = d.clone().rotateAroundY(Math.toRadians(a));
-                for (double r = 2; r <= 8; r += 2)
-                    w.spawnParticle(i == 2 ? Particle.CRIT : Particle.SWEEP_ATTACK, o.clone().add(dd.multiply(r)), 1, .1, .1, .1, 0);
+                for (double r = 2.5; r <= 8; r += 2.75)
+                    w.spawnParticle(big ? Particle.CRIT : Particle.SWEEP_ATTACK, o.clone().add(dd.clone().multiply(r)), 1, .1, .1, .1, 0);
             }
             for (LivingEntity t : near(p, o, 8)) if (inCone(o, d, t, cos, true)) hit(p, t, dmg);
             return false;
-        }, () -> kill(beast)), 4);
+        }, () -> kill(beast));
     }
 
     private void rage(Player p) { // 전투 함성
@@ -1321,42 +1372,67 @@ final class ClassSkills implements Listener {
 
     // ---- archer
 
-    /** 폭죽 화살: a fast firework arrow (260%) piercing 24 blocks and bursting where it ends / hits. */
+    /** 대지의 화살: an earth-spirit rock arrow (260%) piercing 24 blocks; hit enemies get Slowness II for 1.5 s. */
     private void pierce(Player p) {
+        World w = p.getWorld();
         Location eye = p.getEyeLocation();
         Vector dir = aimDir(p, eye, 24);
-        List<LivingEntity> hits = beam(p, eye, dir, 24, .8, 0, Particle.FIREWORK, Color.fromRGB(255, 190, 80));
-        double len = beamLen;
-        bigArrow(eye.clone().add(dir.clone().multiply(.9)).add(0, -.2, 0), dir, .5f, len, 2);
+        double len = blockLen(p, eye, dir, 24);
+        List<LivingEntity> hits = along(p, eye, dir, len, .8);
+        Location from = eye.clone().add(dir.clone().multiply(.9)).add(0, -.2, 0);
+        projectileFx("rock_arrow", from, dir, .9f, len, 3);
+        var stone = Material.STONE.createBlockData();
+        var dirt = Material.COARSE_DIRT.createBlockData();
+        for (double s = .5; s <= len; s += .7) {
+            Location c = eye.clone().add(dir.clone().multiply(s));
+            w.spawnParticle(Particle.BLOCK, c, 2, .12, .12, .12, 0, ((int) (s / .7)) % 2 == 0 ? stone : dirt);
+            if (((int) (s / .7)) % 3 == 0) w.spawnParticle(Particle.DUST, c, 1, .1, .1, .1, 0, new Particle.DustOptions(Color.fromRGB(125, 105, 85), 1.1f));
+        }
+        w.playSound(eye, Sound.ENTITY_ARROW_SHOOT, 1f, .7f);
+        w.playSound(eye, Sound.BLOCK_STONE_BREAK, .7f, 1.2f);
         double dmg = power(p, Job.ARCHER) * 2.6;
-        World w = p.getWorld();
         for (LivingEntity t : hits) {
             hit(p, t, dmg);
-            firework(w, t.getBoundingBox().getCenter().toLocation(w));
+            if (t.isValid()) t.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 30, 1, false, true));
+            rockPuff(w, t.getBoundingBox().getCenter().toLocation(w));
         }
-        firework(w, eye.clone().add(dir.clone().multiply(len)));
+        rockPuff(w, eye.clone().add(dir.clone().multiply(len)));
     }
 
-    private void firework(World w, Location at) {
-        w.spawnParticle(Particle.FIREWORK, at, 28, .3, .3, .3, .2);
-        Color[] cols = {Color.fromRGB(255, 80, 80), Color.fromRGB(255, 220, 80), Color.fromRGB(90, 230, 120), Color.fromRGB(90, 200, 255), Color.fromRGB(255, 120, 220)};
-        for (Color c : cols) w.spawnParticle(Particle.DUST, at, 6, .6, .6, .6, 0, new Particle.DustOptions(c, 1.4f));
-        w.playSound(at, Sound.ENTITY_FIREWORK_ROCKET_BLAST, .8f, 1.2f);
+    private void rockPuff(World w, Location at) {
+        w.spawnParticle(Particle.BLOCK, at, 22, .35, .35, .35, 0, Material.STONE.createBlockData());
+        w.spawnParticle(Particle.BLOCK, at, 10, .3, .3, .3, 0, Material.COARSE_DIRT.createBlockData());
+        w.spawnParticle(Particle.POOF, at, 4, .2, .2, .2, .03);
+        w.playSound(at, Sound.BLOCK_GRAVEL_BREAK, .8f, .8f);
     }
 
-    /** 부채살: three arrows at once in a +-12 degree fan (100% each). */
+    /** 수압 화살: one very fast sharp water arrow, piercing 18 blocks (300% to each enemy). */
     private void spread(Player p) {
         World w = p.getWorld();
         Location eye = p.getEyeLocation();
-        Vector center = aimDir(p, eye, 20);
-        double dmg = power(p, Job.ARCHER);
-        for (int k = -1; k <= 1; k++) {
-            Vector d = center.clone().rotateAroundY(Math.toRadians(12 * k));
-            List<LivingEntity> hits = beam(p, eye, d, 20, .5, 1, Particle.CRIT, Color.WHITE);
-            bigArrow(eye.clone().add(d.clone().multiply(.9)).add(0, -.2, 0), d, .3f, beamLen, 3);
-            for (LivingEntity t : hits) hit(p, t, dmg);
+        Vector dir = aimDir(p, eye, 18);
+        double len = blockLen(p, eye, dir, 18);
+        List<LivingEntity> hits = along(p, eye, dir, len, .6);
+        Location from = eye.clone().add(dir.clone().multiply(.9)).add(0, -.2, 0);
+        projectileFx("water_arrow", from, dir, .8f, len, 1);
+        Particle.DustOptions blue = new Particle.DustOptions(Color.fromRGB(70, 160, 255), 1.1f);
+        for (double s = .5; s <= len; s += .6) {
+            Location c = eye.clone().add(dir.clone().multiply(s));
+            w.spawnParticle(Particle.SPLASH, c, 3, .12, .12, .12, 0);
+            w.spawnParticle(Particle.DUST, c, 1, .06, .06, .06, 0, blue);
+            if (((int) (s / .6)) % 2 == 0) w.spawnParticle(Particle.BUBBLE_POP, c, 1, .1, .1, .1, 0);
+            if (((int) (s / .6)) % 3 == 0) w.spawnParticle(Particle.DRIPPING_WATER, c, 1, .12, .12, .12, 0);
         }
-        w.playSound(eye, Sound.ENTITY_ARROW_SHOOT, 1f, 1.2f);
+        w.playSound(eye, Sound.ENTITY_ARROW_SHOOT, 1.1f, 1.6f);
+        w.playSound(eye, Sound.ENTITY_PLAYER_SPLASH, .8f, 1.5f);
+        double dmg = power(p, Job.ARCHER) * 3.0;
+        for (LivingEntity t : hits) {
+            hit(p, t, dmg);
+            Location c = t.getBoundingBox().getCenter().toLocation(w);
+            w.spawnParticle(Particle.SPLASH, c, 18, .35, .4, .35, .1);
+            w.spawnParticle(Particle.BUBBLE_POP, c, 8, .3, .3, .3, .05);
+            w.playSound(c, Sound.ENTITY_GENERIC_SPLASH, .6f, 1.4f);
+        }
     }
 
     /** 산탄 사격: after a 2 s draw, 20 arrows (25% each) in a +-18 degree cone and a ~5 block recoil. */
@@ -1456,7 +1532,7 @@ final class ClassSkills implements Listener {
         }, () -> kill(bow));
     }
 
-    /** 화살 폭풍: five wind bows hover behind the archer and fire 2 arrows every 0.25 s for 5 s (25% each, 40 arrows). */
+    /** 화살 폭풍: five wind bows hover behind the archer and fire 2 homing arrows every 0.25 s for 5 s (25% each, 40 arrows). */
     private void arrowStorm(Player p) {
         World w = p.getWorld();
         double dmg = power(p, Job.ARCHER) * .25;
@@ -1485,6 +1561,13 @@ final class ClassSkills implements Listener {
             for (int n = 0; n < 2; n++) {
                 Location from = at[rnd.nextInt(5)];
                 Vector d = look.clone().rotateAroundY(Math.toRadians(rnd.nextDouble(-3, 3)));
+                LivingEntity lock = null; double best = Double.MAX_VALUE;
+                for (LivingEntity t : near(p, from, 20)) {
+                    Vector rel = t.getBoundingBox().getCenter().subtract(from.toVector());
+                    double score = rel.length() - 8 * look.dot(rel.clone().normalize());
+                    if (score < best) { best = score; lock = t; }
+                }
+                if (lock != null) d = lock.getBoundingBox().getCenter().subtract(from.toVector()).normalize();
                 volleyArrow(p, from, d, 25, .6, dmg, .28f, 3);
             }
             w.playSound(eye, Sound.ENTITY_ARROW_SHOOT, .5f, 1.5f + rnd.nextFloat() * .3f);
@@ -1492,95 +1575,183 @@ final class ClassSkills implements Listener {
         }, () -> { for (ItemDisplay b : bows) kill(b); });
     }
 
-    /** 늑대 정령: for 8 s the basic attack is a wolf spirit that runs 18 blocks and pierces (150%). */
-    private void wolfSpirit(Player p) {
-        long ms = 8_000;
-        long until = System.currentTimeMillis() + ms;
-        wolfUntil.put(p.getUniqueId(), until);
+    /** 피닉스의 강림: a phoenix hovers at the right shoulder for 12 s shooting fireballs (120%, 1 s) while basic attacks become fire arrows. */
+    private void phoenix(Player p) {
         World w = p.getWorld();
-        w.playSound(p.getLocation(), Sound.ENTITY_WOLF_HOWL, 1.5f, 1f);
-        run(5, (int) (ms / 250), i -> {
-            if (!p.isOnline() || p.isDead() || p.getWorld() != w || wolfUntil.getOrDefault(p.getUniqueId(), 0L) != until) return true;
-            Location c = p.getLocation();
-            ring(c.clone().add(0, .2 + (i % 8) * .22, 0), .9, 8, at -> w.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(140, 215, 255), 1.1f)));
+        UUID id = p.getUniqueId();
+        long ms = CombatStats.duration(p, 12_000);
+        long until = System.currentTimeMillis() + ms;
+        phoenixUntil.put(id, until);
+        Vector look0 = p.getEyeLocation().getDirection().normalize();
+        Location[] cur = {phoenixSpot(p, look0, 0)};
+        ItemDisplay bird = fx("phoenix", cur[0], facing(look0, 0), vec(1.6f), null, (int) Math.min(260, ms / 50 + 6));
+        if (bird != null) bird.setTeleportDuration(3);
+        w.playSound(p.getLocation(), Sound.ENTITY_BLAZE_SHOOT, 1.2f, .6f);
+        w.playSound(p.getLocation(), Sound.ITEM_FIRECHARGE_USE, 1f, .7f);
+        w.spawnParticle(Particle.FLAME, cur[0], 40, .5, .5, .5, .08);
+        double dmg = power(p, Job.ARCHER) * 1.2;
+        Color orange = Color.fromRGB(255, 140, 40);
+        run(1, (int) Math.max(1, ms / 50), i -> {
+            if (!ready(p, w) || phoenixUntil.getOrDefault(id, 0L) != until) return true;
+            Vector look = p.getEyeLocation().getDirection().normalize();
+            Location goal = phoenixSpot(p, look, i);
+            Location now = cur[0];
+            now.add(goal.clone().subtract(now).toVector().multiply(.3));
+            moveFx(bird, now);
+            if (bird != null && bird.isValid() && i % 2 == 0)
+                tween(bird, 1, 2, new Vector3f(), facing(look, (float) Math.sin(i * .45) * .12f), vec(1.6f * (1f + (float) Math.sin(i * .6) * .06f)));
+            if (i % 2 == 0) {
+                w.spawnParticle(Particle.FLAME, now, 1, .25, .2, .25, .01);
+                w.spawnParticle(Particle.DUST, now, 1, .3, .25, .3, 0, new Particle.DustOptions(orange, 1.1f));
+            }
+            if (i % 20 == 19) {
+                Location pl = p.getLocation();
+                List<LivingEntity> targets = near(p, pl, 14);
+                targets.sort(Comparator.comparingDouble(t -> t.getLocation().distanceSquared(pl)));
+                if (!targets.isEmpty()) phoenixFireball(p, now.clone(), targets.get(0), dmg);
+            }
             return false;
-        }, () -> wolfUntil.remove(p.getUniqueId(), until));
+        }, () -> {
+            kill(bird);
+            if (phoenixUntil.getOrDefault(id, 0L) == until) phoenixUntil.remove(id);
+        });
     }
 
-    /** Wolf-spirit basic attack. */
-    private void wolfRun(Player p) {
+    /** Right shoulder spot (1.2 right, 0.6 above the shoulder) with a gentle bob. */
+    private Location phoenixSpot(Player p, Vector look, int tick) {
+        Vector right = new Vector(-look.getZ(), 0, look.getX());
+        if (right.lengthSquared() < 1e-6) right = new Vector(1, 0, 0); else right.normalize();
+        return p.getLocation().add(0, 2.0 + Math.sin(tick * .2) * .1, 0).add(right.multiply(1.2));
+    }
+
+    private void phoenixFireball(Player p, Location from, LivingEntity target, double dmg) {
+        World w = from.getWorld();
+        Location to = target.getBoundingBox().getCenter().toLocation(w);
+        ItemDisplay ball = spawnItem(from, new ItemStack(Material.FIRE_CHARGE), .5f, new Quaternionf());
+        w.playSound(from, Sound.ENTITY_BLAZE_SHOOT, .9f, 1.2f);
+        fall(ball, from, to, 4, c -> {
+            w.spawnParticle(Particle.FLAME, c, 3, .08, .08, .08, .01);
+            w.spawnParticle(Particle.SMALL_FLAME, c, 2, .12, .12, .12, .01);
+        }, () -> {
+            Location at = target.isValid() ? target.getBoundingBox().getCenter().toLocation(w) : to;
+            w.spawnParticle(Particle.FLAME, at, 25, .3, .3, .3, .08);
+            w.spawnParticle(Particle.LAVA, at, 4, .3, .3, .3, 0);
+            w.playSound(at, Sound.ENTITY_GENERIC_BURN, .7f, 1.2f);
+            if (target.isValid()) {
+                hit(p, target, dmg);
+                if (target.isValid()) target.setFireTicks(40);
+            }
+        });
+    }
+
+    /** Basic attack while the phoenix is active: fire arrow, +60% damage, ignites the target for 3 s. */
+    private void fireArrow(Player p) {
+        World w = p.getWorld();
         Location eye = p.getEyeLocation();
-        Vector dir = aimDir(p, eye, 18);
-        List<LivingEntity> hits = beam(p, eye, dir, 18, 1.0, 0, Particle.CLOUD, Color.fromRGB(150, 220, 255));
-        double len = beamLen;
-        Location from = eye.clone().add(dir.clone().multiply(1.2)).add(0, -.9, 0);
-        ItemDisplay wolf = fx("spirit_wolf", from, facing(dir, 0), vec(1.6f), null, 12);
-        if (wolf != null) flyFx(wolf, from.clone().add(dir.clone().multiply(len)), 6);
-        p.getWorld().playSound(eye, Sound.ENTITY_WOLF_GROWL, .8f, 1.4f);
-        double dmg = power(p, Job.ARCHER) * 1.5;
+        Vector adir = aimDir(p, eye, 20);
+        List<LivingEntity> hits = beam(p, eye, adir, 20, .5, 1, Particle.FLAME, Color.fromRGB(255, 140, 40));
+        bigArrow(eye.clone().add(adir.clone().multiply(.9)).add(0, -.2, 0), adir, .3f, beamLen, 3);
+        w.playSound(eye, Sound.ITEM_FIRECHARGE_USE, .5f, 1.6f);
+        double dmg = power(p, Job.ARCHER) * 1.6;
         for (LivingEntity t : hits) {
             hit(p, t, dmg);
-            t.getWorld().spawnParticle(Particle.SWEEP_ATTACK, t.getBoundingBox().getCenter().toLocation(t.getWorld()), 1, 0, 0, 0, 0);
+            if (t.isValid()) t.setFireTicks(60);
+            w.spawnParticle(Particle.FLAME, t.getBoundingBox().getCenter().toLocation(w), 8, .25, .3, .25, .04);
         }
     }
 
     // ---- mage
 
-    /** 마력 파동: a wide (3 block) upright purple wave rolls 14 blocks forward, piercing (200%). */
+    /** 마력 파동: a 70 degree fan-shaped purple wave expands up to 14 blocks along the look direction, piercing (200%). */
     private void wave(Player p) {
         World w = p.getWorld();
         Location eye = p.getEyeLocation();
         Vector dir = eye.getDirection().normalize();
-        Vector side = new Vector(-dir.getZ(), 0, dir.getX());
-        if (side.lengthSquared() < 1e-6) side = new Vector(1, 0, 0); else side.normalize();
-        Vector up = side.clone().crossProduct(dir).normalize();
-        Vector sd = side, ud = up;
-        Location start = eye.clone().add(0, -.4, 0);
+        Vector flat = dir.clone().setY(0);
+        if (flat.lengthSquared() < .01) flat = new Vector(0, 0, 1);
+        flat.normalize();
+        Vector fl = flat;
+        Location start = eye.clone().add(0, -.5, 0);
         double dmg = power(p, Job.MAGE) * 2.0;
-        Quaternionf q = facing(dir, 0).rotateX((float) (Math.PI / 2));
-        ItemDisplay ring = fx("whirl_ring", start.clone().add(dir.clone().multiply(1.2)), q, vec(3f), null, 24);
         Set<LivingEntity> done = new HashSet<>();
         Color purple = Color.fromRGB(170, 70, 235);
+        double cos = Math.cos(Math.toRadians(35));
         w.playSound(eye, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1f, 1.2f);
         run(1, 10, i -> {
             if (!p.isOnline()) return true;
-            Location c = start.clone().add(dir.clone().multiply(1.2 + (i + 1) * 1.3));
-            if (!c.getBlock().isPassable()) return true;
-            moveFx(ring, c);
-            for (int k = 0; k < 18; k++) {
-                double a = k * Math.PI * 2 / 18;
-                Location at = c.clone().add(sd.clone().multiply(Math.cos(a) * 1.5)).add(ud.clone().multiply(Math.sin(a) * 1.5));
-                w.spawnParticle(Particle.DUST, at, 1, .03, .03, .03, 0, new Particle.DustOptions(purple, 1.5f));
-                if (k % 3 == 0) w.spawnParticle(Particle.WITCH, at, 1, 0, 0, 0, 0);
+            double r = 1.4 + (i + 1) * 1.26;
+            for (double a = -35; a <= 35; a += 3.5) {
+                Vector d = fl.clone().rotateAroundY(Math.toRadians(a));
+                Location at = start.clone().add(d.multiply(r));
+                if (!at.getBlock().isPassable()) continue;
+                boolean edge = Math.abs(a) > 31;
+                w.spawnParticle(Particle.DUST, at, 1, .03, .08, .03, 0, new Particle.DustOptions(purple, edge ? 1.4f : 1.1f));
+                w.spawnParticle(Particle.DUST, at.clone().add(0, .35, 0), 1, .03, .05, .03, 0, new Particle.DustOptions(Color.fromRGB(215, 160, 255), .8f));
+                if (((int) (a / 3.5)) % 3 == 0) w.spawnParticle(Particle.WITCH, at, 1, 0, 0, 0, 0);
             }
-            for (LivingEntity t : near(p, c, 2)) if (done.add(t)) hit(p, t, dmg);
+            for (LivingEntity t : near(p, start, r + .8)) {
+                if (done.contains(t) || start.toVector().distance(t.getBoundingBox().getCenter()) < r - 1.4) continue;
+                if (!inCone(start, fl, t, cos, true)) continue;
+                done.add(t);
+                hit(p, t, dmg);
+            }
             return false;
-        }, () -> kill(ring));
+        }, null);
     }
 
-    /** 마력 망치: a giant mana hammer smashes down on the aimed point (max 16): 380% in r 3.5, 1 s stun, shockwave. */
+    /** Hammer orientation: model flipped so the head is on top, swung by theta about the horizontal axis perpendicular to heading h (head moves toward h). */
+    private static Quaternionf hammerRot(float theta, Vector h) {
+        float phi = (float) Math.atan2(-h.getZ(), h.getX()); // model +-X (striking faces) onto the heading
+        Vector a = new Vector(0, 1, 0).crossProduct(h);
+        return new Quaternionf().rotateAxis(theta, (float) a.getX(), (float) a.getY(), (float) a.getZ()).rotateY(phi).rotateZ((float) Math.PI);
+    }
+
+    /** Translation that keeps the handle end (model y = +1.5 blocks) on the display origin for the given rotation / scale. */
+    private static Vector3f hammerShift(Quaternionf q, float s) {
+        Vector3f t = new Vector3f(0, 1.5f * s, 0);
+        q.transform(t);
+        return t.negate();
+    }
+
+    private void hammerPose(ItemDisplay d, int after, int dur, float theta, float s, Vector h) {
+        Quaternionf q = hammerRot(theta, h);
+        tween(d, after, dur, hammerShift(q, s), q, vec(s));
+    }
+
+    /** 마력 망치: a giant mana hammer stands up beside the aimed point, then its head swings over (pivot = handle end) and slams the point: 380% in r 3.5, 1 s stun, shockwave. */
     private void hammer(Player p) {
         Location c = aimPoint(p, 16);
         World w = c.getWorld();
         Vector h = flatLook(p);
         if (h == null) h = new Vector(0, 0, 1);
         Vector heading = h;
-        float yaw = (float) Math.atan2(h.getX(), h.getZ());
-        Location startAt = c.clone().add(0, 3.4, 0).subtract(h.clone().multiply(1.6));
-        Vector travel = c.clone().add(0, 1.0, 0).add(h.clone().multiply(.6)).subtract(startAt).toVector();
-        ItemDisplay hammer = fx("mana_hammer", startAt, new Quaternionf().rotateY(yaw).rotateX(-.2f), vec(1f), null, 40);
-        tween(hammer, 1, 5, new Vector3f(), new Quaternionf().rotateY(yaw).rotateX(-.9f), vec(4.4f));
-        tween(hammer, 8, 5, new Vector3f((float) travel.getX(), (float) travel.getY(), (float) travel.getZ()), new Quaternionf().rotateY(yaw).rotateX(1.5f), vec(4.4f));
+        final float s = 3.0f;
+        final double reach = 1.875 * s; // handle end -> head centre
+        // pivot = handle end, raised so the head's striking face is exactly on the ground at the end of the 90 degree swing
+        Location pivot = c.clone().add(heading.clone().multiply(-reach)).add(0, .87 * s + .05, 0);
+        Quaternionf q0 = hammerRot(0, heading);
+        ItemDisplay hammer = fx("mana_hammer", pivot, q0, vec(.4f * s), null, 50);
+        if (hammer != null) hammer.setTransformation(new Transformation(hammerShift(q0, .4f * s), q0, vec(.4f * s), new Quaternionf()));
+        hammerPose(hammer, 1, 5, 0, s, heading);                       // grows upright
+        final float wind = -.25f, end = (float) (Math.PI / 2);
+        hammerPose(hammer, 8, 3, wind, s, heading);                    // small back-lean
+        for (int k = 1; k <= 8; k++) {                                 // accelerating swing, 8 ticks
+            double f = k / 8.0;
+            hammerPose(hammer, 10 + k, 1, (float) (wind + (end - wind) * f * f), s, heading);
+        }
         w.playSound(c, Sound.BLOCK_BEACON_ACTIVATE, 1f, .6f);
         Color purple = Color.fromRGB(170, 70, 235);
         double dmg = power(p, Job.MAGE) * 3.8;
-        run(1, 14, i -> {
+        run(1, 19, i -> {
             if (!p.isOnline()) return true;
-            if (i < 12) {
-                w.spawnParticle(Particle.DUST, startAt.clone().add(travel.clone().multiply(Math.max(0, (i - 8) / 5.0))), 6, .8, .8, .8, 0, new Particle.DustOptions(purple, 1.6f));
-                return false;
+            if (i >= 11) {
+                double f = (i - 10) / 8.0, th = wind + (end - wind) * f * f;
+                Location head = pivot.clone().add(heading.getX() * Math.sin(th) * reach, Math.cos(th) * reach, heading.getZ() * Math.sin(th) * reach);
+                w.spawnParticle(Particle.DUST, head, 6, .8, .8, .8, 0, new Particle.DustOptions(purple, 1.6f));
+            } else if (i % 3 == 0) {
+                w.spawnParticle(Particle.WITCH, pivot.clone().add(0, reach, 0), 4, .8, .5, .8, 0);
             }
-            return true;
+            return false;
         }, () -> {
             w.playSound(c, Sound.ENTITY_GENERIC_EXPLODE, 1.5f, .7f);
             w.playSound(c, Sound.ITEM_MACE_SMASH_GROUND, 1.2f, .7f);
@@ -1600,21 +1771,61 @@ final class ClassSkills implements Listener {
         });
     }
 
-    /** 마력 대궁: after the 3 s draw (see manaBowFx), a huge mana arrow pierces 30 blocks (550%). */
+    /** 마력 대궁: after the draw (see manaBowFx) a huge mana arrow homes onto the enemy nearest the crosshair (30 blocks), piercing (550%). */
     private void manaBow(Player p) {
-        Location eye = p.getEyeLocation();
-        Vector dir = aimDir(p, eye, 30);
-        List<LivingEntity> hits = beam(p, eye, dir, 30, 1.2, 0, Particle.WITCH, Color.fromRGB(176, 110, 255));
-        double len = beamLen;
-        bigArrow(eye.clone().add(dir.clone().multiply(1.2)).add(0, -.2, 0), dir, 1.5f, len, 4);
         World w = p.getWorld();
+        Location eye = p.getEyeLocation();
+        Vector look = eye.getDirection().normalize();
+        LivingEntity[] lock = {aimTarget(p, eye, look, 30, false)};
+        Vector rside = new Vector(-look.getZ(), 0, look.getX());
+        if (rside.lengthSquared() < 1e-6) rside = new Vector(1, 0, 0); else rside.normalize();
+        Location[] cur = {eye.clone().add(look.clone().multiply(2.0)).add(rside.multiply(.9)).add(0, -1.0, 0)};
+        Vector[] dv = {look.clone()};
+        ItemDisplay arrow = fx("arrow_big", cur[0], facing(look, 0), vec(.9f), new ItemStack(Material.ARROW), 60);
         w.playSound(eye, Sound.ENTITY_ENDER_DRAGON_SHOOT, 1f, 1.5f);
         w.playSound(eye, Sound.ENTITY_ARROW_SHOOT, 1.2f, .5f);
         double dmg = power(p, Job.MAGE) * 5.5;
-        for (LivingEntity t : hits) {
-            hit(p, t, dmg);
-            w.spawnParticle(Particle.DUST, t.getBoundingBox().getCenter().toLocation(w), 20, .4, .5, .4, 0, new Particle.DustOptions(Color.fromRGB(176, 110, 255), 1.8f));
-        }
+        Color violet = Color.fromRGB(176, 110, 255);
+        Set<LivingEntity> done = new HashSet<>();
+        double[] travelled = {0};
+        final double step = 1.8, maxTurn = Math.toRadians(14);
+        run(1, 30, i -> {
+            if (!p.isOnline() || p.getWorld() != w) return true;
+            Location cp = cur[0];
+            LivingEntity lk = lock[0];
+            if (lk != null && lk.isValid() && !lk.isDead()) {
+                Vector want = lk.getBoundingBox().getCenter().subtract(cp.toVector());
+                if (want.lengthSquared() > 1e-4) {
+                    want.normalize();
+                    double ang = dv[0].angle(want);
+                    if (ang <= maxTurn) dv[0] = want;
+                    else {
+                        Vector axis = dv[0].clone().crossProduct(want);
+                        if (axis.lengthSquared() < 1e-8) axis = new Vector(0, 1, 0); else axis.normalize();
+                        dv[0] = dv[0].clone().rotateAroundAxis(axis, maxTurn).normalize();
+                    }
+                }
+            } else lock[0] = null;
+            Vector d = dv[0];
+            boolean blocked = w.rayTraceBlocks(cp, d, step, FluidCollisionMode.NEVER, true) != null;
+            for (LivingEntity t : along(p, cp, d, step, 1.2)) {
+                if (!done.add(t)) continue;
+                hit(p, t, dmg);
+                w.spawnParticle(Particle.DUST, t.getBoundingBox().getCenter().toLocation(w), 20, .4, .5, .4, 0, new Particle.DustOptions(violet, 1.8f));
+                if (t == lock[0]) lock[0] = null; // pierced: fly on straight
+            }
+            Location next = cp.clone().add(d.clone().multiply(step));
+            cur[0] = next;
+            moveFx(arrow, next);
+            if (arrow != null && arrow.isValid()) tween(arrow, 1, 1, new Vector3f(), facing(d, 0), vec(.9f));
+            w.spawnParticle(Particle.WITCH, next, 3, .2, .2, .2, 0);
+            w.spawnParticle(Particle.DUST, next, 3, .25, .25, .25, 0, new Particle.DustOptions(violet, 1.6f));
+            travelled[0] += step;
+            return blocked || travelled[0] >= 30;
+        }, () -> {
+            w.spawnParticle(Particle.DUST, cur[0], 14, .4, .4, .4, 0, new Particle.DustOptions(violet, 1.8f));
+            kill(arrow);
+        });
     }
 
     /** 마력 집중. */
@@ -1691,35 +1902,46 @@ final class ClassSkills implements Listener {
         }, null);
     }
 
-    /** 용의 숨결: after the 3 s charge a dragon head appears and breathes fire in a 10 block 60 degree cone for 5 s (45% / 0.25 s + burning). */
+    /** Dragon head spot: 1.2 blocks above the eye, slightly forward (horizontal), so nothing sits in front of the camera. */
+    private static Location dragonMouth(Location eye, Vector dir) {
+        Vector f = dir.clone().setY(0);
+        if (f.lengthSquared() < 1e-6) f = new Vector(0, 0, 1); else f.normalize();
+        return eye.clone().add(0, .9, 0).add(f.multiply(.7));
+    }
+
+    /** Direction from the raised mouth to the point the player looks at (about 12 blocks ahead). */
+    private static Vector aimFrom(Location mouth, Location eye, Vector dir) {
+        Vector v = eye.clone().add(dir.clone().multiply(12)).toVector().subtract(mouth.toVector());
+        return v.lengthSquared() < 1e-6 ? dir.clone() : v.normalize();
+    }
+
+    /** 청룡의 숨결: after the 3 s charge a dragon head appears above the cast spot (fixed, faces the cast direction) and breathes blue flame in a 16 block 60 degree cone for 5 s (45% / 0.25 s + burning). */
     private void dragon(Player p) {
         World w = p.getWorld();
         double dmg = power(p, Job.MAGE) * .45;
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
         Location eye0 = p.getEyeLocation();
         Vector d0 = eye0.getDirection().normalize();
-        ItemDisplay head = fx("dragon_head", eye0.clone().add(d0.clone().multiply(2.6)).add(0, -.3, 0), facing(d0, 0), vec(3f), null, 110);
-        if (head != null) head.setTeleportDuration(2);
+        Location mouth = dragonMouth(eye0, d0);
+        Vector aim = aimFrom(mouth, eye0, d0);
+        ItemDisplay head = fx("dragon_head", mouth, facing(aim, 0), vec(2.4f), null, 110);
         w.playSound(eye0, Sound.ENTITY_ENDER_DRAGON_GROWL, 1.2f, 1.1f);
         double cos = Math.cos(Math.toRadians(30));
+        Color blue = Color.fromRGB(60, 150, 255), cyan = Color.fromRGB(110, 235, 255);
         run(1, 100, i -> {
             if (!ready(p, w)) return true;
-            Location eye = p.getEyeLocation();
-            Vector dir = eye.getDirection().normalize();
-            Location mouth = eye.clone().add(dir.clone().multiply(2.6)).add(0, -.3, 0);
-            moveFx(head, mouth);
-            if (head != null && head.isValid()) tween(head, 1, 1, new Vector3f(), facing(dir, 0), vec(3f));
-            for (int n = 0; n < 8; n++) {
-                Vector d = dir.clone().rotateAroundY(Math.toRadians(rnd.nextDouble(-30, 30)));
+            for (int n = 0; n < 10; n++) {
+                Vector d = aim.clone().rotateAroundY(Math.toRadians(rnd.nextDouble(-30, 30)));
                 Vector right = d.clone().crossProduct(new Vector(0, 1, 0));
                 if (right.lengthSquared() > 1e-6) d.rotateAroundAxis(right.normalize(), Math.toRadians(rnd.nextDouble(-20, 20)));
-                Location at = mouth.clone().add(d.multiply(1 + rnd.nextDouble() * 9));
-                w.spawnParticle(n % 3 == 0 ? Particle.DRAGON_BREATH : Particle.FLAME, at, 1, .1, .1, .1, .01);
+                Location at = mouth.clone().add(d.multiply(.8 + rnd.nextDouble() * 15));
+                if (n % 2 == 0) w.spawnParticle(Particle.SOUL_FIRE_FLAME, at, 1, .1, .1, .1, .01);
+                else w.spawnParticle(Particle.DUST, at, 1, .1, .1, .1, 0, new Particle.DustOptions(n % 4 == 1 ? blue : cyan, 1.4f));
             }
             if (i % 10 == 0) w.playSound(mouth, Sound.ENTITY_BLAZE_SHOOT, .8f, .6f);
             if (i % 5 == 0) {
-                for (LivingEntity t : near(p, eye, 10)) {
-                    if (!inCone(eye, dir, t, cos, false)) continue;
+                for (LivingEntity t : near(p, mouth, 16)) {
+                    if (!inCone(mouth, aim, t, cos, false)) continue;
                     hit(p, t, dmg);
                     if (t.isValid()) t.setFireTicks(40);
                 }
@@ -2024,7 +2246,12 @@ final class ClassSkills implements Listener {
 
     /** Big arrow flying from the start along dir for dist blocks over the given ticks, then gone. */
     private void bigArrow(Location from, Vector dir, float scale, double dist, int ticks) {
-        ItemDisplay a = fx("arrow_big", from, facing(dir, 0), vec(scale), new ItemStack(Material.ARROW), ticks + 4);
+        projectileFx("arrow_big", from, dir, scale, dist, ticks);
+    }
+
+    /** Same as bigArrow for any model id that points to its forward axis like arrow_big (falls back to a vanilla arrow). */
+    private void projectileFx(String id, Location from, Vector dir, float scale, double dist, int ticks) {
+        ItemDisplay a = fx(id, from, facing(dir, 0), vec(scale), new ItemStack(Material.ARROW), ticks + 4);
         if (a == null) return;
         flyFx(a, from.clone().add(dir.clone().normalize().multiply(dist)), ticks);
         tween(a, ticks, 2, new Vector3f(), facing(dir, 0), vec(scale * .1f));

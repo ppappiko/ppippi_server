@@ -443,9 +443,9 @@ const noisy2 = (c, n = 10, a) => ({ c, noise: n, a });
   m.box([-4, hy - 4.5, -1.5], [20, hy + 10.5, 17.5], 4);               // aura
   m.write();
 }
-// ------------------------------------------------------------------ dragon head (purple scales, orange glow, mouth open toward -Z)
+// ------------------------------------------------------------------ blue dragon / 청룡 (blue-teal scales, cyan glow, mouth open toward -Z)
 {
-  const m = new Model("dragon_head", [noisy2("#7a2fd6"), noisy2("#b86bff"), noisy2("#4b1a8c"), "#ff7a1f", "#ffd23a", "#ffffff", "#e9c8ff", { c: "#ff9a30", a: 150 }, noisy2("#2a1245"), { c: "#ffd23a", a: 120 }]);
+  const m = new Model("dragon_head", [noisy2("#1f6fd0"), noisy2("#2fb4d8"), noisy2("#12408f"), "#2fe0ff", "#bff8ff", "#ffffff", "#eef8ff", { c: "#4fe6ff", a: 150 }, noisy2("#0a1f4a"), { c: "#9ff4ff", a: 120 }]);
   seed = 33;
   const B = (a, b, ci, r) => m.box(a, b, ci, r);
   B([4, 5, 9], [12, 14, 21], 0);                       // skull
@@ -475,9 +475,9 @@ const noisy2 = (c, n = 10, a) => ({ c, noise: n, a });
   for (const z of [22.5, 27]) B([4.2, 4.8, z], [11.8, 6.6, z + 1.4], 8);
   m.write();
 }
-// ------------------------------------------------------------------ tiger claw (striped tiger head at the back, three claw rakes in front)
+// ------------------------------------------------------------------ white tiger / 백호 claw (white-grey striped tiger head, icy-blue claw glow at the back, three claw rakes in front)
 {
-  const m = new Model("tiger_claw", ["#ff9a1f", "#ffc14a", "#fff3e0", "#2a1a10", { c: "#ff7a1f", a: 150 }, { c: "#ffe0a0", a: 130 }, "#ffd23a", "#ffffff", "#e0701a"]);
+  const m = new Model("tiger_claw", [noisy2("#e6eaf0", 6), noisy2("#ffffff", 4), "#f4f8ff", "#14141a", { c: "#7fd8ff", a: 150 }, { c: "#c8f2ff", a: 130 }, "#6fd0ff", "#ffffff", noisy2("#b4bfcf", 6)]);
   const B = (a, b, ci, r) => m.box(a, b, ci, r);
   const hz = 16;
   B([2, 3, hz - 2], [14, 13.5, hz + 8], 0);               // head
@@ -512,5 +512,107 @@ const noisy2 = (c, n = 10, a) => ({ c, noise: n, a });
       t += len;
     }
   }
+  m.write();
+}
+
+// ================================================================== skill FX batch 3
+// ------------------------------------------------------------------ lightning bolt (vertical, zig-zag in the XY plane, y 0..32)
+{
+  const m = new Model("lightning_bolt", ["#ffffff", "#fffbd0", "#ffe94a", { c: "#fff27a", a: 140 }, { c: "#9ff4ff", a: 110 }, { c: "#c8fbff", a: 70 }, "#e8ffff"]);
+  const P = [[9, 31], [12.5, 25], [5.5, 19.5], [11, 13], [4.5, 6.5], [8, 0.8]];
+  for (let i = 0; i < P.length - 1; i++) {
+    const [x0, y0] = P[i], [x1, y1] = P[i + 1], c = [(x0 + x1) / 2, (y0 + y1) / 2], a = Math.atan2(y1 - y0, x1 - x0) / D, len = Math.hypot(x1 - x0, y1 - y0) * (i === 0 ? 1.05 : 1.2);
+    m.tan("xy", [c[0], c[1], 8], [len, 3.6, 2.4], a, 5);       // pale cyan outer glow
+    m.tan("xy", [c[0], c[1], 8], [len, 2.3, 1.8], a, 3);       // yellow glow
+    m.tan("xy", [c[0], c[1], 8], [len, 1.4, 1.3], a, 2);       // yellow rim
+    m.tan("xy", [c[0], c[1], 8], [len, .8, 1], a, 0);       // white core
+  }
+  for (const [x, y] of P.slice(1, -1)) { m.box(...sq([x, y, 8], 1.05), 1, { axis: "z", angle: 45 }); m.box(...sq([x, y, 8], .6), 0, { axis: "z", angle: 22.5 }); }
+  for (const [x, y, a] of [[12.2, 24, 22.5], [5.2, 17.5, -22.5], [11, 11.5, 22.5], [5, 5, -22.5]]) {   // small side forks
+    m.tan("xy", [x + (a > 0 ? 2.2 : -2.2), y - 2.4, 8], [4.4, .9, 1.2], a > 0 ? -50 : 50, 4);
+    m.tan("xy", [x + (a > 0 ? 2.2 : -2.2), y - 2.4, 8], [3.6, .5, .7], a > 0 ? -50 : 50, 0);
+  }
+  m.box([4.5, 0, 6], [11.5, 1, 10], 3); m.box([6, 0, 4.5], [10, 1, 11.5], 4);                             // impact flash
+  for (const [x, y, z] of [[2.5, 4, 8], [13.5, 9, 8], [3, 24, 8.5], [14, 19, 7.5], [8, 31, 8]]) m.box(...sq([x, y, z], .55), 6, { axis: "z", angle: 45 });
+  m.write();
+}
+// ------------------------------------------------------------------ rock arrow (earth spirit, points to model -Z)
+{
+  const nz = (c, n = 12) => ({ c, noise: n });
+  const m = new Model("rock_arrow", [nz("#8a5a30"), nz("#5e3c20"), nz("#85848a", 14), nz("#55534f", 12), nz("#6e5238"), nz("#4f7a35", 14), nz("#7fa84a", 12), nz("#b09a78", 12), nz("#a07040"), { c: "#d8f0b0", a: 90 }]);
+  seed = 21;
+  m.box([7.1, 7.1, -3], [8.9, 8.9, 26], 0); m.box([7.4, 7.4, -3], [8.6, 8.6, 26], 4);                    // wooden shaft
+  for (const z of [3, 9, 15]) m.box([6.5, 6.5, z], [9.5, 9.5, z + 2.2], 3, { axis: "z", angle: 45 });      // stone bands
+  m.box([7, 7, -16], [9, 9, -11], 7); m.box([6.2, 6.2, -12], [9.8, 9.8, -7], 2, { axis: "z", angle: 45 }); // stone tip
+  m.box([6, 6, -9], [10, 10, -4], 2); m.box([6, 6, -9], [10, 10, -4], 3, { axis: "z", angle: 45 });
+  const chunks = [[4.2, 9.2, -7, 3, 2], [11.8, 6.6, -6, 3.2, 3], [7.6, 11.6, -5, 2.8, 2], [8.4, 4.4, -8, 2.8, 3], [11.2, 10.8, -9.5, 2.2, 2], [4.8, 5.6, -10, 2.2, 3], [8, 8, -3, 4.6, 2], [5, 7.4, -2, 2.6, 7], [11.4, 8.6, -1.5, 2.6, 7]];
+  chunks.forEach(([x, y, z, s, ci], i) => { m.box(...sq([x, y, z], s / 2), ci, { axis: ["y", "x", "z"][i % 3], angle: [22.5, 45, -22.5][i % 3] }); m.box(...sq([x, y, z], s / 2 - .35), i % 2 ? 3 : 2, { axis: "y", angle: 45 }); });
+  for (const [x, y, z, w] of [[8, 11.4, -4, 2.6], [5, 10.4, -7.5, 1.8], [11.6, 8, -7, 1.8], [8.6, 3.3, -8, 1.6], [8, 8, -0.4, 2.2]]) { m.box([x - w / 2, y - .5, z - w / 2], [x + w / 2, y + .5, z + w / 2], 5); m.box([x - w / 4, y - .2, z - w / 4], [x + w / 4, y + .8, z + w / 4], 6); }   // moss
+  m.box([4, 4, -10], [12, 12, -1], 9);                                                                   // spirit aura
+  for (const [ang, ci] of [[0, 6], [45, 5], [-45, 5]]) m.box([7.6, 3, 22], [8.4, 13, 29], ci, { axis: "z", angle: ang });   // leaf fletching
+  m.box([3, 7.6, 22], [13, 8.4, 29], 6);
+  m.box([6.9, 6.9, 28.6], [9.1, 9.1, 30.4], 7);
+  for (const [x, y, z, s, ci, a] of [[2.5, 12.5, -3, 1.6, 2, 22.5], [13.5, 3.8, -4.5, 1.4, 3, 45], [3.2, 3.5, 2, 1.2, 7, -22.5], [13, 12.6, 3.5, 1.5, 2, 22.5], [8, 14.8, -10, 1.1, 3, 45], [1.8, 8, -12, 1, 7, 22.5], [14.4, 8, 8, 1.1, 3, -22.5]])
+    m.box(...sq([x, y, z], s / 2), ci, { axis: "y", angle: a });                                         // floating pebbles
+  m.write();
+}
+// ------------------------------------------------------------------ water arrow (thin high-pressure spear, points to model -Z)
+{
+  const m = new Model("water_arrow", ["#ffffff", { c: "#d8fbff", a: 220 }, { c: "#4fd8ff", a: 200 }, { c: "#2a8cf0", a: 190 }, { c: "#1a5ccc", a: 210 }, "#eaffff", { c: "#7fe8ff", a: 90 }, { c: "#bff4ff", a: 150 }]);
+  const oct = (z0, z1, s, ci) => { m.box([8 - s / 2, 8 - s / 2, z0], [8 + s / 2, 8 + s / 2, z1], ci); m.box([8 - s / 2, 8 - s / 2, z0], [8 + s / 2, 8 + s / 2, z1], ci, { axis: "z", angle: 45 }); };
+  oct(-16, -12, .7, 0); oct(-12, -6, 1.5, 1); oct(-6, 2, 2.4, 2); oct(2, 14, 2.6, 3);
+  m.box([7.55, 7.55, -15], [8.45, 8.45, 22], 0);
+  m.box([7.3, 7.3, 14], [8.7, 8.7, 26], 4);
+  for (const [z, r] of [[-3, 1.9], [3, 2.5], [9.5, 2.9], [16, 2.5]]) {      // foam rings
+    for (const rot of [null, { axis: "z", angle: 45 }]) {
+      m.box([8 - r, 8 - r, z], [8 + r, 8 - r + .9, z + 1.4], 5, rot); m.box([8 - r, 8 + r - .9, z], [8 + r, 8 + r, z + 1.4], 5, rot);
+      m.box([8 - r, 8 - r, z], [8 - r + .9, 8 + r, z + 1.4], 5, rot); m.box([8 + r - .9, 8 - r, z], [8 + r, 8 + r, z + 1.4], 5, rot);
+    }
+  }
+  for (let rib = 0; rib < 2; rib++) for (let k = 0; k < 22; k++) {          // spiral wake
+    const t = k / 21, z = 12 + t * 19, ph = (t * 2.4 * 360 + rib * 180) * D, r = 1.8 + 4 * t;
+    const c = [8 + r * Math.cos(ph), 8 + r * Math.sin(ph), z], s = 1.2 - .6 * t;
+    m.box(...sq(c, s / 2 + .25), rib ? 7 : 2, { axis: "z", angle: [0, 22.5, 45, -22.5][k % 4] });
+  }
+  m.box([6.4, 6.4, 12], [9.6, 9.6, 31], 6);
+  for (const [x, y, z] of [[4.4, 11, 20], [11.8, 4.8, 24], [12, 11.2, 29], [4, 5, 28]]) m.box(...sq([x, y, z], .5), 5, { axis: "y", angle: 45 });
+  m.write();
+}
+// ------------------------------------------------------------------ phoenix (spread wings, head toward model -Z)
+{
+  const nz = (c, n = 8) => ({ c, noise: n });
+  const m = new Model("phoenix", [nz("#b3141a"), nz("#e8321c"), nz("#ff7a1f"), nz("#ffb02e"), nz("#ffe14a"), "#fff6b0", "#ffffff", "#3a1410", { c: "#ff8a2a", a: 100 }, { c: "#ffd23a", a: 140 }]);
+  seed = 61;
+  const B = (a, b, ci, r) => m.box(a, b, ci, r);
+  B([6, 5.5, -2], [10, 10, 9], 1); B([6.4, 5, -3], [9.6, 8.5, 4], 3); B([6.6, 9.6, 0], [9.4, 10.6, 8], 0);   // body
+  B([6.8, 8.6, -4.6], [9.2, 12.4, -1], 2, { axis: "x", angle: 22.5 * SGN });                                  // neck
+  B([6.2, 10.4, -8], [9.8, 14, -3.6], 1);                                                                    // head
+  B([7.2, 11.6, -11.6], [8.8, 12.8, -8], 4); B([7.4, 10.6, -10.2], [8.6, 11.8, -8], 3);                      // beak
+  for (const s of [-1, 1]) { B([8 + s * 2.6 - .4, 12.2, -7.2], [8 + s * 2.6 + .4, 13.2, -6], 6); B([8 + s * 2.6 - .3, 12.4, -7.5], [8 + s * 2.6 + .3, 13, -7.1], 7); }
+  B([7.2, 13.6, -6.2], [8.8, 17.2, -4.6], 3, { axis: "x", angle: -22.5 * SGN }); B([7.4, 16.4, -4.4], [8.6, 19.6, -2.2], 4, { axis: "x", angle: -45 * SGN });   // crest
+  B([5.4, 13.4, -4.4], [6.6, 16.4, -2.6], 2, { axis: "z", angle: 22.5 }); B([9.4, 13.4, -4.4], [10.6, 16.4, -2.6], 2, { axis: "z", angle: -22.5 });
+  for (const s of [-1, 1]) {                                                                                 // wings
+    for (let i = 0; i < 8; i++) {
+      const x0 = 8 + s * (2.6 + i * 1.95), x1 = x0 + s * 2.0, y = 8.6 + i * 0.75 + (i > 5 ? 1.2 : 0);
+      const zf = -2.5 + i * .55, len = 5.5 + (i < 5 ? i * 2.2 : 11 - (i - 5) * 3);
+      const lo = Math.min(x0, x1), hi = Math.max(x0, x1);
+      B([lo, y, zf], [hi, y + 1.3, zf + len * .38], i < 4 ? 0 : 1);
+      B([lo, y, zf + len * .38], [hi, y + 1.1, zf + len * .7], i % 2 ? 2 : 1);
+      B([lo, y - .1, zf + len * .7], [hi, y + .9, zf + len], i % 3 ? 3 : 2);
+      B([lo + .1, y - .2, zf + len], [hi - .1, y + .6, zf + len + 3], i % 2 ? 4 : 3);
+      B([lo + .35, y + 1.25, zf + 0.5], [hi - .35, y + 1.7, zf + len * .5], 5);
+    }
+    B([8 + s * 2.2 - 1.2, 8.4, -1.5], [8 + s * 2.2 + 1.2, 11.2, 4], 1);
+  }
+  const tails = [[8, [[8, 8], [7.2, 13], [6, 18], [6, 23], [8, 28], [11, 31]], 3.2, 2.4, 2, 3, 4], [5.2, [[8, 8], [6.8, 12], [5.6, 16], [5.2, 21], [6.4, 25]], 2.2, 1.8, 0, 2, 3], [10.8, [[8, 8], [6.8, 12], [5.6, 16], [5.2, 21], [6.4, 25]], 2.2, 1.8, 0, 2, 3]];
+  for (const [x, pts, wd, th, c1, c2, c3] of tails) {                                                       // tail streamers
+    limb(m, pts, th + .4, wd, c1, x);
+    limb(m, pts.map(([y, z]) => [y + .1, z]), th * .6, wd * .55, c2, x);
+    const [ey, ez] = pts[pts.length - 1]; B([x - wd * .45, ey - .8, ez - 1], [x + wd * .45, ey + 1.6, Math.min(ez + 3, 32)], c3);
+  }
+  for (const s of [-1, 1]) { B([8 + s * 1.6 - .4, 3, 3], [8 + s * 1.6 + .4, 5.8, 4], 4); B([8 + s * 1.6 - .7, 2.4, 1.6], [8 + s * 1.6 + .7, 3.2, 4.2], 4); }
+  B([5, 4.5, -2], [11, 11.5, 12], 8);
+  for (const [x, y, z, a] of [[-6, 6, 4, 45], [22, 7, 3, 22.5], [-3, 18, 9, 22.5], [19, 19, 8, 45], [8, 4, 16, 22.5], [1.5, 9, 14, 45], [14.5, 9, 14, -22.5], [8, 22, 2, 45]])
+    B(...sq([x, y, z], .75), a > 30 ? 5 : 4, { axis: "y", angle: a });
   m.write();
 }

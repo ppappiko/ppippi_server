@@ -81,6 +81,7 @@ plots:
         stations:
           '6_64_55':
             level: 4
+            paused: 1794402029901
       GOLD_MINE:
         paused: 1793958560037
         anchor: '-3_64_38'
@@ -150,9 +151,9 @@ players:
       aptitudes:
         FARM: 2
         PET_STORAGE: 2
-      food: 58
-      stock: 20
-      since: 1794393679041
+      food: 40
+      stock: 408
+      since: 1794402023966
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -302,27 +303,28 @@ players:
       lumber-slot: 4
       facility-bound: true
     sunlizard:
-      food: 70
+      food: 0
       stock: 0
-      since: 1794393679041
+      since: 1794402023966
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 5
       facility-bound: true
+      refilling: true
     ferret:
-      food: 57
+      food: 40
       stock: 1
-      since: 1794393679041
+      since: 1794402023966
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 3
       facility-bound: true
     angelpig:
-      food: 61
+      food: 46
       stock: 0
-      since: 1794393679041
+      since: 1794402023966
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -549,9 +551,9 @@ pet-storage:
         production-anchor: '6_64_55'
         lumber-slot: 2
         facility-bound: true
-        food: 58
+        food: 40
         stock: 0
-        since: 1794393679041
+        since: 1794402023966
         active: true
       44867329-bc34-4972-b522-6fa5361c88fa:
         production-facility: LUMBER
@@ -620,90 +622,12 @@ facility-views:
       depth: 2
       wide: true
       food:
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: PIPIFACILITIES_STRAW
-        amount: 46
-        meta:
-          ==: ItemMeta
-          meta-type: UNSPECIFIC
-          display-name: '{"text":"","extra":["짚"]}'
-          lore:
-          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
-          PublicBukkitValues: |-
-            {
-                "pipilife:processed_product": "straw"
-            }
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: PIPIFACILITIES_STRAW
-        amount: 64
-        meta:
-          ==: ItemMeta
-          meta-type: UNSPECIFIC
-          display-name: '{"text":"","extra":["짚"]}'
-          lore:
-          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
-          PublicBukkitValues: |-
-            {
-                "pipilife:processed_product": "straw"
-            }
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: PIPIFACILITIES_STRAW
-        amount: 64
-        meta:
-          ==: ItemMeta
-          meta-type: UNSPECIFIC
-          display-name: '{"text":"","extra":["짚"]}'
-          lore:
-          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
-          PublicBukkitValues: |-
-            {
-                "pipilife:processed_product": "straw"
-            }
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: PIPIFACILITIES_STRAW
-        amount: 64
-        meta:
-          ==: ItemMeta
-          meta-type: UNSPECIFIC
-          display-name: '{"text":"","extra":["짚"]}'
-          lore:
-          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
-          PublicBukkitValues: |-
-            {
-                "pipilife:processed_product": "straw"
-            }
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: PIPIFACILITIES_STRAW
-        amount: 64
-        meta:
-          ==: ItemMeta
-          meta-type: UNSPECIFIC
-          display-name: '{"text":"","extra":["짚"]}'
-          lore:
-          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
-          PublicBukkitValues: |-
-            {
-                "pipilife:processed_product": "straw"
-            }
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: PIPIFACILITIES_STRAW
-        amount: 64
-        meta:
-          ==: ItemMeta
-          meta-type: UNSPECIFIC
-          display-name: '{"text":"","extra":["짚"]}'
-          lore:
-          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
-          PublicBukkitValues: |-
-            {
-                "pipilife:processed_product": "straw"
-            }
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
       - null
       - null
       - null
