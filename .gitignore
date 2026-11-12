@@ -108,6 +108,7 @@ session.lock
 /plugins/PipiLife/regions.yml
 /plugins/PipiLife/npc-registry.yml
 /plugins/PipiLife/resource-nodes.yml
+/plugins/PipiLife/warps.yml
 
 ### 플러그인: 자동 생성 캐시 / 출력물 ###
 /plugins/ItemsAdder/storage/cache/
