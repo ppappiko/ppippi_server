@@ -103,6 +103,11 @@ session.lock
 /plugins/Skript/backups/
 /plugins/PipiLife/workshops.yml
 /plugins/PipiLife/trade-escrow.yml
+/plugins/PipiLife/armory.yml
+/plugins/PipiLife/loadouts.yml
+/plugins/PipiLife/regions.yml
+/plugins/PipiLife/npc-registry.yml
+/plugins/PipiLife/resource-nodes.yml
 
 ### 플러그인: 자동 생성 캐시 / 출력물 ###
 /plugins/ItemsAdder/storage/cache/
