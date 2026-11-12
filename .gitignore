@@ -58,3 +58,60 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/windows,java
 ### Build outputs ###
 dev/**/out/
+
+#####################################################################
+### Minecraft server: 개인 테스트 환경마다 달라지는 파일 (공유 X) ###
+#####################################################################
+
+### 월드 / 맵 (맵 변경은 Git 대신 별도 공유) ###
+/world/*
+!/world/datapacks/
+/world/datapacks/*
+!/world/datapacks/datapack test/
+/village/
+/pipi_tutorial/
+session.lock
+
+### 개인 서버 설정 / 플레이어 목록 ###
+/ops.json
+/whitelist.json
+/banned-ips.json
+/banned-players.json
+/usercache.json
+/usernamecache.json
+/server.properties
+
+### 로그 / 크래시 ###
+/logs/
+/crash-reports/
+*.log.gz
+
+### 서버가 자동으로 받는/생성하는 라이브러리 ###
+/libraries/
+/plugins/.paper-remapped/
+
+### 백업 파일 ###
+*.bak
+*.bak-next
+*.bak-*
+
+### 플러그인: 플레이어 데이터 ###
+/plugins/MythicMobs/data/
+/plugins/MythicDungeons/globalplayerdata/
+/plugins/ItemsAdder/storage/players/
+/plugins/Skript/variables.csv
+/plugins/Skript/backups/
+/plugins/PipiLife/workshops.yml
+/plugins/PipiLife/trade-escrow.yml
+
+### 플러그인: 자동 생성 캐시 / 출력물 ###
+/plugins/ItemsAdder/storage/cache/
+/plugins/ItemsAdder/lib/
+/plugins/ItemsAdder/output/
+/plugins/ModelEngine/.data/
+/plugins/ProtocolLib/lastupdate
+/plugins/bStats/
+/plugins/pStats/
+
+### 비밀키 (라이선스 / API key) ###
+/plugins/ItemsAdder/secret.yml
