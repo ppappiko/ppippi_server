@@ -46,7 +46,7 @@ public final class CombatBar {
     /** Currently equipped ids of the class index (0 w, 1 a, 2 m): keys 1-3 general, [3] buff (key 4), [4] ultimate (key 5). */
     static String[] loadout(int cls) { return loadouts[cls].clone(); }
 
-    private static boolean isCharged(String id) { return id.equals("w_rush") || id.equals("a_triple") || id.equals("m_seek"); }
+    private static boolean isCharged(String id) { return id.equals("w_split") || id.equals("a_triple") || id.equals("m_seek"); }
 
     private static void receiveLoadout(String text) {
         String[] parts = text.substring(LOADOUT_PREFIX.length()).split(":");

@@ -96,6 +96,7 @@ plots:
         stations:
           '6_64_55':
             level: 4
+            paused: 1794445989693
       GOLD_MINE:
         paused: 1793958560037
         anchor: '-3_64_38'
@@ -169,9 +170,9 @@ players:
       aptitudes:
         FARM: 2
         PET_STORAGE: 2
-      food: 25
-      stock: 405
-      since: 1794411795232
+      food: 88
+      stock: 442
+      since: 1794445984048
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -321,27 +322,28 @@ players:
       lumber-slot: 4
       facility-bound: true
     sunlizard:
-      food: 90
+      food: 0
       stock: 0
-      since: 1794411795232
+      since: 1794445984048
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 5
       facility-bound: true
+      refilling: true
     ferret:
-      food: 25
+      food: 88
       stock: 0
-      since: 1794411795232
+      since: 1794445984048
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 3
       facility-bound: true
     angelpig:
-      food: 31
+      food: 64
       stock: 6
-      since: 1794411795232
+      since: 1794445984048
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -568,9 +570,9 @@ pet-storage:
         production-anchor: '6_64_55'
         lumber-slot: 2
         facility-bound: true
-        food: 25
+        food: 88
         stock: 0
-        since: 1794411795232
+        since: 1794445984048
         active: true
       44867329-bc34-4972-b522-6fa5361c88fa:
         production-facility: LUMBER
@@ -640,20 +642,7 @@ facility-views:
       - null
       - null
       - null
-      - ==: org.bukkit.inventory.ItemStack
-        v: 3955
-        type: PIPIFACILITIES_STRAW
-        amount: 46
-        meta:
-          ==: ItemMeta
-          meta-type: UNSPECIFIC
-          display-name: '{"text":"","extra":["짚"]}'
-          lore:
-          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
-          PublicBukkitValues: |-
-            {
-                "pipilife:processed_product": "straw"
-            }
+      - null
       - null
       - null
       - null
