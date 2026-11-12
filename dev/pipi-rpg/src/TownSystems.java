@@ -139,7 +139,8 @@ final class TownSystems implements Listener {
         if (blocked(event.getPlayer(), event.getBlock())) event.setCancelled(true);
     }
     private boolean blocked(Player player, Block block) {
-        return !player.isOp() && block.getWorld().getName().equals(plugin.villageName())
+        // residence world: everyone (OPs included) may only build/dig inside their own plot; creative/spectator stay free for building the town
+        return player.getGameMode() != org.bukkit.GameMode.CREATIVE && player.getGameMode() != org.bukkit.GameMode.SPECTATOR && block.getWorld().getName().equals(plugin.villageName())
             && !plugin.owns(player, plugin.plotAt(block.getLocation()));
     }
     @EventHandler(ignoreCancelled = true) public void protectContainer(PlayerInteractEvent event) {
@@ -167,6 +168,7 @@ final class TownSystems implements Listener {
             }
             case "forge" -> args.length == 2 && args[1].equals("npc") ? spawnSmith(player) : openForgeDesk(player, -1, -1, false, null);
             case "trade" -> trade(player, args);
+            case "smelt" -> smeltCommand(player, args);
             case "alchemy" -> openAlchemy(player, 0, -1, 0, false, null);
             case "inherit" -> openInherit(player, 0, -1, -1, null, null, false, null);
             case "heal" -> heal(player);
@@ -453,7 +455,7 @@ final class TownSystems implements Listener {
             int index = Integer.parseInt(args[2]), count = Integer.parseInt(args[3]);
             if (index >= 0 && index < menu.products.size() && count > 0) {
                 if (menu.buy && (long) unitPrice(menu.products.get(index), true) * count > gold(player).getScore()) {
-                    returnTitle(player, "골드가 부족합니다.");
+                    goldShort(player, "§c골드 부족", "골드 " + fmt((long) unitPrice(menu.products.get(index), true) * count - gold(player).getScore()) + " 부족");
                     return true;
                 }
                 int maximum=saleMaximum(tradeCapacity(player,menu.products.get(index),menu.buy),remaining(player,menu.products.get(index),menu.buy,System.currentTimeMillis()/SHOP_HOUR));
@@ -503,6 +505,30 @@ final class TownSystems implements Listener {
         player.sendMessage(message);
     }
 
+    /** Thousands-separated number for display (gold etc.). */
+    static String fmt(long n) { return String.format(Locale.ROOT, "%,d", n); }
+
+    /** True (and shows a 재료 부족 title listing everything missing) when gold or any ingredient is short. */
+    private boolean lacks(Player player, long goldNeed, Collection<Ingredient> items, boolean chests) {
+        List<String> parts = new ArrayList<>();
+        boolean anyItem = false;
+        for (Ingredient ingredient : items) {
+            int missing = ingredient.count() - ingredientCount(player, ingredient, chests);
+            if (ingredient.count() > 0 && missing > 0) { parts.add(ingredient.label() + " " + fmt(missing) + "개"); anyItem = true; }
+        }
+        long missingGold = goldNeed - gold(player).getScore();
+        if (goldNeed > 0 && missingGold > 0) parts.add("골드 " + fmt(missingGold));
+        if (parts.isEmpty()) return false;
+        goldShort(player, anyItem ? "§c재료 부족" : "§c골드 부족", String.join(" · ", parts) + " 부족");
+        return true;
+    }
+
+    private void goldShort(Player player, String title, String subtitle) {
+        if (player.getOpenInventory().getTopInventory().getType() == org.bukkit.event.inventory.InventoryType.CHEST)
+            player.closeInventory();
+        player.sendTitle(title, subtitle, 5, 40, 10);
+    }
+
     private void executeTrade(Player player, ShopMenu menu) {
         Quote quote = menu.quote;
         Product product = menu.products.get(quote.index());
@@ -520,7 +546,7 @@ final class TownSystems implements Listener {
         int total = unitPrice(product, menu.buy) * quote.count();
         long balance = (long) score.getScore() + (menu.buy ? -total : total);
         if (balance < 0 || balance > Integer.MAX_VALUE) {
-            returnTitle(player, balance < 0 ? "골드가 부족합니다." : "잔액 한도를 초과합니다.");
+            if (balance < 0) goldShort(player, "§c골드 부족", "골드 " + fmt(-balance) + " 부족"); else returnTitle(player, "잔액 한도를 초과합니다.");
             return;
         }
         var bag = player.getInventory();
@@ -545,7 +571,7 @@ final class TownSystems implements Listener {
         }
         bag.setStorageContents(contents);
         score.setScore((int) balance);
-        tell(player, (menu.buy ? "구매" : "판매") + " 완료 · " + total + "골드");
+        tell(player, (menu.buy ? "구매" : "판매") + " 완료 · " + fmt(total) + "골드");
         openShopTab(player, menu.tab, null);
     }
 
@@ -667,10 +693,10 @@ final class TownSystems implements Listener {
         UpgradeCost cost = upgradeCostOf(facility, level);
         if (facility == Facility.PET_STORAGE && level >= 3) return List.of("최대 레벨");
         List<String> tokens = new ArrayList<>();
-        if (cost == null) tokens.add((100 * level) + "골드");
+        if (cost == null) tokens.add(fmt(100L * level) + "골드");
         else {
             for (Ingredient ingredient : cost.items()) tokens.add(ingredient.label() + " " + ingredient.count());
-            if (cost.gold() > 0) tokens.add(cost.gold() + "골드");
+            if (cost.gold() > 0) tokens.add(fmt(cost.gold()) + "골드");
         }
         List<String> lines = new ArrayList<>();
         for (int i = 0; i < tokens.size(); i += 2)
@@ -950,10 +976,7 @@ final class TownSystems implements Listener {
         UpgradeCost cost = upgradeCostOf(facility, level);
         if (cost == null) return upgradeLumber(player, key, level);
         Score score = gold(player);
-        for (Ingredient ingredient : cost.items())
-            if (ingredientCount(player, ingredient) < ingredient.count())
-                { returnTitle(player, ingredient.label() + " " + ingredient.count() + "개가 필요합니다."); return false; }
-        if (score.getScore() < cost.gold()) { returnTitle(player, cost.gold() + "골드가 필요합니다."); return false; }
+        if (lacks(player, cost.gold(), cost.items(), false)) return false;
         if (!plugin.store(key, level + 1)) return false;
         for (Ingredient ingredient : cost.items()) consume(player, ingredient);
         if (cost.gold() > 0) score.setScore(score.getScore() - cost.gold());
@@ -1002,7 +1025,7 @@ final class TownSystems implements Listener {
         }
         long have = gold(player).getScore();
         if (have < goldCost) enough = false;
-        view.setItem(31, plugin.statusIcon(Material.GOLD_INGOT, goldCost + " 골드", "보유 " + have + " 골드"));
+        view.setItem(31, plugin.statusIcon(Material.GOLD_INGOT, fmt(goldCost) + " 골드", "보유 " + fmt(have) + " 골드"));
         view.setItem(39, enough ? plugin.statusIcon(Material.LIME_DYE, "업그레이드") : plugin.statusIcon(Material.GRAY_DYE, "재료 부족"));
         view.setItem(41, plugin.statusIcon(Material.BARRIER, "취소"));
         player.openInventory(view);
@@ -1034,7 +1057,7 @@ final class TownSystems implements Listener {
     boolean upgradeLumber(Player player, String key, int level) {
         Score score = gold(player);
         int cost = 100 * level;
-        if (score.getScore() < cost) { returnTitle(player, cost + "골드가 필요합니다."); return false; }
+        if (lacks(player, cost, List.of(), false)) return false;
         if (!plugin.store(key, level + 1)) return false;
         score.setScore(score.getScore() - cost);
         return true;
@@ -1133,9 +1156,7 @@ final class TownSystems implements Listener {
         List<Ingredient> inputs = new ArrayList<>();
         for (Ingredient unit : RECIPES.get(recipe).inputs())
             inputs.add(new Ingredient(unit.material(), unit.tag(), unit.label(), unit.count() * count));
-        for (Ingredient ingredient : inputs)
-            if (ingredientCount(player, ingredient, true) < ingredient.count())
-                { returnTitle(player, ingredient.label() + " " + ingredient.count() + "개가 필요합니다."); return true; }
+        if (lacks(player, 0, inputs, true)) return true;
         long each = craftMillis(recipe, level);
         long duration = each * count;
         if (!plugin.startCraft(player, recipe, System.currentTimeMillis() + duration, count, each))
@@ -1489,7 +1510,7 @@ final class TownSystems implements Listener {
                 int gauge = gearValue(hand, "gauge", 0);
                 inventory.setItem(13, hand.clone());
                 inventory.setItem(20, plugin.statusIcon(Material.ANVIL, level == MAX_UPGRADE ? "최대 강화" : "+" + level + " → +" + (level + 1),
-                    "성공률 " + percentText(successChance(CombatStats.armor(hand), level, gauge)) + " · " + upgradeCost(hand, level) + "골드 · " + upgradeMatsText(level),
+                    "성공률 " + percentText(successChance(CombatStats.armor(hand), level, gauge)) + " · " + fmt(upgradeCost(hand, level)) + "골드 · " + upgradeMatsText(level),
                     "§e" + "■".repeat(gauge / 10) + "§7" + "□".repeat(10 - gauge / 10) + " " + gauge + "%",
                     "실패 시 게이지 +" + gaugeGain(level) + "%p" + (level >= 10 ? " · 1단계 하락" : "")));
             } else inventory.setItem(13, plugin.statusIcon(Material.BARRIER, "제작한 장비를 주 손에 드세요."));
@@ -1637,7 +1658,7 @@ final class TownSystems implements Listener {
                 inventory.setItem(22, modeledIcon(recipe.material(), recipe.label(),
                     forgeIngredientText(player, forgeMetal(recipe)),
                     forgeIngredientText(player, forgeDiamond(recipe)),
-                    "소모 골드 " + recipe.gold(), "보유 골드 " + gold(player).getScore()));
+                    "소모 골드 " + fmt(recipe.gold()), "보유 골드 " + fmt(gold(player).getScore())));
                 inventory.setItem(40, plugin.statusIcon(Material.ANVIL, "제작하기"));
                 if (confirm) inventory.setItem(41, plugin.statusIcon(Material.LIME_DYE, "제작 확인"));
             }
@@ -1667,7 +1688,7 @@ final class TownSystems implements Listener {
                     case 10 -> openForgeDesk(player, 0, -1, false, null);
                     case 12 -> openUpgrade(player, 0, -1, false, null, null);
                     case 14 -> openInherit(player, 0, -1, -1, null, null, false, null);
-                    case 16 -> openSmelt(player, -1);
+                    case 16 -> { player.closeInventory(); smeltCommand(player, new String[]{"smelt"}); }
                     case 22 -> player.closeInventory();
                     default -> {}
                 }
@@ -1711,10 +1732,9 @@ final class TownSystems implements Listener {
     private ItemStack createForgeItem(Player player, ForgeRecipe recipe) {
         int slot = player.getInventory().firstEmpty();
         Score score = gold(player);
-        if (slot < 0 || score.getScore() < recipe.gold()) {
-            returnTitle(player, slot < 0 ? "가방 공간이 부족합니다." : "골드가 부족합니다."); return null;
-        }
+        if (slot < 0) { returnTitle(player, "가방 공간이 부족합니다."); return null; }
         Ingredient metal = forgeMetal(recipe), diamond = forgeDiamond(recipe);
+        if (lacks(player, recipe.gold(), List.of(metal, diamond), false)) return null;
         if (!hasIngredients(player, metal, diamond)) return null;
         ItemStack item = new ItemStack(recipe.material());
         var meta = item.getItemMeta();
@@ -1822,12 +1842,12 @@ final class TownSystems implements Listener {
             boolean open = stage <= opened;
             inventory.setItem(cursor, plugin.statusIcon(open ? Material.DIAMOND : Material.IRON_BARS, "§b" + stage + "단계"));
             if (open && !pendingResearch(player, stage).isEmpty()) {
-                inventory.setItem(cursor + 1, plugin.statusIcon(Material.ENCHANTED_BOOK, "랜덤 연구", researchPrice(stage) + "골드"));
+                inventory.setItem(cursor + 1, plugin.statusIcon(Material.ENCHANTED_BOOK, "랜덤 연구", fmt(researchPrice(stage)) + "골드"));
             } else if (open) {
                 inventory.setItem(cursor + 1, plugin.statusIcon(Material.GRAY_DYE, "연구 완료"));
             } else {
                 List<String> lore = new ArrayList<>();
-                lore.add("골드 " + gold(player).getScore() + "/" + openingPrice(stage));
+                lore.add("골드 " + fmt(gold(player).getScore()) + "/" + fmt(openingPrice(stage)));
                 if (stage != opened + 1) lore.add("이전 단계 개방 필요");
                 inventory.setItem(cursor + 1, plugin.statusIcon(Material.IRON_BARS, "개방하기",
                     lore.toArray(String[]::new)));
@@ -1879,8 +1899,8 @@ final class TownSystems implements Listener {
         detail.setItemMeta(meta);
         inventory.setItem(51, detail);
         if (researchable(key) && !learned(player, key) && selStage <= opened) inventory.setItem(50,
-            plugin.statusIcon(Material.ENCHANTED_BOOK, "연구 시작", (researchPrice(selStage) * 5) + "골드"));
-        inventory.setItem(52, plugin.statusIcon(Material.GOLD_INGOT, "보유 골드 " + gold(player).getScore(),
+            plugin.statusIcon(Material.ENCHANTED_BOOK, "연구 시작", fmt(researchPrice(selStage) * 5L) + "골드"));
+        inventory.setItem(52, plugin.statusIcon(Material.GOLD_INGOT, "보유 골드 " + fmt(gold(player).getScore()),
             "선택한 제작법의 상세 정보는 위 아이콘에 마우스를 올려 확인하세요."));
         inventory.setItem(53, plugin.statusIcon(Material.BARRIER, "닫기"));
     }
@@ -1890,7 +1910,7 @@ final class TownSystems implements Listener {
         String key=RESEARCH_STAGES.get(stage-1).get(selection);
         if(learned(player,key)||!researchable(key))return;
         int cost=researchPrice(stage)*5;Score score=gold(player);
-        if(score.getScore()<cost){returnTitle(player,cost+"골드가 필요합니다.");return;}
+        if(lacks(player,cost,List.of(),false))return;
         if(!plugin.store(user(player)+".research."+key,true)){tell(player,"연구 저장에 실패했습니다.");return;}
         score.setScore(score.getScore()-cost);tell(player,"선택 연구 완료");
     }
@@ -1907,11 +1927,7 @@ final class TownSystems implements Listener {
             if (stage != opened + 1) { tell(player, "이전 단계를 먼저 개방하세요."); return; }
             int cost = openingPrice(stage);
             List<Ingredient> requirements = unlockRequirements(stage);
-            if (score.getScore() < cost) { returnTitle(player, cost + "골드가 필요합니다."); return; }
-            for (Ingredient requirement : requirements)
-                if (ingredientCount(player, requirement) < requirement.count()) {
-                    returnTitle(player, requirement.label() + " " + requirement.count() + "개가 필요합니다."); return;
-                }
+            if (lacks(player, cost, requirements, false)) return;
             if (!plugin.store(user(player) + ".research-stage", stage)) {
                 tell(player, "단계 개방을 저장하지 못했습니다."); return;
             }
@@ -1923,7 +1939,7 @@ final class TownSystems implements Listener {
         List<String> pending = pendingResearch(player, stage);
         if (pending.isEmpty()) { tell(player, "이 단계의 연구가 모두 끝났습니다."); return; }
         int cost = researchPrice(stage);
-        if (score.getScore() < cost) { returnTitle(player, cost + "골드가 필요합니다."); return; }
+        if (lacks(player, cost, List.of(), false)) return;
         String key = pending.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(pending.size()));
         if (!plugin.store(user(player) + ".research." + key, true)) {
             tell(player, "연구를 저장하지 못했습니다."); return;
@@ -1936,13 +1952,7 @@ final class TownSystems implements Listener {
     private Ingredient refinedDiamond() { return raw(Material.DIAMOND, "다이아몬드", 1); }
 
     private boolean hasIngredients(Player player, Ingredient... inputs) {
-        for (Ingredient input : inputs) {
-            if (ingredientCount(player, input) < input.count()) {
-                returnTitle(player, input.label() + " " + input.count() + "개가 필요합니다.");
-                return false;
-            }
-        }
-        return true;
+        return !lacks(player, 0, Arrays.asList(inputs), false);
     }
 
     private void craftGear(Player player, Gear gear) {
@@ -2013,13 +2023,12 @@ final class TownSystems implements Listener {
         if (level >= MAX_UPGRADE) return null;
         Score score = gold(player);
         int cost = upgradeCost(item, level);
-        if (score.getScore() < cost) { returnTitle(player, cost + "골드가 필요합니다."); return null; }
         UpgradeMats mats = upgradeMats(level);
         List<Ingredient> inputs = new ArrayList<>();
         if (mats.steel() > 0) inputs.add(plates(mats.steel()));
         if (mats.blue() > 0) inputs.add(blueDiamond(mats.blue()));
         if (mats.vitality() > 0) inputs.add(vitalityCrystal(mats.vitality()));
-        if (!inputs.isEmpty() && !hasIngredients(player, inputs.toArray(Ingredient[]::new))) return null;
+        if (lacks(player, cost, inputs, false)) return null;
         boolean success = java.util.concurrent.ThreadLocalRandom.current().nextInt(1000) < successChance(CombatStats.armor(item), level, gauge);
         int next = success ? level + 1 : failedLevel(level);
         int nextGauge = success ? 0 : Math.min(100, gauge + gaugeGain(level));
@@ -2031,8 +2040,16 @@ final class TownSystems implements Listener {
         score.setScore(score.getScore() - cost);
         player.getInventory().setItem(selected, updated);
         String result = (success ? "강화 성공" : "강화 실패") + " · +" + next + " · 대장장이의 축복 " + nextGauge + "%";
-        tell(player, result);
+        upgradeEffects(player, success, next, updated); // hidden message only: effects/sounds are UI-only on the client
         return new UpgradeResult(updated.clone(), result, success);
+    }
+
+    /** Hidden PIPI_UPGRADE message for the client's UI animation and UI sounds (nothing is shown in the world). */
+    private void upgradeEffects(Player player, boolean success, int level, ItemStack item) {
+        String name = item.hasItemMeta() && item.getItemMeta().hasDisplayName()
+            ? org.bukkit.ChatColor.stripColor(item.getItemMeta().getDisplayName())
+            : item.getType().name();
+        player.sendMessage("PIPI_UPGRADE:" + (success ? "success" : "fail") + ":" + level + ":" + name.replace('\n', ' '));
     }
 
     private ItemStack upgradePreview(ItemStack item, int level) {
@@ -2091,8 +2108,8 @@ final class TownSystems implements Listener {
                 view.setItem(38, plugin.displayIcon(taggedItem(vitality != null ? vitality : Material.AMETHYST_SHARD, "vitality_crystal", "활력의 결정체"),
                     "활력의 결정체", ingredientCount(player, vitalityCrystal(1)) + " / " + upgradeMats(level).vitality()));
             }
-            view.setItem(43, plugin.statusIcon(Material.GOLD_INGOT, upgradeCost(chosen, level) + " 골드",
-                "보유 " + gold(player).getScore() + " 골드"));
+            view.setItem(43, plugin.statusIcon(Material.GOLD_INGOT, fmt(upgradeCost(chosen, level)) + " 골드",
+                "보유 " + fmt(gold(player).getScore()) + " 골드"));
             view.setItem(44, plugin.statusIcon(Material.BOOK, "강화 안내",
                 "성공하면 대장장이의 축복이 초기화됩니다.",
                 level >= 10 ? "실패하면 강화가 1단계 하락합니다." : "실패해도 강화 단계가 유지됩니다.",
@@ -2383,7 +2400,7 @@ final class TownSystems implements Listener {
                 if (filled) view.setItem(36 + i, plugin.statusIcon(locked ? Material.GOLD_NUGGET : Material.TRIPWIRE_HOOK,
                     locked ? "잠금 해제" : "옵션 잠금"));
             }
-            view.setItem(44, plugin.statusIcon(Material.GOLD_INGOT, alchemyGold(chosen, locks) + " 골드", "보유 " + gold(player).getScore()));
+            view.setItem(44, plugin.statusIcon(Material.GOLD_INGOT, fmt(alchemyGold(chosen, locks)) + " 골드", "보유 " + fmt(gold(player).getScore())));
             view.setItem(43, plugin.statusIcon(Material.NETHER_STAR, Enchants.COLORS[grade] + "[" + Enchants.GRADES[grade] + "]",
                 grade >= 3 ? "최고 등급" : "등급 상승 확률 " + Enchants.fmt(Enchants.GRADE_UP[grade]) + "% → " + Enchants.GRADES[grade + 1],
                 "잠금 " + Integer.bitCount(locks) + "개"));
@@ -2442,7 +2459,7 @@ final class TownSystems implements Listener {
         Score score = gold(player);
         long cost = alchemyGold(item, menu.locks());
         if (score.getScore() < cost) {
-            returnTitle(player, "인챈트에 필요한 골드가 부족합니다. (" + cost + "골드)");
+            goldShort(player, "§c골드 부족", "골드 " + fmt(cost - score.getScore()) + " 부족");
             return snapshot;
         }
         var rolls = Enchants.read(item);
@@ -2518,7 +2535,7 @@ final class TownSystems implements Listener {
             return "계승 장비에 이미 인챈트가 있어 계승할 수 없습니다.";
         long cost = inheritCost(target);
         if (gold(player).getScore() < cost)
-            return "계승 비용 " + cost + "골드가 필요합니다.";
+            return "계승 비용 " + fmt(cost) + "골드가 필요합니다.";
         return null;
     }
 
@@ -2565,8 +2582,8 @@ final class TownSystems implements Listener {
                 "강화 +" + sourceLevel + " → +" + resultLevel));
             view.setItem(34, plugin.statusIcon(Material.WRITABLE_BOOK, "계승 전 능력치", gearStats(targetSnap).toArray(String[]::new)));
             view.setItem(35, plugin.statusIcon(Material.WRITABLE_BOOK, "계승 후 능력치", gearStats(preview).toArray(String[]::new)));
-            view.setItem(44, plugin.statusIcon(Material.GOLD_INGOT, inheritCost(targetSnap) + " 골드",
-                "보유 " + gold(player).getScore() + " 골드"));
+            view.setItem(44, plugin.statusIcon(Material.GOLD_INGOT, fmt(inheritCost(targetSnap)) + " 골드",
+                "보유 " + fmt(gold(player).getScore()) + " 골드"));
             String reason = inheritReason(player, targetSnap, sourceSnap);
             if (reason != null) view.setItem(42, plugin.statusIcon(Material.BARRIER, reason));
             else {
@@ -2594,7 +2611,7 @@ final class TownSystems implements Listener {
         if (reason != null) return reason;
         long cost = inheritCost(target);
         Score score = gold(player);
-        if (score.getScore() < cost) return "계승 비용 " + cost + "골드가 필요합니다.";
+        if (score.getScore() < cost) return "계승 비용 " + fmt(cost) + "골드가 필요합니다.";
         ItemStack updatedTarget = inheritPreview(target, source);
         bag.setItem(menu.target(), updatedTarget);
         bag.setItem(menu.source(), null);
@@ -2695,7 +2712,7 @@ final class TownSystems implements Listener {
                 return tell(player, "거래 상대와 6블록 안에서 양수 가격을 입력하고 팔 물품을 손에 드세요.");
             trades.put(target.getUniqueId(), new Trade(buyer, inv.getHeldItemSlot(), item.clone(), price, System.currentTimeMillis() + 60_000));
             target.sendMessage(player.getName() + "님의 거래 제안 · " + item.getType() + " ×" + item.getAmount()
-                + " / " + price + "골드 · /pipilife trade accept 또는 decline");
+                + " / " + fmt(price) + "골드 · /pipilife trade accept 또는 decline");
             return tell(player, "거래를 제안했습니다. 60초 안에 수락할 수 있습니다.");
         }
         if (args.length == 2 && args[1].equals("decline")) {
@@ -2721,7 +2738,7 @@ final class TownSystems implements Listener {
             player.getInventory().setItem(slot, offer.item());
             destination.setScore(destination.getScore() - offer.price());
             source.setScore((int) total);
-            seller.sendMessage("거래 완료 · " + offer.price() + "골드를 받았습니다.");
+            seller.sendMessage("거래 완료 · " + fmt(offer.price()) + "골드를 받았습니다.");
             return tell(player, "거래 완료 · 물품을 받았습니다.");
         }
         return tell(player, "/pipilife trade <offer 이름 가격|accept|decline|cancel>");
@@ -2862,6 +2879,65 @@ final class TownSystems implements Listener {
                 openSmelt(player, -1);
             }
         });
+    }
+
+    // ---- 무기 제련 screen (client SmeltScreen). Hidden chat protocol (cancelled by the PipiTravel client mod):
+    //   PIPI_SME_BEGIN:<count>:<open 0|1>
+    //   PIPI_SME_ITEM:<invSlot 0..35>:<hash>:<warn 0|1>:<b64 weapon>:<b64 refund>,<b64 refund>...   (count times)
+    //   PIPI_SME_END
+    // Long lines are split by Armory.sendLine (PIPI_ARM_PART). Client commands: /pipilife smelt [list] | smelt do <invSlot> <hash> [confirm]
+    private boolean smeltCommand(Player player, String[] args) {
+        if (!town(player)) return tell(player, "공동 마을 대장간에서 이용하세요.");
+        if (Armory.inCombatMode(player)) return tell(player, "전투 모드를 끈 뒤(Alt) 이용하세요.");
+        if (args.length >= 4 && args[1].equals("do")) {
+            int slot;
+            try { slot = Integer.parseInt(args[2]); } catch (NumberFormatException ex) { return true; }
+            boolean confirm = args.length >= 5 && args[4].equals("confirm");
+            ItemStack item = slot >= 0 && slot < 36 ? player.getInventory().getItem(slot) : null;
+            List<ItemStack> refund = item != null && CombatStats.weapon(item) ? smeltRefund(item) : null;
+            if (refund == null || !args[3].equals(Integer.toHexString(item.hashCode()))) {
+                tell(player, "§c가방이 바뀌었습니다. 다시 선택하세요.");
+            } else if (smeltWarn(item) && !confirm) {
+                tell(player, "§c강화·인챈트가 적용된 무기입니다. 한 번 더 눌러 확인하세요.");
+            } else {
+                player.getInventory().setItem(slot, null);
+                for (ItemStack extra : player.getInventory().addItem(refund.toArray(ItemStack[]::new)).values())
+                    player.getWorld().dropItemNaturally(player.getLocation(), extra).setOwner(player.getUniqueId());
+                player.playSound(player.getLocation(), Sound.BLOCK_GRINDSTONE_USE, 1f, 1f);
+                tell(player, "§a파쇄 완료 · 재료를 돌려받았습니다.");
+            }
+            sendSmeltData(player, false);
+            return true;
+        }
+        sendSmeltData(player, args.length < 2 || !args[1].equals("list"));
+        return true;
+    }
+
+    private void sendSmeltData(Player player, boolean open) {
+        List<String> lines = new ArrayList<>();
+        int scanned = 0;
+        ItemStack[] bag = player.getInventory().getStorageContents();
+        for (int i = 0; i < bag.length; i++) {
+            ItemStack item = bag[i];
+            if (!CombatStats.weapon(item)) continue;
+            scanned++;
+            List<ItemStack> refund = smeltRefund(item);
+            if (refund == null) continue;
+            String b64 = Armory.bytes(item.clone(), player);
+            if (b64 == null) continue;
+            StringBuilder parts = new StringBuilder();
+            for (ItemStack r : refund) {
+                String rb = Armory.bytes(r.clone(), player);
+                if (rb == null) continue;
+                if (parts.length() > 0) parts.append(',');
+                parts.append(rb);
+            }
+            lines.add("PIPI_SME_ITEM:" + i + ":" + Integer.toHexString(item.hashCode()) + ":" + (smeltWarn(item) ? 1 : 0) + ":" + b64 + ":" + parts);
+        }
+        if (Boolean.getBoolean("pipi.debug")) plugin.getLogger().info("[Smelt] " + player.getName() + " 에게 무기 " + lines.size() + "개 전송 (가방 무기 " + scanned + ")");
+        player.sendMessage("PIPI_SME_BEGIN:" + lines.size() + ":" + (open ? 1 : 0));
+        for (String line : lines) Armory.sendLine(player, line);
+        player.sendMessage("PIPI_SME_END");
     }
 
     private boolean heal(Player player) {

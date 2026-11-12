@@ -44,7 +44,7 @@ final class CharacterScreen extends ContainerScreen {
             g.drawString(font,"아이템레벨",205,83,TEXT,false);g.drawString(font,val(values,0),422,83,0xffe6c588,false);
             g.drawString(font,"무기 1개 + 방어구 4개의 평균",205,106,MUTED,false);
             g.drawString(font,"미착용 부위는 0으로 계산",205,121,MUTED,false);
-            g.renderItem(menu.getSlot(1).getItem(),208,148);
+            for(int i=0;i<5;i++){int ix=208+i*28;g.fill(ix-2,146,ix+18,166,0xff385367);g.fill(ix-1,147,ix+17,165,0xff080f16);g.renderItem(menu.getSlot(1+i).getItem(),ix,148);}
             line(g,"◇ 전투력",val(values,1),24,198);
             g.fill(17,219,503,220,0xff385367);
             line(g,"체력",val(values,2),25,235);line(g,"방어력",val(values,3),275,235);
@@ -56,8 +56,8 @@ final class CharacterScreen extends ContainerScreen {
             g.drawCenteredString(font,"ESC 닫기",W/2,394,MUTED);
         } finally{g.pose().popPose();}
         if(minecraft!=null&&minecraft.player!=null){double x=(mx-left)/scale,y=(my-top)/scale;
-            var weapon=menu.getSlot(1).getItem();
-            if(y>=148&&y<164&&x>=208&&x<224&&!weapon.isEmpty())g.renderTooltip(font,weapon,mx,my);
+            int gi=(int)Math.floor((x-206)/28);var weapon=gi>=0&&gi<5&&(x-206)-gi*28<20?menu.getSlot(1+gi).getItem():net.minecraft.world.item.ItemStack.EMPTY;
+            if(y>=146&&y<166&&!weapon.isEmpty())g.renderTooltip(font,weapon,mx,my);
             else if(y>=233&&y<245&&x>=275&&x<440)g.renderTooltip(font,Component.literal("받는 피해 "+val(data(),15)+"% 감소"),mx,my);
         }
     }

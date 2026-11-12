@@ -321,7 +321,7 @@ final class ResearchScreen extends ContainerScreen {
 
     private static String goldRatio(List<String> actionLore) {
         if (actionLore.isEmpty()) return "0/0";
-        String raw = actionLore.getFirst().replace("골드", "").trim();
+        String raw = actionLore.getFirst().replace("골드", "").replace(",", "").trim();
         String[] parts = raw.split("/");
         try {
             long have = Long.parseLong(parts[0].trim());
@@ -334,7 +334,7 @@ final class ResearchScreen extends ContainerScreen {
 
     private static boolean goldShort(List<String> actionLore) {
         if (actionLore.isEmpty()) return false;
-        String[] parts = actionLore.getFirst().replace("골드", "").trim().split("/");
+        String[] parts = actionLore.getFirst().replace("골드", "").replace(",", "").trim().split("/");
         try {
             return parts.length > 1 && Long.parseLong(parts[0].trim()) < Long.parseLong(parts[1].trim());
         } catch (RuntimeException ignored) {

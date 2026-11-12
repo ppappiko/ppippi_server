@@ -55,9 +55,6 @@ plots:
       - - 12
         - 64
         - 44
-      - - -14
-        - 64
-        - 52
       PET_STORAGE:
       - - 7
         - 64
@@ -79,6 +76,9 @@ plots:
         - 54
       FEEDER:
       - - 1
+        - 64
+        - 51
+      - - -7
         - 64
         - 51
     lumber:
@@ -133,7 +133,7 @@ players:
   8fe0b940-3078-41c9-a3cc-f8c700b6651b:
     fox:
       food: 99
-      stock: 465
+      stock: 0
       active: true
       since: 1794393499376
       facility-bound: true
@@ -169,9 +169,9 @@ players:
       aptitudes:
         FARM: 2
         PET_STORAGE: 2
-      food: 25
-      stock: 405
-      since: 1794411795232
+      food: 62
+      stock: 36
+      since: 1794469153514
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -217,9 +217,9 @@ players:
       aptitudes:
         CRAFT: 3
         MINE: 1
-      food: 98
+      food: 91
       stock: 26
-      since: 1794225221988
+      since: 1794462835480
       active: false
       facility-bound: false
     pirateotter:
@@ -254,7 +254,7 @@ players:
         CRAFT: 1
         LUMBER: 2
       food: 97
-      stock: 64
+      stock: 0
       since: 1794393499376
       active: true
       facility-bound: true
@@ -281,7 +281,7 @@ players:
       facility-bound: false
     tortoise:
       food: 95
-      stock: 41
+      stock: 0
       since: 1794393499376
       active: true
       production-facility: DIAMOND_MINE
@@ -307,9 +307,9 @@ players:
       lumber-slot: 2
       facility-bound: true
     raccoon:
-      food: 96
+      food: 85
       stock: 0
-      since: 1794284698502
+      since: 1794464625979
       active: false
     mole:
       food: 97
@@ -323,25 +323,25 @@ players:
     sunlizard:
       food: 90
       stock: 0
-      since: 1794411795232
+      since: 1794469153514
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 5
       facility-bound: true
     ferret:
-      food: 25
+      food: 62
       stock: 0
-      since: 1794411795232
+      since: 1794469153514
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
       lumber-slot: 3
       facility-bound: true
     angelpig:
-      food: 31
-      stock: 6
-      since: 1794411795232
+      food: 76
+      stock: 0
+      since: 1794469153514
       active: true
       production-facility: FARM
       production-anchor: '6_64_55'
@@ -420,8 +420,6 @@ town:
       '5_64_38': {}
       '-1_64_49': {}
       '12_64_44':
-        craft-worker: REDPANDA
-      '-14_64_52':
         craft-worker: RACCOON
     shop:
       sell:
@@ -568,9 +566,9 @@ pet-storage:
         production-anchor: '6_64_55'
         lumber-slot: 2
         facility-bound: true
-        food: 25
+        food: 62
         stock: 0
-        since: 1794411795232
+        since: 1794469153514
         active: true
       44867329-bc34-4972-b522-6fa5361c88fa:
         production-facility: LUMBER
@@ -592,7 +590,7 @@ pet-storage:
         lumber-slot: 5
         facility-bound: true
         food: 99
-        stock: 7
+        stock: 0
         since: 1794393499376
         active: true
       c22688af-a430-4c0f-8089-604b09c72964:
@@ -635,15 +633,80 @@ facility-views:
       depth: 2
       wide: true
       food:
-      - null
-      - null
-      - null
-      - null
-      - null
       - ==: org.bukkit.inventory.ItemStack
         v: 3955
         type: PIPIFACILITIES_STRAW
-        amount: 46
+        amount: 37
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
         meta:
           ==: ItemMeta
           meta-type: UNSPECIFIC
@@ -675,10 +738,6 @@ facility-views:
       - null
       - null
       - null
-    '-14_64_52':
-      width: 3
-      depth: 1
-      wide: true
     '2_64_56':
       width: 2
       depth: 2
@@ -699,3 +758,87 @@ facility-views:
       width: 3
       depth: 1
       wide: true
+    '-7_64_51':
+      width: 2
+      depth: 2
+      wide: true
+      food:
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 64
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - ==: org.bukkit.inventory.ItemStack
+        v: 3955
+        type: PIPIFACILITIES_STRAW
+        amount: 41
+        meta:
+          ==: ItemMeta
+          meta-type: UNSPECIFIC
+          display-name: '{"text":"","extra":["짚"]}'
+          lore:
+          - '{"text":"","extra":["펫 전용 먹이 · 포만감 +10"]}'
+          PublicBukkitValues: |-
+            {
+                "pipilife:processed_product": "straw"
+            }
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null

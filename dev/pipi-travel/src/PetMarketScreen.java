@@ -22,7 +22,7 @@ final class PetMarketScreen extends ContainerScreen {
  void panel(GuiGraphics g,int x,int y,int w,int h){g.fill(x,y,x+w,y+h,0xff476276);g.fill(x+1,y+1,x+w-1,y+h-1,0xff142230);}
  void button(GuiGraphics g,String text,int x,int y,int w,int h,boolean on){panel(g,x,y,w,h);g.drawCenteredString(font,text,x+w/2,y+(h-8)/2,on?0xffe4eaf0:0xff6c7a86);}
  int priceValue(){try{long v=Long.parseLong(price);return v>=1&&v<=100000000?(int)v:-1;}catch(NumberFormatException e){return -1;}}
- String coins(String n){return n+" 골드";}
+ String coins(String n){try{return String.format(java.util.Locale.ROOT,"%,d",Long.parseLong(n.trim()))+" 골드";}catch(NumberFormatException e){return n+" 골드";}}
  public void render(GuiGraphics g,int mx,int my,float delta){
   g.fill(0,0,width,height,0xb8081018);g.pose().pushPose();
   try{
@@ -51,7 +51,7 @@ final class PetMarketScreen extends ContainerScreen {
      }
     }
     g.drawString(font,"가격",328,276,0xffa5baca,false);panel(g,356,270,110,22);
-    g.drawString(font,price.isEmpty()?"1~100000000":price+((System.currentTimeMillis()/500%2==0)?"_":""),362,277,price.isEmpty()?0xff6c7a86:0xffe4eaf0,false);
+    g.drawString(font,price.isEmpty()?"1~100,000,000":price+((System.currentTimeMillis()/500%2==0)?"_":""),362,277,price.isEmpty()?0xff6c7a86:0xffe4eaf0,false);
     button(g,"판매 시작",474,270,126,22,selRow>=0&&!has(Math.max(selRow,0))&&selSlot>=0&&priceValue()>0);
     if(has(48))button(g,"이전",20,310,70,24,true);if(has(50))button(g,"다음",100,310,70,24,true);
     button(g,sellConfirm?"정말 판매 (되돌릴 수 없음)":"상점에 바로 판매",180,310,200,24,selSlot>=0);
