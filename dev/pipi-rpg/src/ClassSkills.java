@@ -184,8 +184,7 @@ final class ClassSkills implements Listener {
     void syncLoadouts(Player p) {
         int[][] all = loadouts.computeIfAbsent(p.getUniqueId(), k -> defaultLoadout());
         for (int j = 0; j < 3; j++) p.sendMessage("PIPI_LOADOUT:" + CLS[j] + ":" + loadoutText(j, all[j]));
-        Job job = weaponType(p.getInventory().getItemInMainHand());
-        if (job == null) job = weaponType(Armory.weaponFor(p));
+        Job job = combatJob(p);
         long[] cd = cooldowns.get(p.getUniqueId());
         if (job == null || cd == null) return;
         long now = System.currentTimeMillis();
@@ -234,7 +233,7 @@ final class ClassSkills implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void shortcut(PlayerSwapHandItemsEvent event) {
         Player player = event.getPlayer();
-        if (!player.isSneaking() || weaponType(player.getInventory().getItemInMainHand()) == null) return;
+        if (!player.isSneaking() || combatJob(player) == null) return;
         event.setCancelled(true);
         cast(player, 1);
     }
@@ -293,6 +292,12 @@ final class ClassSkills implements Listener {
         for (var m : new ArrayList<>(attr.getModifiers())) if (SPEED_KEY.equals(m.getKey())) attr.removeModifier(m);
     }
 
+    /** Job of the main-hand item, only when it is the marked Armory weapon in combat mode. */
+    private Job combatJob(Player p) {
+        ItemStack hand = p.getInventory().getItemInMainHand();
+        return Armory.isCombatWeapon(p, hand) ? weaponType(hand) : null;
+    }
+
     private Job weaponType(ItemStack item) {
         if (item.getType().name().endsWith("_SWORD")) return Job.WARRIOR;
         if (item.getType() == Material.BOW) return Job.ARCHER;
@@ -319,11 +324,8 @@ final class ClassSkills implements Listener {
             player.sendMessage("튜토리얼 밖의 월드에서 서바이벌 또는 모험 모드로 사용하세요.");
             return true;
         }
-        Job job = weaponType(player.getInventory().getItemInMainHand());
-        if (job == null && slot != 6) {
-            player.sendMessage("주 손에 검, 활 또는 대장간 지팡이를 드세요.");
-            return true;
-        }
+        Job job = combatJob(player);
+        if (job == null && slot != 6) return true; // 전투 모드의 장착 무기가 아니면 스킬은 조용히 무시
         // cooldowns, charges and marks are keyed by skill (key), not by the key-slot the skill currently sits in
         int[] lo = job == null ? null : loadout(player, job);
         final int key = job == null ? slot : slot >= 1 && slot <= 3 ? gen(job, lo[slot - 1])
@@ -2357,7 +2359,7 @@ final class ClassSkills implements Listener {
 
     /** Class-themed impact sound on a skill/basic hit, at most one every 150 ms per player. */
     private void hitSound(Player p, LivingEntity target) {
-        Job j = weaponType(p.getInventory().getItemInMainHand());
+        Job j = combatJob(p);
         if (j == null) return;
         long now = System.currentTimeMillis();
         if (now - hitSoundAt.getOrDefault(p.getUniqueId(), 0L) < 150) return;

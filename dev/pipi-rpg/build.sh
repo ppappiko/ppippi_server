@@ -46,5 +46,10 @@ sed -i "0,/^version: *$OLD/s//version: $NEW/" "$YML"
 
 OUTJAR="$REPO/$OUT/PipiLife-$NEW.jar"
 rm -f "$OUTJAR"
-( cd "$TMP/jar" && jar cf "$OUTJAR" . )
+# Mojang-mapped plugin: tells the Paper/Youer plugin remapper not to rewrite our net.minecraft reflection names (runtime is Mojang-named)
+rm -f "$TMP/jar/META-INF/MANIFEST.MF"
+printf "Manifest-Version: 1.0
+paperweight-mappings-namespace: mojang
+" > "$TMP/mf.txt"
+( cd "$TMP/jar" && jar cfm "$OUTJAR" "$TMP/mf.txt" . )
 echo "built $OUTJAR (version $OLD -> $NEW)"

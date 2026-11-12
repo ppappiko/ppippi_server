@@ -20,11 +20,9 @@ import org.bukkit.persistence.PersistentDataType;
  * Combat mode (client Alt) calls "/pipilife combat on|off": on moves the weapon into the hotbar (marked), off takes it back.
  */
 final class Armory implements Listener {
-    static final String TITLE = "삐삐서버 · 무기 장착";
     static final String MSG_START = "전투 모드 시작 · 슬롯 ";
     static final String MSG_BASIC = "전투 모드 기본";
     static final String MSG_END = "전투 모드 종료";
-    private static final int EQUIPPED_SLOT = 4, CLOSE_SLOT = 8, FIRST_BAG = 9, SIZE = 45;
     private static Armory instance;
 
     private final PipiLife plugin;
@@ -38,13 +36,6 @@ final class Armory implements Listener {
     private static final class State {
         ItemStack weapon, displaced, snapshot;
         int slot = -1;
-    }
-
-    private static final class Menu implements InventoryHolder {
-        Inventory inventory;
-        final int[] sources = new int[SIZE];
-        final ItemStack[] snapshots = new ItemStack[SIZE];
-        @Override public Inventory getInventory() { return inventory; }
     }
 
     Armory(PipiLife plugin, TownNpcRegistry npcs) {
@@ -101,6 +92,11 @@ final class Armory implements Listener {
     static boolean inCombatMode(Player player) {
         Armory a = instance;
         return a != null && a.inCombat(player);
+    }
+    /** True only for the marked Armory weapon while in combat mode (the only thing that may cast skills). */
+    static boolean isCombatWeapon(Player player, ItemStack item) {
+        Armory a = instance;
+        return a != null && a.inCombat(player) && a.marked(item);
     }
     private boolean inCombat(Player player) {
         State s = states.get(player.getUniqueId());
@@ -246,8 +242,17 @@ final class Armory implements Listener {
         if (marked(event.getOldCursor()) || event.getNewItems().values().stream().anyMatch(this::marked)) event.setCancelled(true);
     }
 
-    // ---- NPC + menu ----
+    // ---- NPC + client screen ----
+    // Protocol (hidden chat messages, cancelled by the PipiTravel client mod):
+    //   PIPI_ARM_BEGIN:<count>:<open 0|1>
+    //   PIPI_ARM_ITEM:<invSlot -1..35>:<hash>:<equipped 0|1>:<base64 serializeAsBytes>   (count times)
+    //   PIPI_ARM_END
+    //   long lines (>8000 chars) arrive as PIPI_ARM_PART:<id>:<idx>:<total>:<chunk> and are reassembled by the client
+    // Client commands: /pipilife armory equip <invSlot> <hash> | unequip | list
     boolean command(Player player, String[] args) {
+        if (args.length >= 2 && args[1].equals("equip")) { equipCommand(player, args); return true; }
+        if (args.length >= 2 && args[1].equals("unequip")) { unequipCommand(player); return true; }
+        if (args.length >= 2 && args[1].equals("list")) { sendData(player, false); return true; }
         if (!player.isOp()) { player.sendMessage("§c관리자 전용 명령어입니다. 무기 관리인에게 가세요."); return true; }
         if (args.length == 2 && args[1].equals("npc")) return spawnNpc(player);
         open(player);
@@ -278,87 +283,92 @@ final class Armory implements Listener {
         open(event.getPlayer());
     }
 
-    private ItemStack display(ItemStack item, String... extra) {
-        ItemStack copy = item.clone();
-        var meta = copy.getItemMeta();
-        List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-        lore.add(" ");
-        lore.addAll(List.of(extra));
-        meta.setLore(lore);
-        copy.setItemMeta(meta);
-        return copy;
-    }
-
     void open(Player player) {
         if (inCombat(player)) { player.sendMessage("전투 모드를 끈 뒤(Alt) 이용하세요."); return; }
-        Menu menu = new Menu();
-        Inventory inv = Bukkit.createInventory(menu, SIZE, TITLE);
-        menu.inventory = inv;
-        render(player, menu);
-        player.openInventory(inv);
+        sendData(player, true);
     }
 
-    private void render(Player player, Menu menu) {
-        Inventory inv = menu.inventory;
-        inv.clear();
-        Arrays.fill(menu.sources, -1);
-        Arrays.fill(menu.snapshots, null);
+    private static boolean bytesWarned;
+    private static final java.util.concurrent.atomic.AtomicInteger PART_ID = new java.util.concurrent.atomic.AtomicInteger();
+    /** Debug logging for the hidden-chat item transport: -Dpipi.debug=true or "debug: true" in armory.yml. */
+    private boolean debug() { return Boolean.getBoolean("pipi.debug") || data.getBoolean("debug", false); }
+
+    /** ItemWire text ("B"/"T" + base64) of the item with the player as owner, or null. */
+    static String bytes(ItemStack item, Player owner) { return ItemWire.encode(item, owner); }
+
+    /** Sends one hidden line; lines over 8000 chars are split into PIPI_ARM_PART:<id>:<idx>:<total>:<chunk> (client reassembles the original line). */
+    static void sendLine(Player player, String line) {
+        final int max = 8000;
+        if (line.length() <= max) { player.sendMessage(line); return; }
+        int id = PART_ID.incrementAndGet() & 0xffffff, total = (line.length() + max - 1) / max;
+        for (int i = 0; i < total; i++)
+            player.sendMessage("PIPI_ARM_PART:" + id + ":" + i + ":" + total + ":" + line.substring(i * max, Math.min(line.length(), (i + 1) * max)));
+    }
+
+    /** Sends the equipped weapon (slot -1) and every eligible bag weapon; the client opens the screen when open is true. */
+    private void sendData(Player player, boolean open) {
         State s = states.get(player.getUniqueId());
-        inv.setItem(0, plugin.statusIcon(Material.BOOK, "§e무기 장착", "장착한 무기는 Alt 전투 모드에서", "자동으로 손에 들립니다.", "상태창 능력치·아이템레벨에도 반영됩니다."));
-        inv.setItem(CLOSE_SLOT, plugin.statusIcon(Material.BARRIER, "닫기"));
-        if (s != null && s.weapon != null) inv.setItem(EQUIPPED_SLOT, display(s.weapon, "§c장착 중 · 클릭하여 해제", "§7해제하면 가방으로 돌아갑니다."));
-        else inv.setItem(EQUIPPED_SLOT, plugin.statusIcon(Material.ITEM_FRAME, "§7장착한 무기 없음", "아래 가방의 무기를 클릭하면 장착합니다."));
-        var bag = player.getInventory();
-        int shown = FIRST_BAG;
-        for (int i = 0; i < 36 && shown < SIZE; i++) {
-            ItemStack item = bag.getItem(i);
-            if (!CombatStats.weapon(item) || !CombatStats.eligible(item)) continue;
-            menu.sources[shown] = i;
-            menu.snapshots[shown] = item.clone();
-            inv.setItem(shown++, display(item, "§a클릭하여 장착", s != null && s.weapon != null ? "§7장착 중인 무기와 교체됩니다." : "§7가방에서 무기 칸으로 이동합니다."));
+        List<String> lines = new ArrayList<>();
+        int scanned = 0, eligibleCount = 0;
+        if (s != null && s.weapon != null) {
+            String b64 = bytes(s.weapon.clone(), player);
+            if (b64 != null) lines.add("PIPI_ARM_ITEM:-1:" + Integer.toHexString(s.weapon.hashCode()) + ":1:" + b64);
         }
-        if (shown == FIRST_BAG) inv.setItem(FIRST_BAG, plugin.statusIcon(Material.BARRIER, "§7장착 가능한 무기 없음", "대장간에서 3줄 이상 옵션이 붙은", "검·활·지팡이를 제작하세요."));
+        var bag = player.getInventory();
+        for (int i = 0; i < 36; i++) {
+            ItemStack item = bag.getItem(i);
+            if (CombatStats.weapon(item)) scanned++;
+            if (!CombatStats.weapon(item) || !CombatStats.eligible(item)) continue;
+            eligibleCount++;
+            String b64 = bytes(item.clone(), player);
+            if (b64 != null) lines.add("PIPI_ARM_ITEM:" + i + ":" + Integer.toHexString(item.hashCode()) + ":0:" + b64);
+        }
+        if (debug()) plugin.getLogger().info("[Armory] " + player.getName() + " 에게 무기 " + lines.size() + "개 전송 (가방 무기 " + scanned
+            + ", 장착 가능 " + eligibleCount + ", 장착중 " + (s != null && s.weapon != null ? 1 : 0) + ", open=" + open + ")");
+        player.sendMessage("PIPI_ARM_BEGIN:" + lines.size() + ":" + (open ? 1 : 0));
+        for (String line : lines) sendLine(player, line);
+        player.sendMessage("PIPI_ARM_END");
     }
 
-    @EventHandler
-    public void click(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof Menu menu)) return;
-        event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player) || event.getClickedInventory() != event.getView().getTopInventory()) return;
-        int raw = event.getRawSlot();
-        if (raw == CLOSE_SLOT) { player.closeInventory(); return; }
-        if (inCombat(player)) { player.closeInventory(); return; }
+    private void equipCommand(Player player, String[] args) {
+        if (inCombat(player)) { player.sendMessage("전투 모드를 끈 뒤(Alt) 이용하세요."); sendData(player, false); return; }
+        int source;
+        try { source = Integer.parseInt(args[2]); } catch (RuntimeException ex) { return; }
+        String hash = args.length >= 4 ? args[3] : null;
+        var bag = player.getInventory();
+        ItemStack item = source >= 0 && source < 36 ? bag.getItem(source) : null;
+        if (item == null || !CombatStats.weapon(item) || !CombatStats.eligible(item)
+            || hash != null && !hash.equals(Integer.toHexString(item.hashCode()))) {
+            player.sendMessage("§c가방이 바뀌었습니다. 다시 선택하세요.");
+            sendData(player, false);
+            return;
+        }
         UUID id = player.getUniqueId();
         State s = states.computeIfAbsent(id, k -> new State());
-        var bag = player.getInventory();
-        if (raw == EQUIPPED_SLOT) {
-            if (s.weapon == null) return;
-            int free = bag.firstEmpty();
-            if (free < 0) { player.sendMessage("§c가방이 가득 찼습니다. 빈 칸을 만든 뒤 해제하세요."); return; }
-            bag.setItem(free, s.weapon);
-            s.weapon = null;
-            save(id);
-            player.sendMessage("§e무기를 해제했습니다.");
-        } else if (raw >= FIRST_BAG && raw < SIZE && menu.sources[raw] >= 0) {
-            int source = menu.sources[raw];
-            ItemStack item = bag.getItem(source);
-            if (item == null || !item.equals(menu.snapshots[raw]) || !CombatStats.weapon(item) || !CombatStats.eligible(item)) {
-                player.sendMessage("§c가방이 바뀌었습니다. 다시 선택하세요.");
-                render(player, menu);
-                return;
-            }
-            ItemStack old = s.weapon;
-            bag.setItem(source, old); // swap: the previous weapon takes the vacated bag slot (null when nothing was equipped)
-            s.weapon = item.clone();
-            save(id);
-            player.sendMessage("§a무기를 장착했습니다. Alt를 눌러 전투 모드에서 사용하세요.");
-        } else return;
+        ItemStack old = s.weapon;
+        bag.setItem(source, old); // swap: the previous weapon takes the vacated bag slot (null when nothing was equipped)
+        s.weapon = item.clone();
+        save(id);
+        player.sendMessage("§a무기를 장착했습니다. Alt를 눌러 전투 모드에서 사용하세요.");
         player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_IRON, 1f, 1f);
-        render(player, menu);
+        ClassSkills.syncFor(player);
+        sendData(player, false);
     }
 
-    @EventHandler
-    public void drag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof Menu) event.setCancelled(true);
+    private void unequipCommand(Player player) {
+        if (inCombat(player)) { player.sendMessage("전투 모드를 끈 뒤(Alt) 이용하세요."); sendData(player, false); return; }
+        UUID id = player.getUniqueId();
+        State s = states.get(id);
+        if (s == null || s.weapon == null) { sendData(player, false); return; }
+        var bag = player.getInventory();
+        int free = bag.firstEmpty();
+        if (free < 0) { player.sendMessage("§c가방이 가득 찼습니다. 빈 칸을 만든 뒤 해제하세요."); sendData(player, false); return; }
+        bag.setItem(free, s.weapon);
+        s.weapon = null;
+        save(id);
+        player.sendMessage("§e무기를 해제했습니다.");
+        player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_IRON, 1f, 1f);
+        ClassSkills.syncFor(player);
+        sendData(player, false);
     }
 }

@@ -4,16 +4,16 @@ players:
     weapon:
       ==: org.bukkit.inventory.ItemStack
       v: 3955
-      type: IRON_SWORD
+      type: BOW
       meta:
         ==: ItemMeta
         meta-type: UNSPECIFIC
-        display-name: '{"text":"","extra":[{"text":"0티어 검 +0","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"aqua","bold":false}]}'
+        display-name: '{"text":"","extra":[{"text":"0티어 활 +5","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"aqua","bold":false}]}'
         lore:
-        - '{"text":"","extra":[{"text":"아이템레벨 100","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gold","bold":false}]}'
-        - '{"text":"","extra":[{"text":"공격력 +120","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"힘 +60","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
-        - '{"text":"","extra":[{"text":"민첩 +31","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"아이템레벨 150","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gold","bold":false}]}'
+        - '{"text":"","extra":[{"text":"공격력 +170","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"힘 +52","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
+        - '{"text":"","extra":[{"text":"민첩 +100","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
         - '{"text":"","extra":[{"text":"잠재 슬롯 5개","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
         - '{"text":"","extra":[{"text":"인챈트","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"dark_purple","bold":false}]}'
         - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
@@ -22,25 +22,15 @@ players:
         - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
         - '{"text":"","extra":[{"text":"○ 빈 인챈트 슬롯","obfuscated":false,"italic":false,"underlined":false,"strikethrough":false,"color":"gray","bold":false}]}'
         custom-model-data: 10000
-        attribute-modifiers:
-          minecraft:generic.attack_damage:
-          - ==: org.bukkit.attribute.AttributeModifier
-            amount: 5.0
-            slot: mainhand
-            operation: 0
-            key: pipilife:smith_base_generic_attack_damage_base_attack_damage
-          minecraft:generic.attack_speed:
-          - ==: org.bukkit.attribute.AttributeModifier
-            amount: -2.4000000953674316
-            slot: mainhand
-            operation: 0
-            key: pipilife:smith_base_generic_attack_speed_base_attack_speed
         ItemFlags:
         - HIDE_UNBREAKABLE
         Unbreakable: true
         PublicBukkitValues: |-
           {
-              "pipilife:smith_catalog": "0티어 검",
+              "pipilife:smith_catalog": "0티어 활",
               "pipilife:smith_combat_schema": 3,
+              "pipilife:smith_gauge": 0,
+              "pipilife:smith_level": 5,
               "pipilife:smith_lines": 5
           }
+debug: true

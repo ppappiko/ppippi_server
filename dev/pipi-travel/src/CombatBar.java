@@ -123,9 +123,10 @@ public final class CombatBar {
         client().getConnection().sendCommand("pipilife skill basic");
     }
 
-    private static boolean isWeapon(ItemStack item) {
-        return item.getItem() instanceof SwordItem || item.is(Items.BOW)
-            || item.is(Items.BLAZE_ROD) && item.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME);
+    /** Only the Armory-marked combat weapon counts (server stamps pipilife:armory_weapon); plain sword/bow/staff never do. */
+    static boolean isWeapon(ItemStack item) {
+        var data = item.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+        return data != null && data.copyTag().getCompound("PublicBukkitValues").contains("pipilife:armory_weapon");
     }
 
     private static void toggle() {
@@ -148,22 +149,9 @@ public final class CombatBar {
         client().getConnection().sendCommand("pipilife combat on " + bag.selected);
     }
 
+    /** No armory weapon equipped: combat mode is unavailable (a plain held weapon no longer starts it). */
     private static void enterLocal() {
-        var player = client().player;
-        var bag = player.getInventory();
-        int slot = bag.selected;
-        if (!isWeapon(bag.getItem(slot))) {
-            slot = 0;
-            while (slot < 9 && !isWeapon(bag.getItem(slot))) slot++;
-        }
-        if (slot == 9) {
-            player.displayClientMessage(Component.literal("무기 관리인에게 무기를 장착하세요."), true);
-            return;
-        }
-        savedSlot = bag.selected;
-        bag.selected = slot;
-        weapon = bag.getItem(slot);
-        selectedSkill = 0;
+        client().player.displayClientMessage(Component.literal("무기 관리인에게 무기를 장착하세요."), true);
     }
 
     static void receiveCooldown(net.neoforged.neoforge.client.event.ClientChatReceivedEvent.System event) {

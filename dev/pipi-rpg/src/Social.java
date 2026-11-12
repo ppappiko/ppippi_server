@@ -37,6 +37,7 @@ final class Social implements Listener {
     private final Map<UUID, UUID> pendingPrice = new HashMap<>();
     private final Map<UUID, Long> pendingExpires = new HashMap<>();
     private final Map<UUID, Long> lastBrag = new HashMap<>();
+    TradeWindow trades;
 
     private static final class PlayerMenu implements InventoryHolder {
         final UUID target;
@@ -82,6 +83,8 @@ final class Social implements Listener {
         }
         lastBrag.put(player.getUniqueId(), now);
         ItemStack shown = item.clone();
+        CombatStats.markOwner(shown, player.getName());
+        if (broadcastHidden(shown, player)) return true;
         BaseComponent name = shown.hasItemMeta() && shown.getItemMeta().hasDisplayName()
             ? new TextComponent(TextComponent.fromLegacyText(shown.getItemMeta().getDisplayName()))
             : new TranslatableComponent(shown.getType().getItemTranslationKey());
@@ -106,6 +109,17 @@ final class Social implements Listener {
         return true;
     }
 
+    // ---- hidden-message brag: the client mod rebuilds the item and its hover ----
+    private boolean broadcastHidden(ItemStack shown, Player player) {
+        String name = player.getName();
+        String enc = ItemWire.encode(shown, player);
+        if (enc == null) return false;
+        String message = "PIPI_BRAG:" + name + ":" + enc;
+        for (Player p : Bukkit.getOnlinePlayers()) p.sendMessage(message);
+        Bukkit.getConsoleSender().sendMessage(name + "님이 [" + shown.getType().getKey() + " ×" + shown.getAmount() + "]을(를) 자랑합니다!");
+        return true;
+    }
+
     // ---- sneak + right-click a player ----
     @EventHandler(ignoreCancelled = true)
     public void interact(PlayerInteractEntityEvent event) {
@@ -116,7 +130,7 @@ final class Social implements Listener {
         event.setCancelled(true);
         PlayerMenu menu = new PlayerMenu(target.getUniqueId());
         menu.inventory = Bukkit.createInventory(menu, 27, "삐삐서버 · " + target.getName());
-        menu.inventory.setItem(11, plugin.statusIcon(Material.EMERALD, "거래", "손에 든 물품을 채팅으로 입력한 가격에 제안합니다"));
+        menu.inventory.setItem(11, plugin.statusIcon(Material.EMERALD, "거래", "거래창에서 아이템과 골드를 안전하게 교환합니다"));
         menu.inventory.setItem(15, plugin.statusIcon(Material.BOOK, "상태창", "장비와 전투 스탯을 읽기 전용으로 봅니다"));
         player.openInventory(menu.inventory);
     }
@@ -138,9 +152,8 @@ final class Social implements Listener {
                 player.sendMessage("§c상대가 접속 중이 아닙니다.");
             } else if (slot == 11) {
                 player.closeInventory();
-                pendingPrice.put(player.getUniqueId(), target.getUniqueId());
-                pendingExpires.put(player.getUniqueId(), System.currentTimeMillis() + 30_000);
-                player.sendMessage("§e" + target.getName() + "님에게 팔 물품을 손에 들고, 채팅으로 가격(골드)을 입력하세요. (취소: 취소)");
+                if (trades != null) trades.request(player, target);
+                else player.sendMessage("§c거래창을 사용할 수 없습니다.");
             } else if (slot == 15) {
                 combat.open(player, target);
             }
