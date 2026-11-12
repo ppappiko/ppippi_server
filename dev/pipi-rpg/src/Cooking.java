@@ -274,8 +274,16 @@ final class Cooking implements Listener {
         for (String id : ingredients) need.merge(materialOf(id), 1, Integer::sum);
         need.merge(materialOf(seasoning), 1, Integer::sum);
         if (need.containsKey(null)) { player.sendMessage("요리 재료 아이템을 찾을 수 없습니다. 모드를 확인하세요."); return true; }
-        for (var entry : need.entrySet())
-            if (count(player, entry.getKey()) < entry.getValue()) { player.sendMessage("재료가 부족합니다."); return true; }
+        List<String> lacking = new ArrayList<>();
+        for (var entry : need.entrySet()) {
+            int missing = entry.getValue() - count(player, entry.getKey());
+            if (missing <= 0) continue;
+            String label = null;
+            for (var id : INGREDIENTS.keySet()) if (materialOf(id) == entry.getKey()) label = INGREDIENTS.get(id);
+            for (var id : SEASONINGS.keySet()) if (materialOf(id) == entry.getKey()) label = SEASONINGS.get(id);
+            lacking.add((label == null ? entry.getKey().name() : label) + " " + missing + "개");
+        }
+        if (!lacking.isEmpty()) { player.sendTitle("§c재료 부족", String.join(" · ", lacking) + " 부족", 5, 40, 10); return true; }
         if (ModItems.byIdOrNull(FAILED) == null) { player.sendMessage("요리 아이템을 찾을 수 없습니다. 모드를 확인하세요."); return true; }
         lastCook.put(player.getUniqueId(), now);
         need.forEach((material, amount) -> take(player, material, amount));

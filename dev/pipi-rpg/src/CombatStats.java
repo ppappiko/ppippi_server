@@ -367,10 +367,10 @@ final class CombatStats implements Listener {
         holder.inventory=Bukkit.createInventory(holder,54,TITLE);
         Inventory inv=holder.inventory;
         inv.setItem(0,plugin.statusIcon(Material.PLAYER_HEAD,player.getName()));
-        inv.setItem(1,Armory.weaponFor(player).clone());
+        inv.setItem(1,markOwner(Armory.weaponFor(player).clone(),player.getName()));
         var gear=player.getInventory();
         ItemStack[] armor={gear.getHelmet(),gear.getChestplate(),gear.getLeggings(),gear.getBoots()};
-        for(int i=0;i<4;i++)if(armor[i]!=null)inv.setItem(2+i,armor[i].clone());
+        for(int i=0;i<4;i++)if(armor[i]!=null)inv.setItem(2+i,markOwner(armor[i].clone(),player.getName()));
         double max=player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
         double defense=s.defense();
         double attack=s.attackBonus();
@@ -379,6 +379,8 @@ final class CombatStats implements Listener {
         inv.setItem(10,plugin.statusIcon(Material.BOOK,"전투 스탯",data.toArray(String[]::new)));
         inv.setItem(49,plugin.statusIcon(Material.BARRIER,"닫기"));viewer.openInventory(inv);return true;
     }
+    /** Stamps the owner name (pipilife:owner) so the client spec card can show 소유자. */
+    static ItemStack markOwner(ItemStack item,String owner){if(item==null||item.getType().isAir()||!item.hasItemMeta())return item;var m=item.getItemMeta();m.getPersistentDataContainer().set(NamespacedKey.fromString("pipilife:owner"),PersistentDataType.STRING,owner);item.setItemMeta(m);return item;}
     private static String f(double v){return String.format(Locale.ROOT,"%.1f",v);}
     @EventHandler public void click(InventoryClickEvent e){if(e.getView().getTopInventory().getHolder() instanceof Profile){e.setCancelled(true);if(e.getRawSlot()==49)e.getWhoClicked().closeInventory();}}
     @EventHandler public void drag(InventoryDragEvent e){if(e.getView().getTopInventory().getHolder() instanceof Profile)e.setCancelled(true);}

@@ -31,6 +31,16 @@ warps:
     yaw: 91.93377685546875
     category: 마을
     name: 서쪽
+  home_plot07:
+    world: village
+    x: -54
+    y: 64
+    z: 37
+    yaw: 178.3703155517578
+    category: 거주지
+    name: S3O3ON__의 거주지
+    owners:
+    - 3743feba-4aba-4ecc-a9cf-481e6e1553ec
 players:
   8fe0b940-3078-41c9-a3cc-f8c700b6651b:
   - '1'

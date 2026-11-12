@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
@@ -18,6 +19,8 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(CombatBar::receiveCooldown);
         NeoForge.EVENT_BUS.addListener(CombatBar::layerPre);
         NeoForge.EVENT_BUS.addListener(HudBar::receive);
+        NeoForge.EVENT_BUS.addListener(ChargeOverlay::receive);
+        NeoForge.EVENT_BUS.addListener(UpgradeFx::receive);
         NeoForge.EVENT_BUS.addListener(CastAnim::receive);
         NeoForge.EVENT_BUS.addListener(CastAnim::hand);
         NeoForge.EVENT_BUS.addListener(HudBar::layerPre);
@@ -26,10 +29,15 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(HudInfo::key);
         NeoForge.EVENT_BUS.addListener(CaptureInput::tick);
         NeoForge.EVENT_BUS.addListener(CaptureInput::receive);
+        NeoForge.EVENT_BUS.addListener(BragChat::receive);
+        NeoForge.EVENT_BUS.addListener(ArmoryScreen::receive);
+        NeoForge.EVENT_BUS.addListener(SmeltScreen::receive);
+        NeoForge.EVENT_BUS.addListener(TradeScreen::receive);
         NeoForge.EVENT_BUS.addListener(CaptureInput::fov);
         NeoForge.EVENT_BUS.addListener(this::openResearch);
         NeoForge.EVENT_BUS.addListener(GearTooltips::addDetails);
         NeoForge.EVENT_BUS.addListener(GearTooltips::color);
+        NeoForge.EVENT_BUS.addListener(GearCard::pre);
     }
 
     private void openResearch(ScreenEvent.Opening event) {
@@ -75,13 +83,15 @@ public final class PipiTravel {
     }
 
     private void registerHud(RegisterGuiLayersEvent event) {
+        event.registerBelow(VanillaGuiLayers.CROSSHAIR, ResourceLocation.fromNamespaceAndPath("pipitravel", "charge_circle"), (graphics, delta) -> ChargeOverlay.draw(graphics));
+        event.registerBelow(VanillaGuiLayers.CROSSHAIR, ResourceLocation.fromNamespaceAndPath("pipitravel", "upgrade_fx"), (graphics, delta) -> UpgradeFx.drawHud(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "capture_aim"), (graphics, delta) -> CaptureInput.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "combat_bar"), (graphics, delta) -> HudBar.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "hud_info"), (graphics, delta) -> HudInfo.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "menu_bar"), (graphics, delta) -> {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null && client.level != null && !client.options.hideGui
-                && !(client.screen instanceof PipiMenu) && !(client.screen instanceof ResearchScreen) && !(client.screen instanceof CraftScreen) && !(client.screen instanceof PetStorageScreen) && !(client.screen instanceof ForgeScreen) && !(client.screen instanceof AlchemyScreen) && !(client.screen instanceof CookingScreen) && !(client.screen instanceof InheritScreen) && !(client.screen instanceof ShopScreen) && !(client.screen instanceof UpgradeScreen) && !(client.screen instanceof UpgradeConfirmScreen) &&!(client.screen instanceof CharacterScreen) && !(client.screen instanceof PetMarketScreen)) drawBar(graphics, false);
+                && !(client.screen instanceof PipiMenu) && !(client.screen instanceof ResearchScreen) && !(client.screen instanceof CraftScreen) && !(client.screen instanceof PetStorageScreen) && !(client.screen instanceof ForgeScreen) && !(client.screen instanceof AlchemyScreen) && !(client.screen instanceof CookingScreen) && !(client.screen instanceof InheritScreen) && !(client.screen instanceof ShopScreen) && !(client.screen instanceof UpgradeScreen) && !(client.screen instanceof UpgradeConfirmScreen) &&!(client.screen instanceof CharacterScreen) && !(client.screen instanceof PetMarketScreen) && !(client.screen instanceof ArmoryScreen) && !(client.screen instanceof SmeltScreen) && !(client.screen instanceof TradeScreen)) drawBar(graphics, false);
         });
     }
 
@@ -90,7 +100,7 @@ public final class PipiTravel {
         return screen instanceof PipiMenu || screen instanceof ResearchScreen || screen instanceof CraftScreen || screen instanceof PetStorageScreen
             || screen instanceof ForgeScreen || screen instanceof AlchemyScreen || screen instanceof CookingScreen || screen instanceof InheritScreen
             || screen instanceof ShopScreen || screen instanceof UpgradeScreen || screen instanceof CharacterScreen || screen instanceof PetMarketScreen
-            || screen instanceof FoodStorageScreen || screen instanceof WarpScreen || screen instanceof UpgradeConfirmScreen;
+            || screen instanceof FoodStorageScreen || screen instanceof WarpScreen || screen instanceof UpgradeConfirmScreen || screen instanceof ArmoryScreen || screen instanceof SmeltScreen || screen instanceof TradeScreen;
     }
 
     static void drawBar(GuiGraphics graphics, boolean expanded) {

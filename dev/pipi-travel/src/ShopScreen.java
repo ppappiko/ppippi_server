@@ -48,6 +48,10 @@ final class ShopScreen extends ContainerScreen {
     }
     private int maximum() { return Math.max(0, number(selected, 2)); }
     private static String amount(long value) { return "%,d".formatted(value); }
+    private String balanceText() {
+        String raw = item(47).getHoverName().getString();
+        try { return amount(Long.parseLong(raw.trim())); } catch (NumberFormatException ignored) { return raw; }
+    }
 
     @Override public void render(GuiGraphics g, int mx, int my, float delta) {
         double x = (mx-left)/scale, y = (my-top)/scale;
@@ -61,7 +65,7 @@ final class ShopScreen extends ContainerScreen {
             panel(g, 358, 0, 302, H, false);
             g.drawString(font, "공동 마을 상점", 13, 13, TEXT, false);
             g.renderItem(item(47), 375, 12);
-            g.drawString(font, font.plainSubstrByWidth("보유 골드  " + item(47).getHoverName().getString(), 628 - 6 - 395), 395, 16, GOLD, false);
+            g.drawString(font, font.plainSubstrByWidth("보유 골드  " + balanceText(), 628 - 6 - 395), 395, 16, GOLD, false);
             button(g, "×", 628, 8, 24, 23, hit(x,y,628,8,24,23));
             button(g, "구매", 13, 32, 48, 24, tab()==0);
             button(g, "광물 상점", 65, 32, 70, 24, tab()==1);

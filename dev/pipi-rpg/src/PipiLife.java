@@ -106,6 +106,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private CombatStats combat;
     private Armory armory;
     private Social social;
+    private TradeWindow tradeWindow;
     private CustomPets customPets;
     private CaptureSystem captures;
     private ResourceNodes resourceNodes;
@@ -153,6 +154,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(town, this);
         social = new Social(this, town, combat);
         getServer().getPluginManager().registerEvents(social, this);
+        tradeWindow = new TradeWindow(this, town);
+        social.trades = tradeWindow;
+        getServer().getPluginManager().registerEvents(tradeWindow, this);
         cooking = new Cooking(this);
         getServer().getPluginManager().registerEvents(cooking, this);
         try {
@@ -173,6 +177,19 @@ public final class PipiLife extends JavaPlugin implements Listener {
         try {
             regions = new Regions(this);
             getServer().getPluginManager().registerEvents(regions, this);
+            // plots claimed before deed protection existed get their owner region once the village world is up
+            getServer().getScheduler().runTaskLater(this, () -> {
+                var plots = data.getConfigurationSection("plots");
+                org.bukkit.World village = Bukkit.getWorld(getConfig().getString("village-world", "village"));
+                if (regions == null || plots == null || village == null) return;
+                for (String name : plots.getKeys(false)) {
+                    String owner = plots.getString(name + ".owner");
+                    if (owner == null || regions.hasRegion(name)) continue;
+                    String ownerName;
+                    try { ownerName = Bukkit.getOfflinePlayer(UUID.fromString(owner)).getName(); } catch (IllegalArgumentException ex) { continue; }
+                    regions.claimPlot(name, owner, ownerName, village, plots.getInt(name + ".x"), plots.getInt(name + ".z"));
+                }
+            }, 120L);
         } catch (RuntimeException ex) {
             regions = null;
             getLogger().warning("보호 구역을 시작하지 못했습니다: " + ex);
@@ -522,7 +539,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (!persist()) {
             data.set(path, null);
             player.sendMessage("선점 저장 실패.");
-        } else player.sendMessage(plot + " 부지를 선점했습니다.");
+        } else {
+            player.sendMessage(plot + " 부지를 선점했습니다. 이제 내 땅이라 다른 사람은 건드릴 수 없어요.");
+            if (regions != null) regions.claimPlot(plot, uuid, player.getName(), player.getWorld(), data.getInt("plots." + plot + ".x"), data.getInt("plots." + plot + ".z"));
+        }
         return true;
     }
 
@@ -535,6 +555,15 @@ public final class PipiLife extends JavaPlugin implements Listener {
             if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("dummy");
         } else if (dummies != null && args[0].equalsIgnoreCase("dummy") && (sender.isOp() || sender.hasPermission("pipilife.admin"))) {
             out.addAll(dummies.complete(args));
+        } else if (args[0].equalsIgnoreCase("station") && (sender.isOp() || sender.hasPermission("pipilife.admin"))) {
+            if (args.length == 2) out.add("forceremove");
+            else if (args.length <= 5 && args[1].equalsIgnoreCase("forceremove") && sender instanceof Player p) {
+                var hit = p.rayTraceBlocks(6);
+                if (hit != null && hit.getHitBlock() != null) {
+                    var b = hit.getHitBlock();
+                    out.add(String.valueOf(args.length == 3 ? b.getX() : args.length == 4 ? b.getY() : b.getZ()));
+                }
+            }
         } else if (warps != null && args[0].equalsIgnoreCase("warp")) {
             out.addAll(warps.complete(sender, args));
         } else if (regions != null && args[0].equalsIgnoreCase("region")) {
@@ -564,6 +593,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length > 0 && args[0].equals("petstorage")) return storageCommand(player, args);
         if (args.length > 0 && args[0].equals("market")) return marketCommand(player, args);
         if (args.length > 0 && args[0].equals("armory")) return armory.command(player, args);
+        if (args.length > 1 && args[0].equals("trade") && tradeWindow != null && tradeWindow.command(player, args)) return true;
         if (args.length > 0 && args[0].equals("combat")) return armory.combatCommand(player, args);
         if (args.length > 0 && args[0].equals("skill")) {
             if (args.length >= 2 && args[1].equals("loadout")) return skills.loadoutCommand(player, args);
@@ -588,7 +618,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length > 0 && args[0].equals("workstation")) return workstation(player, args);
         if (args.length > 0 && args[0].equals("cook")) return cooking.command(player, args);
         if (warps != null && args.length > 0 && args[0].equalsIgnoreCase("warp") && warps.handles(args)) return warps.command(player, args);
-        if (args.length > 0 && Set.of("deed","home","warp","shop","research","process","forge","heal","party","trade","alchemy","inherit").contains(args[0].toLowerCase(Locale.ROOT)))
+        if (args.length > 0 && Set.of("deed","home","warp","shop","research","process","forge","heal","party","trade","smelt","alchemy","inherit").contains(args[0].toLowerCase(Locale.ROOT)))
             return town.command(player, args);
         if (args.length == 1 && Set.of("profile", "pets").contains(args[0])) return args[0].equals("pets") ? openPetStorage(player) : openStatus(player, false);
         if (args.length == 1 && args[0].equalsIgnoreCase("travel")) return openTravel(player);
@@ -599,6 +629,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length > 0 && Set.of("maps", "finish").contains(args[0].toLowerCase(Locale.ROOT))) return mapCommand(player, args);
         if (args.length > 0 && Set.of("register", "claim", "plot").contains(args[0].toLowerCase(Locale.ROOT)))
             return plotCommand(player, args);
+        if (args.length >= 2 && args[0].equalsIgnoreCase("station") && args[1].equalsIgnoreCase("forceremove")) return forceRemoveStation(player, args);
         if (args.length == 1 && args[0].equalsIgnoreCase("station")) {
             player.sendMessage("제작한 식량·벌목·채광·기본 작업대를 내 부지에 설치하고 우클릭하세요.");
             return true;
@@ -1076,17 +1107,41 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (data != null) refreshStationModels(event.getChunk());
     }
 
+    private final Map<String, Integer> stationRetries = new HashMap<>();
+
+    /** True when every chunk touching the box around c (radius r) is loaded with its entities. */
+    private boolean stationEntitiesReady(Location c, int r) {
+        World w = c.getWorld();
+        for (int cx = (c.getBlockX() - r) >> 4; cx <= (c.getBlockX() + r) >> 4; cx++)
+            for (int cz = (c.getBlockZ() - r) >> 4; cz <= (c.getBlockZ() + r) >> 4; cz++)
+                if (!w.isChunkLoaded(cx, cz) || !w.getChunkAt(cx, cz).isEntitiesLoaded()) return false;
+        return true;
+    }
+
     private void showStationModel(org.bukkit.block.Block anchor, Facility facility) {
         Material modItem = stationModelItem(facility);
         if (modItem == null && !Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) return;
         boolean wide = facility == Facility.FEEDER ? wideFeeder(anchor) : wideStation(anchor);
         Location center = anchor.getLocation().add(wide ? facility.width()/2.0 : .5, 1, wide ? facility.depth()/2.0 : .5);
         String tag = feederModelTag(anchor);
+        // The display can sit in a neighbouring chunk. If any chunk of the search box has not loaded its entities yet, the old
+        // display is invisible to getNearbyEntities and a duplicate would be spawned on every visit (618 stacked lumber trees).
+        if (!stationEntitiesReady(center, 8)) {
+            int tries = stationRetries.merge(tag, 1, Integer::sum);
+            if (tries <= 20) Bukkit.getScheduler().runTaskLater(this, () -> {
+                if (facilityAt(anchor) == facility) showStationModel(anchor, facility);
+            }, 40L);
+            return;
+        }
+        stationRetries.remove(tag);
         var existing = center.getWorld().getNearbyEntities(center, 8, 8, 8).stream()
             .filter(entity -> entity.getScoreboardTags().contains(tag)).toList();
         if (!existing.isEmpty()) {
             String need = facility.isQuarry() ? STATION_V3_TAG : STATION_V2_TAG;
-            if (modItem == null || existing.stream().allMatch(entity -> entity.getScoreboardTags().contains(need))) return;
+            if (modItem == null || existing.stream().allMatch(entity -> entity.getScoreboardTags().contains(need))) {
+                for (int i = 1; i < existing.size(); i++) existing.get(i).remove(); // drop stacked duplicates, keep one
+                return;
+            }
             existing.forEach(Entity::remove); // old ItemsAdder model -> replaced below
         }
         if (modItem != null) {
@@ -1243,6 +1298,137 @@ public final class PipiLife extends JavaPlugin implements Listener {
             applyFacilityLevel(player, plot, facility, block, item);
             finishStation(player, block, facility);
         }
+    }
+
+/** Admin: /pipilife station forceremove [x y z] - tears down a (possibly broken) facility ignoring busy checks. */
+    private boolean forceRemoveStation(Player admin, String[] args) {
+        if (!admin.isOp() && !admin.hasPermission("pipilife.admin")) { admin.sendMessage("§c관리자 전용 명령어입니다."); return true; }
+        org.bukkit.block.Block target;
+        if (args.length == 5) {
+            try { target = admin.getWorld().getBlockAt(Integer.parseInt(args[2]), Integer.parseInt(args[3]), Integer.parseInt(args[4])); }
+            catch (NumberFormatException ex) { admin.sendMessage("§c좌표가 잘못됐습니다. /pipilife station forceremove [x y z]"); return true; }
+        } else if (args.length == 2) {
+            var hit = admin.rayTraceBlocks(6);
+            if (hit == null || hit.getHitBlock() == null) { admin.sendMessage("§c6칸 이내의 시설 블록을 바라보세요. (또는 /pipilife station forceremove <x> <y> <z>)"); return true; }
+            target = hit.getHitBlock();
+        } else { admin.sendMessage("§c/pipilife station forceremove [x y z]"); return true; }
+
+        // 1) resolve anchor + facility
+        org.bukkit.block.Block anchor = feederAnchor(target);
+        Facility facility = anchor == null ? null : facilityAt(anchor);
+        if (anchor == null) {
+            search:
+            for (int dx = 0; dx <= 2; dx++) for (int dz = 0; dz <= 2; dz++) {
+                var cand = target.getRelative(-dx, 0, -dz);
+                String candPlot = plotAt(cand.getLocation());
+                List<Integer> candPoint = List.of(cand.getX(), cand.getY(), cand.getZ());
+                boolean viewed = data.contains(facilityViewKey(cand));
+                for (Facility f : Facility.values()) {
+                    if (candPlot == null || !facilityPositions(candPlot, f).contains(candPoint)) continue;
+                    int w = Math.max(f.width(), data.getInt(facilityViewKey(cand) + ".width", 1));
+                    int d = Math.max(f.depth(), data.getInt(facilityViewKey(cand) + ".depth", 1));
+                    if (dx < w && dz < d) { anchor = cand; facility = f; break search; }
+                }
+                if (viewed && dx < Math.max(1, data.getInt(facilityViewKey(cand) + ".width", 1))
+                    && dz < Math.max(1, data.getInt(facilityViewKey(cand) + ".depth", 1))) { anchor = cand; break search; }
+            }
+        }
+        if (anchor == null) { admin.sendMessage("§c그 위치에서 시설 데이터를 찾지 못했습니다. (" + target.getX() + "," + target.getY() + "," + target.getZ() + ")"); return true; }
+
+        String plot = plotAt(anchor.getLocation());
+        String ownerId = plot == null ? null : data.getString("plots." + plot + ".owner");
+        String coords = coordinates(anchor);
+        String viewKey = facilityViewKey(anchor);
+        List<Integer> point = List.of(anchor.getX(), anchor.getY(), anchor.getZ());
+        List<String> report = new ArrayList<>();
+        report.add("기준 블록 " + anchor.getX() + "," + anchor.getY() + "," + anchor.getZ() + " (" + anchor.getType() + ")"
+            + (facility == null ? " - 시설 종류 불명(배치 목록에 없음)" : " - " + facility.label));
+
+        // 2) level (must be read before position / legacy anchor changes)
+        int keptLevel = 1;
+        String levelKey = null;
+        if (facility != null && plot != null) {
+            if (facility == Facility.PET_STORAGE) { if (ownerId != null) levelKey = "pet-storage." + ownerId + ".level"; }
+            else if (facility.isProducer()) levelKey = producerKey(plot, facility, coords) + ".level";
+            if (levelKey != null) keptLevel = data.getInt(levelKey, 1);
+        }
+
+        // 3) craft process / worker data
+        if (facility == Facility.CRAFT && ownerId != null) {
+            String base = "town." + ownerId;
+            List<Integer> pinned = data.getIntegerList(base + ".craft-anchor");
+            var craftPositions = facilityPositions(plot, Facility.CRAFT);
+            boolean primary = pinned.isEmpty() ? !craftPositions.isEmpty() && craftPositions.getFirst().equals(point) : pinned.equals(point);
+            if (primary && pinned.isEmpty() && craftPositions.size() > 1) data.set(base + ".craft-anchor", point); // keep other stations on their own keys
+            String prefix = primary ? base : base + ".craft-stations." + coords;
+            List<String> job = data.getStringList(prefix + ".process");
+            if (!job.isEmpty()) report.add("제작 주문 삭제됨: " + job + " (재료/완성품은 환급되지 않습니다. 필요하면 수동 보상)");
+            String worker = data.getString(prefix + ".craft-worker");
+            if (worker != null && !worker.isEmpty()) report.add("제작 펫 배치 해제: " + worker);
+            for (String suffix : List.of(".process", ".process-hungry", ".process-paused", ".craft-worker")) data.set(prefix + suffix, null);
+            if (!primary) data.set(prefix, null);
+        }
+
+        // 4) legacy producer anchor / station data
+        if (facility != null && facility.isProducer() && plot != null) {
+            String legacy = legacyProducerKey(plot, facility);
+            if (coords.equals(data.getString(legacy + ".anchor"))) { data.set(legacy + ".anchor", null); report.add("레거시 생산 기준점 해제"); }
+            data.set(legacy + ".stations." + coords, null);
+        }
+        if (levelKey != null) data.set(levelKey, null);
+
+        // 5) remove from every facility position list
+        if (plot != null) for (Facility f : Facility.values()) {
+            var positions = facilityPositions(plot, f);
+            if (positions.remove(point)) {
+                data.set(facilityKey(plot, f), positions.isEmpty() ? null : positions);
+                report.add("배치 목록에서 제거: " + f.label);
+            }
+        }
+
+        // 6) view entry (+ stored food)
+        int width = Math.max(facility == null ? 1 : facility.width(), data.getInt(viewKey + ".width", 1));
+        int depth = Math.max(facility == null ? 1 : facility.depth(), data.getInt(viewKey + ".depth", 1));
+        width = Math.min(width, 4); depth = Math.min(depth, 4);
+        int droppedFood = 0;
+        if (data.contains(viewKey + ".food")) {
+            for (Object o : data.getList(viewKey + ".food", List.of())) if (o instanceof ItemStack stack && !stack.getType().isAir()) {
+                anchor.getWorld().dropItemNaturally(anchor.getLocation().add(.5, 1, .5), stack);
+                droppedFood++;
+            }
+        }
+        if (data.contains(viewKey)) report.add("시설 뷰 데이터 삭제" + (droppedFood > 0 ? " (보관 식량 " + droppedFood + "스택 드롭)" : ""));
+        data.set(viewKey, null);
+        foodInventories.remove(viewKey + ".food");
+        if (!persist()) report.add("§c경고: 데이터 파일 저장에 실패했습니다. 서버 로그를 확인하세요.");
+
+        // 7) world: wide barrier cells, chunk marker, anchor, displays
+        int cells = 0;
+        for (int x = 0; x < width; x++) for (int z = 0; z < depth; z++) {
+            var cell = anchor.getRelative(x, 0, z);
+            if ((x != 0 || z != 0) && (cell.getType() == Material.BARRIER || cell.getType() == FEEDER_WALL)) { cell.setType(Material.AIR, false); cells++; }
+        }
+        var pdc = anchor.getChunk().getPersistentDataContainer();
+        if (pdc.has(wideStationKey(anchor), PersistentDataType.BYTE)) { pdc.remove(wideStationKey(anchor)); report.add("청크 wide 마커 삭제"); }
+        report.add("보조 장벽 블록 " + cells + "개 제거");
+        if (!anchor.getType().isAir()) { anchor.setType(Material.AIR, false); report.add("기준 블록 제거"); }
+        String tag = feederModelTag(anchor);
+        int removedDisplays = 0;
+        for (var entity : anchor.getWorld().getNearbyEntities(anchor.getLocation().add(.5, 1, .5), 8, 8, 8)) {
+            if (entity.getScoreboardTags().contains(tag)) { entity.remove(); removedDisplays++; }
+        }
+        report.add("표시 엔티티 " + removedDisplays + "개 제거");
+
+        // 8) hand the item to the admin
+        if (facility != null && facility != Facility.GOLD_MINE) {
+            var left = admin.getInventory().addItem(stationItem(facility, keptLevel));
+            left.values().forEach(rest -> admin.getWorld().dropItemNaturally(admin.getLocation(), rest));
+            report.add(facility.label + (keptLevel >= 2 ? " Lv." + keptLevel : "") + " 아이템 지급" + (left.isEmpty() ? "" : " (가방이 가득 차 바닥에 드롭)"));
+        }
+        admin.sendMessage("§e[강제 철거] 완료");
+        for (String line : report) admin.sendMessage("§7 - " + line);
+        getLogger().info("[forceremove] " + admin.getName() + " -> " + String.join(" | ", report));
+        return true;
     }
 
     @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
@@ -1457,6 +1643,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if(healthBars!=null)healthBars.close();
         if(resourceNodes!=null)resourceNodes.close();
         if (armory != null) armory.close();
+        if (tradeWindow != null) tradeWindow.close();
         if (skills != null) skills.shutdown();
         if (combat != null) combat.removeModifiers();
         if (town != null) town.close();
@@ -1790,7 +1977,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         fillMarketRows(h.inventory,h.owner,true);
         for(int i=0;i<STORAGE_PAGE_SIZE;i++){
             String e=entries.get(page*STORAGE_PAGE_SIZE+i);Pet pet=entryPet(e);if(e.isEmpty()||pet==null)continue;
-            h.inventory.setItem(9+i,statusIcon(petIcon(pet),pet.label,petAssignment(p,e),petSalePrice(p,e)+" 골드",aptitudeLabel(pet.aptitude)+" 적성 Lv."+pet.level));
+            h.inventory.setItem(9+i,statusIcon(petIcon(pet),pet.label,petAssignment(p,e),TownSystems.fmt(petSalePrice(p,e))+" 골드",aptitudeLabel(pet.aptitude)+" 적성 Lv."+pet.level));
         }
         h.inventory.setItem(5,statusIcon(Material.GOLD_INGOT,"판매 대금",String.valueOf(data.getLong(marketKey(h.owner)+".proceeds"))));
         h.inventory.setItem(53,statusIcon(Material.NAME_TAG,"주인",p.getName()));h.inventory.setItem(52,statusIcon(Material.BOOK,"페이지",String.valueOf(page+1)));
@@ -1830,7 +2017,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 long pay=Math.min(sum,(long)Integer.MAX_VALUE-balance.getScore());
                 if(pay<=0){p.sendMessage("골드 보유 한도를 초과합니다.");return true;}
                 if(!store(key,sum-pay)){p.sendMessage("저장 실패 · 다시 시도하세요.");return true;}
-                balance.setScore(balance.getScore()+(int)pay);p.sendMessage("판매 대금 "+pay+"골드를 받았습니다.");openPetMarket(p,h.page);
+                balance.setScore(balance.getScore()+(int)pay);p.sendMessage("판매 대금 "+TownSystems.fmt(pay)+"골드를 받았습니다.");openPetMarket(p,h.page);
             }else if(h.mine&&sub.equals("stop")&&a.length==3){
                 int row=Integer.parseInt(a[2]);if(row<0||row>=MARKET_ROWS)return true;
                 String name=data.getString(marketRow(h.owner,row)+".entry","");
@@ -1845,7 +2032,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             }else if(h.mine&&sub.equals("list")&&a.length==5){
                 int row=Integer.parseInt(a[2]),slot=Integer.parseInt(a[3]),price=Integer.parseInt(a[4]);
                 if(row<0||row>=MARKET_ROWS||slot<9||slot>=9+STORAGE_PAGE_SIZE)return true;
-                if(price<1||price>MARKET_MAX_PRICE){p.sendMessage("가격은 1~"+MARKET_MAX_PRICE+" 골드여야 합니다.");return true;}
+                if(price<1||price>MARKET_MAX_PRICE){p.sendMessage("가격은 1~"+TownSystems.fmt(MARKET_MAX_PRICE)+" 골드여야 합니다.");return true;}
                 String rp=marketRow(h.owner,row);if(!data.getString(rp+".entry","").isEmpty()){p.sendMessage("이미 판매 중인 칸입니다.");return true;}
                 List<String> entries=storageEntries(p);int idx=h.page*STORAGE_PAGE_SIZE+slot-9;
                 if(idx<0||idx>=entries.size()||entries.get(idx).isEmpty())return true;
@@ -1854,7 +2041,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 String sk=storageKey(p),dp=craftEntryPath(p,entry),mk=marketKey(h.owner);Object s1=snap(sk),s2=snap(dp),s3=snap(mk);Object petData=snap(dp);
                 data.set(rp+".entry",entry);data.set(rp+".price",price);if(petData instanceof Map<?,?> m)data.createSection(rp+".data",m);
                 entries.set(idx,"");data.set(sk,entries);data.set(dp,null);
-                if(persist())p.sendMessage(pet.label+" 판매 시작 · "+price+"골드");
+                if(persist())p.sendMessage(pet.label+" 판매 시작 · "+TownSystems.fmt(price)+"골드");
                 else{restore(sk,s1);restore(dp,s2);restore(mk,s3);p.sendMessage("저장 실패 · 다시 시도하세요.");}
                 openPetMarket(p,h.page);
             }else if(h.mine&&sub.equals("sell")&&a.length==3){
@@ -1867,17 +2054,17 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 String path=craftEntryPath(p,entry);var section=data.getConfigurationSection(path);Map<String,Object> old=section==null?null:section.getValues(true);var previous=new ArrayList<>(entries);
                 entries.set(index,"");data.set(storageKey(p),entries);data.set(path,null);
                 if(!persist()){data.set(storageKey(p),previous);if(old!=null)data.createSection(path,old);p.sendMessage("판매 저장 실패 · 다시 시도하세요.");return true;}
-                balance.setScore(balance.getScore()+price);p.sendMessage("펫 판매 완료 · "+price+"골드");openPetMarket(p,h.page);
+                balance.setScore(balance.getScore()+price);p.sendMessage("펫 판매 완료 · "+TownSystems.fmt(price)+"골드");openPetMarket(p,h.page);
             }else if(!h.mine&&sub.equals("buy")&&a.length==4){
                 int row=Integer.parseInt(a[2]),expect=Integer.parseInt(a[3]);if(row<0||row>=MARKET_ROWS)return true;
                 String rp=marketRow(h.owner,row),entry=data.getString(rp+".entry","");int price=data.getInt(rp+".price");
                 if(entry.isEmpty()||entryPet(entry)==null){p.sendMessage("이미 판매되었거나 중지된 펫입니다.");openPetMarketBuyer(p,h.plot,0);return true;}
                 if(price!=expect){p.sendMessage("가격이 변경되었습니다. 다시 확인하세요.");openPetMarketBuyer(p,h.plot,0);return true;}
-                var balance=town.gold(p);if(balance.getScore()<price){p.sendMessage("골드가 부족합니다. ("+price+"골드 필요)");return true;}
+                var balance=town.gold(p);if(balance.getScore()<price){p.sendTitle("§c골드 부족","골드 "+TownSystems.fmt((long)price-balance.getScore())+" 부족",5,40,10);return true;}
                 Pet pet=entryPet(entry);
                 switch(marketTransfer(p,h.owner,row,price)){
-                    case 0->{balance.setScore(balance.getScore()-price);p.sendMessage(pet.label+"을(를) "+price+"골드에 구매했습니다. 펫 창고를 확인하세요.");
-                        Player owner=Bukkit.getPlayer(h.owner);if(owner!=null)owner.sendMessage("가판대에서 "+pet.label+"이(가) "+p.getName()+"님에게 "+price+"골드에 판매되었습니다. 가판대에서 대금을 수령하세요.");}
+                    case 0->{balance.setScore(balance.getScore()-price);p.sendMessage(pet.label+"을(를) "+TownSystems.fmt(price)+"골드에 구매했습니다. 펫 창고를 확인하세요.");
+                        Player owner=Bukkit.getPlayer(h.owner);if(owner!=null)owner.sendMessage("가판대에서 "+pet.label+"이(가) "+p.getName()+"님에게 "+TownSystems.fmt(price)+"골드에 판매되었습니다. 가판대에서 대금을 수령하세요.");}
                     case 1->p.sendMessage("이미 판매되었거나 중지된 펫입니다.");
                     case 2->p.sendMessage("펫 창고에 빈 칸이 없어 구매할 수 없습니다.");
                     case 3->p.sendMessage("같은 종의 기본 펫이 이미 창고에 있어 구매할 수 없습니다.");

@@ -62,7 +62,7 @@ final class HitEffects implements Listener {
     /** 0 warrior, 1 archer, 2 mage, -1 none. */
     private static int kindOf(Player p, boolean projectile) {
         ItemStack w = Armory.weaponFor(p);
-        if (w == null || w.getType() == Material.AIR) w = p.getInventory().getItemInMainHand();
+        if (!Armory.inCombatMode(p) || w == null) return -1; // combat effects only via the Armory combat weapon
         Material m = w.getType();
         if (m.name().endsWith("_SWORD")) return 0;
         if (m == Material.BOW) return 1;

@@ -136,18 +136,32 @@ const icons = {
     line(4, 27, 8, 22, 2, DPUR); line(8, 22, 13, 20, 2, PUR); line(13, 20, 17, 16, 2, PUR);
     line(5, 21, 9, 18, 1, hex("#e6d2ff"));
   },
-  m_frost() {
-    poly([[27, 5], [20, 7], [6, 22], [9, 25], [24, 12]], ICE); poly([[27, 5], [20, 7], [6, 22], [9, 25]], hex("#6ec8f0"));
-    line(5, 23, 4, 28, 2, hex("#6ec8f0"));
-    for (const [x, y] of [[10, 8], [22, 22], [26, 17]]) { line(x - 2, y, x + 2, y, 1, WH); line(x, y - 2, x, y + 2, 1, WH); }
+  m_frost() { // three glowing giant swords, tips down, in a fan
+    const GLOW = hex("#4fd0ff"), BLADE = hex("#bff4ff"), GOLD = hex("#e8b84a");
+    const sword = (cx, cy, ang) => { // hilt at (cx,cy); blade points along ang (radians from straight down)
+      const dx = Math.sin(ang), dy = Math.cos(ang), px = dy, py = -dx;
+      const at = (t, o = 0) => [cx + dx * t + px * o, cy + dy * t + py * o];
+      const pts = (t0, t1, w) => [at(t0, -w), at(t0, w), at(t1, w), at(t1, -w)];
+      poly(pts(2, 18, 2.6), GLOW);                           // glow aura
+      poly([at(3, -1.6), at(3, 1.6), at(14, 1.6), at(18, 0), at(14, -1.6)], BLADE);
+      line(...at(3, 0), ...at(17, 0), 1, WH);                // white core
+      poly(pts(0, 2, 3.6), GOLD);                            // guard
+      line(...at(-1, 0), ...at(-4, 0), 2, hex("#7a5030"));   // grip
+    };
+    sword(10, 6, -.32); sword(22, 6, .32); sword(16, 3, 0);
+    for (const [x, y] of [[4, 24], [28, 22], [16, 28], [13, 25]]) { line(x - 1, y, x + 1, y, 1, WH); line(x, y - 1, x, y + 1, 1, WH); }
   },
-  m_thunder() { // storm cloud with zig-zag bolt
-    const G1 = hex("#8d97ad"), G2 = hex("#c3cbdc"), G3 = hex("#5d667c");
-    disc(10, 9, 4, G3); disc(17, 7, 5, G3); disc(23, 10, 4, G3); rect(8, 9, 25, 12, G3);
-    disc(10, 8, 3, G1); disc(17, 6, 4, G2); disc(22, 9, 3, G1); rect(9, 9, 24, 11, G1);
-    poly([[18, 11], [11, 18], [15, 18], [9, 28], [23, 16], [18, 16], [22, 11]], hex("#ffd23a"));
-    poly([[18, 12], [13, 18], [17, 18], [12, 25], [20, 16], [16, 16], [19, 12]], WH);
-    for (const [x, y] of [[5, 20], [26, 24], [6, 26], [27, 17]]) { line(x - 1, y, x + 1, y, 1, YEL); line(x, y - 1, x, y + 1, 1, YEL); }
+  m_thunder() { // compressed mana cannonball with rune bands and a blast spark
+    const GL = hex("#4a2a8a"), GL2 = hex("#7a45d6"), LT = hex("#e6d2ff");
+    disc(15, 17, 12, GL); disc(15, 17, 11, GL2); disc(15, 17, 10, hex("#2a1550"));
+    disc(15, 17, 9, DPUR); disc(14, 16, 7, PUR); disc(13, 15, 4, LT); disc(12, 14, 2, WH);
+    ring(15, 17, 9, 1, hex("#1d0e3a"));
+    ring(15, 17, 7, 1, hex("#2a1550"), 20, 160); ring(15, 17, 9, 1, hex("#2a1550"), 200, 340);
+    for (const [x, y] of [[9, 21], [12, 23], [16, 24], [20, 22]]) { rect(x, y, x + 1, y + 1, YEL); }
+    for (const [x, y] of [[20, 13], [22, 16], [21, 19]]) { rect(x, y, x, y + 1, YEL); }
+    line(23, 9, 28, 4, 1, WH); line(23, 5, 25, 7, 1, YEL); line(27, 9, 29, 10, 1, YEL);
+    line(26, 2, 26, 6, 1, YEL); line(24, 4, 28, 4, 1, YEL); set(26, 4, WH);
+    for (const [x, y] of [[4, 6], [6, 28], [27, 26]]) { line(x - 1, y, x + 1, y, 1, LT); line(x, y - 1, x, y + 1, 1, LT); }
   },
   m_heal() {
     ring(16, 16, 12, 1, CY, 0, 360);
@@ -167,7 +181,7 @@ const icons = {
     poly([[16, 4], [26, 10], [26, 22], [16, 28], [6, 22], [6, 10]], hex("#33205c")); hexa(16, 16, 12, 1, PUR);
     hexa(16, 16, 6, 1, hex("#e2cbff")); line(16, 4, 16, 10, 1, DPUR); line(26, 22, 21, 19, 1, DPUR); line(6, 22, 11, 19, 1, DPUR);
     disc(16, 16, 2, WH);
-  },
+  },
   w_heavy() { // big overhead cleave
     poly([[16, 3], [20, 6], [21, 24], [16, 28], [11, 24], [12, 6]], STEEL); poly([[16, 3], [20, 6], [21, 24], [16, 28]], hex("#aab8c8"));
     rect(8, 4, 23, 5, hex("#ffcf4a"));
