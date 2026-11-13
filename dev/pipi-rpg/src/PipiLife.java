@@ -118,6 +118,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private TrainingDummy dummies;
     private DamageNumbers damageNumbers;
     private HitEffects hitEffects;
+    private Tutorial tutorial;
 
     @Override public void onEnable() {
         saveDefaultConfig();
@@ -165,6 +166,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         } catch (RuntimeException ex) {
             getLogger().warning("자원 노드를 시작하지 못했습니다: " + ex);
         }
+        autoSetupMaps();
         if (data.getBoolean("maps-ready")) {
             maps.open(VillageMaps.TUTORIAL);
             World village = maps.open(maps.village());
@@ -212,6 +214,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
             for (var world : getServer().getWorlds()) for (var chunk : world.getLoadedChunks()) refreshStationModels(chunk);
         }, 100L);
         if(Bukkit.getPluginManager().isPluginEnabled("ModelEngine")){customPets=new CustomPets(this);getServer().getPluginManager().registerEvents(customPets,this);getServer().getScheduler().runTaskTimer(this,customPets::tick,40,10);getServer().getScheduler().runTaskTimer(this,customPets::spawnWild,60,Math.max(20,getConfig().getLong("pet-spawn.interval-ticks",200)));}
+        tutorial = new Tutorial(this);
+        getServer().getPluginManager().registerEvents(tutorial, this);
+        getServer().getScheduler().runTaskTimer(this, tutorial::tick, 40, 20);
         captures=new CaptureSystem(this);
         healthBars=new MobHealthBars(this);
         getServer().getPluginManager().registerEvents(captures,this);
@@ -550,6 +555,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             out.addAll(List.of("capture", "pets", "petstorage", "skill", "workstation", "warp"));
+            out.add("tutorial");
             if (sender.isOp()) out.addAll(List.of("petspawn", "spawninfo", "armory"));
             if (regions != null && (sender.isOp() || sender.hasPermission("pipilife.admin"))) out.add("region");
             if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("dummy");
@@ -571,6 +577,11 @@ public final class PipiLife extends JavaPlugin implements Listener {
         } else if (sender.isOp() && args[0].equals("petspawn")) {
             if (args.length == 2) for (Pet p : Pet.values()) out.add(p.name().toLowerCase(Locale.ROOT));
             else if (args.length == 3) out.addAll(List.of("1", "2", "3", "4", "5"));
+        } else if (args[0].equalsIgnoreCase("tutorial")) {
+            boolean admin = sender.isOp() || sender.hasPermission("pipilife.admin");
+            if (args.length == 2) { out.add("pet"); if (admin) out.add("reset"); }
+            else if (args.length == 3 && admin && args[1].equalsIgnoreCase("reset"))
+                for (Player online : Bukkit.getOnlinePlayers()) out.add(online.getName());
         } else if (sender.isOp() && args[0].equals("spawninfo") && args.length == 2) {
             out.add("all");
         }
@@ -625,6 +636,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length == 1 && args[0].equalsIgnoreCase("compass")) {
             giveCompass(player);
             return true;
+        }
+        if (args.length > 0 && args[0].equalsIgnoreCase("tutorial")) {
+            if (tutorial == null) { player.sendMessage("튜토리얼 기능을 불러오지 못했습니다."); return true; }
+            return tutorial.command(player, args);
         }
         if (args.length > 0 && Set.of("maps", "finish").contains(args[0].toLowerCase(Locale.ROOT))) return mapCommand(player, args);
         if (args.length > 0 && Set.of("register", "claim", "plot").contains(args[0].toLowerCase(Locale.ROOT)))
@@ -1635,6 +1650,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     @Override public void onDisable() {
+        if(tutorial!=null)tutorial.close();
         if(customPets!=null)customPets.close();
         if(damageNumbers!=null)damageNumbers.shutdown();
         if(hitEffects!=null)hitEffects.shutdown();
@@ -2142,6 +2158,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     private void openStoragePage(Player player, int page) {
+        if (tutorial != null) tutorial.storageOpened(player);
         int pages = storagePages(player);
         page = Math.clamp(page, 0, pages - 1);
         StorageHolder holder = new StorageHolder(page);
@@ -3027,7 +3044,11 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 World world = maps.open(args[2].equals("tutorial") ? VillageMaps.TUTORIAL : maps.village());
                 if (world != null && data.getBoolean("maps-ready")) player.teleport(world.getSpawnLocation());
                 else player.sendMessage("먼저 /pipilife maps build를 실행하세요.");
-            } else player.sendMessage("/pipilife maps build · /pipilife maps visit <tutorial|village>");
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("refresh-tutorial")) {
+                player.sendMessage(maps.refreshTutorial()
+                    ? "튜토리얼 맵을 새 구성(펫 안내소)으로 갱신했습니다."
+                    : "튜토리얼 맵을 찾지 못했거나 맵을 만드는 중입니다.");
+            } else player.sendMessage("/pipilife maps build · refresh-tutorial · visit <tutorial|village>");
             return true;
         }
         if (!player.getWorld().getName().equals(VillageMaps.TUTORIAL) || !data.getBoolean("maps-ready")) {
@@ -3035,6 +3056,11 @@ public final class PipiLife extends JavaPlugin implements Listener {
             return true;
         }
         if (args[0].equalsIgnoreCase("finish") && args.length == 1) {
+            boolean firstFinish = !tutorialComplete(player);
+            if (tutorial != null && firstFinish && !tutorial.hasStarterPet(player)) {
+                player.sendMessage("§e먼저 펫 안내소의 레시를 우클릭해 첫 펫으로 데려가세요.");
+                return true;
+            }
             World town = maps.open(maps.village());
             if (town == null || !player.teleport(town.getSpawnLocation())) {
                 player.sendMessage("공동 마을로 이동하지 못했습니다.");
@@ -3042,7 +3068,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
             }
             data.set(path + ".done", true);
             if (!persist()) { data.set(path + ".done", null); player.sendMessage("튜토리얼 완료 상태 저장 실패."); }
-            else { this.town.giveDeed(player); giveStarterKit(player); giveWarpBlueprint(player, false); }
+            else {
+                this.town.giveDeed(player); giveStarterKit(player); giveWarpBlueprint(player, false);
+                if (tutorial != null && firstFinish) tutorial.startGuide(player);
+            }
         } else player.sendMessage("/pipilife finish");
         return true;
     }
@@ -3205,6 +3234,46 @@ public final class PipiLife extends JavaPlugin implements Listener {
         for (String plot : plots.getKeys(false)) if (owns(player, plot)) return plot;
         return null;
     }
+
+    // ------------------------------------------------------------------ 튜토리얼 지원
+
+    /**
+     * 새 서버 자동 설정: workshops.yml(서버별 데이터, Git 제외)이 비어 있어도 village·pipi_tutorial 맵이 있으면
+     * 맵 준비 완료와 기본 부지 10개를 채워 바로 튜토리얼·부지 선점이 동작하게 한다. 이미 설정된 서버는 건드리지 않는다.
+     */
+    private void autoSetupMaps() {
+        if (data.getBoolean("maps-ready")) return;
+        File container = Bukkit.getWorldContainer();
+        if (!new File(container, maps.village() + "/level.dat").isFile()
+            || !new File(container, VillageMaps.TUTORIAL + "/level.dat").isFile()) return;
+        boolean addedPlots = !data.isConfigurationSection("plots");
+        if (addedPlots) for (VillageMaps.Plot plot : VillageMaps.plots())
+            data.createSection("plots." + plot.name(), Map.of("x", plot.x(), "z", plot.z()));
+        data.set("maps-ready", true);
+        if (persist()) {
+            getLogger().info("맵을 찾아 튜토리얼을 자동으로 켰습니다" + (addedPlots ? " (기본 부지 10개 등록)." : "."));
+            return;
+        }
+        if (addedPlots) data.set("plots", null);
+        data.set("maps-ready", null);
+        getLogger().warning("맵 자동 설정을 저장하지 못했습니다.");
+    }
+
+    /** 튜토리얼 기본 펫 지급. 처음 얻는 종이면 포만감을 채워 등록하고, 이미 있으면 그대로 둔다. */
+    boolean grantStarterPet(Player player, Pet pet, int food) {
+        String key = path(player, pet);
+        if (data.isConfigurationSection(key)) return true;
+        if (save(key, new Workshop(Math.clamp(food, 0, MAX_FOOD), 0, System.currentTimeMillis(), false))) return true;
+        data.set(key, null);
+        return false;
+    }
+
+    boolean hasFacilityIn(String plot, Facility facility) { return plot != null && hasFacility(plot, facility); }
+    boolean hasCraftWorker(Player player) { return ownedPlot(player) != null && !craftWorkers(player).isEmpty(); }
+    LivingEntity spawnDisplayPet(Location at, String skin) { return customPets == null ? null : customPets.spawnDisplay(at, skin); }
+    void tutorialCrafted(Player player, String recipe) { if (tutorial != null) tutorial.crafted(player, recipe); }
+    /** 퀘스트 패널용 튜토리얼 목록 (첫 줄은 제목). 튜토리얼 중이 아니면 null. */
+    List<String> tutorialQuest(Player player) { return tutorial == null ? null : tutorial.questLines(player); }
 
     boolean store(String path, Object value) {
         Object previous = data.get(path);

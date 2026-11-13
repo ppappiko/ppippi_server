@@ -1119,6 +1119,7 @@ final class TownSystems implements Listener {
         Object next = claimed == progress.count() ? null : List.of(job.get(0), job.get(1), job.get(2),
             Integer.toString(progress.count()), Long.toString(progress.interval()), Integer.toString(claimed), Long.toString(pausedAt(job)));
         if (!plugin.store(key, next)) return tell(player, "가공 상태를 저장하지 못했습니다.");
+        plugin.tutorialCrafted(player, job.get(0));
         if (cursor) player.setItemOnCursor(output);
         else {
             int left = take * unit;

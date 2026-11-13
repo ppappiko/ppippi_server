@@ -122,22 +122,51 @@ final class VillageMaps {
         }
     }
 
+    /** 튜토리얼 맵에서 레시 안내 펫이 서 있는 자리 (펫 안내소 가운데). */
+    static Location tutorialPetSpot(World world) { return new Location(world, 8.5, 64, 12.5, 180, 0); }
+
     private void tutorial(World world) {
         fill(world, -17, GROUND, -10, 17, GROUND, 29, Material.SMOOTH_STONE);
         fill(world, -2, GROUND, -9, 2, GROUND, 28, Material.STONE_BRICKS);
         pavilion(world, -6, -19, Material.SPRUCE_LOG, Material.SPRUCE_PLANKS);
         sign(world, 3, 64, 2, "삐삐서버", "튜토리얼 마을");
-        sign(world, -8, 64, 10, "전사", "/pipilife class warrior");
-        sign(world, 0, 64, 10, "마법사", "/pipilife class mage");
-        sign(world, 8, 64, 10, "궁수", "/pipilife class archer");
-        for (int x : new int[] {-8, 0, 8}) {
-            fill(world, x - 2, GROUND, 9, x + 2, GROUND, 14, Material.POLISHED_ANDESITE);
-            put(world, x, 64, 14, Material.SHROOMLIGHT);
-        }
+        petCorner(world);
         sign(world, 3, 64, 24, "공동 마을 입장", "/pipilife finish");
         fill(world, -2, 64, 27, -2, 68, 27, Material.SPRUCE_LOG);
         fill(world, 2, 64, 27, 2, 68, 27, Material.SPRUCE_LOG);
         fill(world, -2, 68, 27, 2, 68, 27, Material.SPRUCE_PLANKS);
+    }
+
+    /** 펫 안내소: 레시가 서 있는 받침과 안내 표지판. */
+    private void petCorner(World world) {
+        fill(world, 6, GROUND, 10, 10, GROUND, 15, Material.POLISHED_ANDESITE);
+        put(world, 6, 64, 15, Material.SHROOMLIGHT);
+        put(world, 10, 64, 15, Material.SHROOMLIGHT);
+        sign(world, 8, 64, 9, "펫 안내소", "레시를 우클릭해", "첫 펫으로", "데려가세요");
+        sign(world, 3, 64, 12, "펫은 함께 일하고", "재료를 모으고", "물건을 만들어요");
+    }
+
+    /**
+     * 이미 만들어진 튜토리얼 맵을 새 구성으로 바꾼다: 예전 직업 선택 표지판과 받침을 지우고 펫 안내소를 세운다.
+     * 블록 몇십 개라 바로 적용한다.
+     */
+    boolean refreshTutorial() {
+        World world = open(TUTORIAL);
+        if (world == null || building) return false;
+        List<Runnable> queued = new ArrayList<>(blocks);
+        blocks.clear();
+        for (int x : new int[] {-8, 0, 8}) {
+            put(world, x, 64, 10, Material.AIR);
+            put(world, x, 64, 14, Material.AIR);
+            fill(world, x - 2, GROUND, 9, x + 2, GROUND, 14, Material.SMOOTH_STONE);
+        }
+        fill(world, -2, GROUND, 9, 2, GROUND, 14, Material.STONE_BRICKS);
+        petCorner(world);
+        for (Runnable block : blocks) block.run();
+        blocks.clear();
+        blocks.addAll(queued);
+        world.save();
+        return true;
     }
 
     private void pavilion(World world, int x, int z, Material post, Material roof) {

@@ -13,6 +13,14 @@ OUT=dev/pipi-rpg/out
 if ls plugins/PipiLife-*.jar >/dev/null 2>&1; then PLUGINS="$REPO/plugins"; else PLUGINS="$MAIN/plugins"; fi
 
 CP="$SOR/work/pipi-rpg/compile-api"
+# compile-api 폴더가 없는 PC: 서버가 받아 둔 libraries/의 Paper API(paper-remap.jar)와 라이브러리로 대신 컴파일
+if [ ! -d "$CP" ]; then
+  API="$REPO/libraries/com/mohistmc/installation/data/paper-remap.jar"
+  [ -f "$API" ] || { echo "compile-api not found and $API missing: run the server once so it downloads libraries/" >&2; exit 1; }
+  echo "compile-api not found, using server libraries/"
+  CP="$(cygpath -m "$API" 2>/dev/null || echo "$API")"
+  while IFS= read -r j; do CP="$CP;$(cygpath -m "$j" 2>/dev/null || echo "$j")"; done < <(find "$REPO/libraries" -name '*.jar')
+fi
 for j in "$PLUGINS"/*.jar; do
   [ -f "$j" ] || continue
   case "$j" in */PipiLife-*) continue;; esac
