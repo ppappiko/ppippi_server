@@ -16,6 +16,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 public final class PipiTravel {
     public PipiTravel(IEventBus bus) {
         bus.addListener(this::registerHud);
+        bus.addListener(PipiArmor::registerReload);
         NeoForge.EVENT_BUS.addListener(CombatBar::receiveCooldown);
         NeoForge.EVENT_BUS.addListener(CombatBar::layerPre);
         NeoForge.EVENT_BUS.addListener(HudBar::receive);

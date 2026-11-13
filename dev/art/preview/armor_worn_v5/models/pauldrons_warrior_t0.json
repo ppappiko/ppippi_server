@@ -1,0 +1,496 @@
+{
+  "credit": "pipi preview - worn armour v5",
+  "texture_size": [
+    64,
+    64
+  ],
+  "textures": {
+    "0": "pipi:item/pauldrons_warrior_t0",
+    "particle": "pipi:item/pauldrons_warrior_t0"
+  },
+  "_frame": "mannequin-space + (8,0,8): player feet-centre = x8,z8,y0; front = south/+z; bone tag in element name says which limb the piece follows (rarm/larm/rleg/lleg, none = body); rotation single-axis about origin",
+  "elements": [
+    {
+      "name": "warrior_0_rarm",
+      "from": [
+        -3.2,
+        22.4,
+        4
+      ],
+      "to": [
+        3,
+        26,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            2.25,
+            15.75,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            0,
+            4.25,
+            1.75,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            5,
+            2.25,
+            7,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            7.25,
+            2.25,
+            9.25,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            1.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            3.75,
+            2
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          3,
+          26,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "warrior_1_larm",
+      "from": [
+        13,
+        22.4,
+        4
+      ],
+      "to": [
+        19.2,
+        26,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2,
+            4.25,
+            3.75,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            4,
+            4.25,
+            5.75,
+            5.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            9.5,
+            2.25,
+            11.5,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            11.75,
+            2.25,
+            13.75,
+            3.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            5.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            6,
+            0,
+            7.75,
+            2
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          13,
+          26,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "warrior_2_rarm",
+      "from": [
+        -1.4,
+        26,
+        4.8
+      ],
+      "to": [
+        2.6,
+        28.4,
+        11.2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            6.5,
+            1,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1.25,
+            6.5,
+            2.25,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            0,
+            5.5,
+            1.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            2,
+            5.5,
+            3.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            2.25,
+            1,
+            4
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1.25,
+            2.25,
+            2.25,
+            4
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          3,
+          26,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "warrior_3_larm",
+      "from": [
+        13.4,
+        26,
+        4.8
+      ],
+      "to": [
+        17.4,
+        28.4,
+        11.2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            2.5,
+            6.5,
+            3.5,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            3.75,
+            6.5,
+            4.75,
+            7.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            5.5,
+            5.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6,
+            5.5,
+            7.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            2.5,
+            2.25,
+            3.5,
+            4
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            3.75,
+            2.25,
+            4.75,
+            4
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          13,
+          26,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "warrior_4_rarm",
+      "from": [
+        -3.6,
+        19.6,
+        4.4
+      ],
+      "to": [
+        2.6,
+        22.4,
+        11.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            5.5,
+            9.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            10,
+            5.5,
+            11.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            6,
+            4.25,
+            8,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8.25,
+            4.25,
+            10.25,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            8,
+            0,
+            9.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10,
+            0,
+            11.75,
+            2
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          3,
+          26,
+          8
+        ],
+        "axis": "z",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "warrior_5_larm",
+      "from": [
+        13.4,
+        19.6,
+        4.4
+      ],
+      "to": [
+        19.6,
+        22.4,
+        11.6
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            5.5,
+            13.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            14,
+            5.5,
+            15.75,
+            6.25
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            10.5,
+            4.25,
+            12.5,
+            5
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12.75,
+            4.25,
+            14.75,
+            5
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            12,
+            0,
+            13.75,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            14,
+            0,
+            15.75,
+            2
+          ],
+          "texture": "#0"
+        }
+      },
+      "rotation": {
+        "origin": [
+          13,
+          26,
+          8
+        ],
+        "axis": "z",
+        "angle": -22.5
+      }
+    }
+  ],
+  "display": {
+    "head": {
+      "translation": [
+        0,
+        0,
+        0
+      ],
+      "scale": [
+        1,
+        1,
+        1
+      ]
+    }
+  }
+}

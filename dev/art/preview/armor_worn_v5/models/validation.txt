@@ -1,0 +1,71 @@
+OK: all hat + warrior piece models pass (coords -16..32, single-axis rotation in {-45,-22.5,22.5,45}, uv 0..16)
+
+  pauldrons: 6 elements tex 64x64
+  couters: 2 elements tex 32x32
+  cuffs: 2 elements tex 32x32
+  fauld: 8 elements tex 64x64
+  greaves: 6 elements tex 32x32
+warrior T0: hat 40 elements tex 64x64; gear 24 elements tex 64x64
+  pauldrons: 6 elements tex 64x64
+  couters: 2 elements tex 32x32
+  cuffs: 2 elements tex 32x32
+  fauld: 8 elements tex 64x64
+  greaves: 6 elements tex 32x32
+warrior T1: hat 40 elements tex 64x64; gear 24 elements tex 64x64
+  pauldrons: 6 elements tex 64x64
+  couters: 2 elements tex 32x32
+  cuffs: 2 elements tex 32x32
+  fauld: 8 elements tex 64x64
+  greaves: 6 elements tex 32x32
+warrior T2: hat 40 elements tex 64x64; gear 24 elements tex 64x64
+  pauldrons: 6 elements tex 64x64
+  couters: 2 elements tex 32x32
+  cuffs: 2 elements tex 32x32
+  fauld: 8 elements tex 64x64
+  greaves: 6 elements tex 32x32
+  cape: 3 elements tex 32x32
+warrior T3: hat 40 elements tex 64x64; gear 27 elements tex 128x128
+  pauldrons: 6 elements tex 64x64
+  couters: 2 elements tex 32x32
+  cuffs: 2 elements tex 32x32
+  fauld: 8 elements tex 64x64
+  greaves: 6 elements tex 32x32
+  cape: 3 elements tex 32x32
+warrior T4: hat 40 elements tex 64x64; gear 27 elements tex 128x128
+  pauldrons: 6 elements tex 64x64
+  couters: 2 elements tex 32x32
+  cuffs: 2 elements tex 32x32
+  fauld: 8 elements tex 64x64
+  greaves: 6 elements tex 32x32
+  cape: 3 elements tex 32x32
+warrior T5: hat 40 elements tex 64x64; gear 27 elements tex 128x128
+  gear: 13 elements tex 64x64
+archer T0: hat 14 elements tex 64x64; gear 13 elements tex 64x64
+  gear: 13 elements tex 64x64
+archer T1: hat 14 elements tex 64x64; gear 13 elements tex 64x64
+  gear: 13 elements tex 64x64
+archer T2: hat 14 elements tex 64x64; gear 13 elements tex 64x64
+  gear: 13 elements tex 64x64
+  cape: 3 elements tex 32x32
+archer T3: hat 14 elements tex 64x64; gear 16 elements tex 64x64
+  gear: 13 elements tex 64x64
+  cape: 3 elements tex 32x32
+archer T4: hat 14 elements tex 64x64; gear 16 elements tex 64x64
+  gear: 13 elements tex 64x64
+  cape: 3 elements tex 32x32
+archer T5: hat 14 elements tex 64x64; gear 16 elements tex 64x64
+  gear: 25 elements tex 128x128
+mage T0: hat 17 elements tex 128x128; gear 25 elements tex 128x128
+  gear: 25 elements tex 128x128
+mage T1: hat 17 elements tex 128x128; gear 25 elements tex 128x128
+  gear: 25 elements tex 128x128
+mage T2: hat 18 elements tex 128x128; gear 25 elements tex 128x128
+  gear: 25 elements tex 128x128
+  cape: 3 elements tex 32x32
+mage T3: hat 18 elements tex 128x128; gear 28 elements tex 128x128
+  gear: 25 elements tex 128x128
+  cape: 3 elements tex 32x32
+mage T4: hat 18 elements tex 128x128; gear 28 elements tex 128x128
+  gear: 25 elements tex 128x128
+  cape: 3 elements tex 32x32
+mage T5: hat 19 elements tex 128x128; gear 28 elements tex 128x128
