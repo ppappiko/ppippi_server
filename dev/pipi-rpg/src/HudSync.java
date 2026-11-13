@@ -58,11 +58,10 @@ final class HudSync {
     private String quest(Player p) {
         List<String> lines = new ArrayList<>();
         String title = "";
-        if (p.getWorld().getName().equals(VillageMaps.TUTORIAL) && !plugin.tutorialComplete(p)) {
-            title = "튜토리얼";
-            lines.add("마을을 둘러보며 NPC와 대화하기");
-            lines.add("시설 설치법 익히기");
-            lines.add("준비되면 /pipilife finish");
+        List<String> tutorial = plugin.tutorialQuest(p);
+        if (tutorial != null && !tutorial.isEmpty()) {
+            title = tutorial.getFirst();
+            lines.addAll(tutorial.subList(1, tutorial.size()));
         } else if (plugin.tutorialComplete(p)) {
             var data = plugin.data();
             int storage = Math.clamp(data.getInt("pet-storage." + p.getUniqueId() + ".level", 1), 1, 5);
