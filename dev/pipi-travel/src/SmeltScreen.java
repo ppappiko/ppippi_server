@@ -15,7 +15,7 @@ import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 
 /**
- * 무기 제련(파쇄) screen, same window/style as UpgradeScreen (720x370). Server protocol (hidden chat, cancelled here):
+ * 무기·방어구 제련(파쇄) screen, same window/style as UpgradeScreen (720x370). Server protocol (hidden chat, cancelled here):
  *   PIPI_SME_BEGIN:count:open(0|1)  then count x  PIPI_SME_ITEM:invSlot:hash:warn(0|1):base64(weapon):base64(refund),base64(refund)...  then PIPI_SME_END
  *   (long lines are split by the server as PIPI_ARM_PART and reassembled in ArmoryScreen)
  * Client commands: pipilife smelt list | smelt do invSlot hash [confirm]
@@ -38,7 +38,7 @@ final class SmeltScreen extends Screen {
     private boolean armed;
     private long lastSend, busyUntil;
 
-    SmeltScreen() { super(Component.literal("무기 제련")); }
+    SmeltScreen() { super(Component.literal("무기·방어구 제련")); }
 
     // ---- network ----
     static void receive(ClientChatReceivedEvent.System event) {
@@ -157,9 +157,9 @@ final class SmeltScreen extends Screen {
             panel(g, 0, 0, 210, H, false);
             panel(g, 214, 0, 308, H, false);
             panel(g, 526, 0, 194, H, false);
-            heading(g, 6, 198, "보유 무기");
+            heading(g, 6, 198, "보유 장비");
             heading(g, 220, 296, "제련");
-            heading(g, 532, 182, "무기 정보");
+            heading(g, 532, 182, "장비 정보");
             g.fill(691, 7, 712, 26, hit(x, y, 691, 7, 21, 19) ? 0xffa78c59 : 0xff3d5369);
             g.fillGradient(692, 8, 711, 25, hit(x, y, 691, 7, 21, 19) ? 0xff3a4d63 : 0xff1a2a3a, 0xff0c1721);
             g.drawCenteredString(font, "X", 701, 13, TEXT);
@@ -168,18 +168,20 @@ final class SmeltScreen extends Screen {
                 int row = 38 + i * 31;
                 panel(g, 7, row, 196, 29, hit(x, y, 7, row, 196, 29) || sel == e);
                 g.renderItem(e.stack, 12, row + 6);
-                g.drawString(font, font.plainSubstrByWidth(name(e.stack), 165), 34, row + 4, TEXT, false);
+                int cls = ClassIcons.of(e.stack);
+                if (cls >= 0) ClassIcons.draw(g, cls, 185f, row + 7f, 15f, .95f);
+                g.drawString(font, font.plainSubstrByWidth(name(e.stack), cls >= 0 ? 148 : 165), 34, row + 4, TEXT, false);
                 if (e.warn) g.drawString(font, "강화·인챈트 적용", 34, row + 16, RED, false);
                 if (hit(x, y, 7, row, 196, 29)) hoverStack = e.stack;
             }
-            if (data.isEmpty()) g.drawCenteredString(font, "제련할 무기가 없습니다", 105, 160, MUTED);
+            if (data.isEmpty()) g.drawCenteredString(font, "제련할 장비가 없습니다", 105, 160, MUTED);
             if (first > 0) button(g, 8, 338, 82, 24, "이전", x, y);
             if (first < maxFirst()) button(g, 120, 338, 82, 24, "다음", x, y);
             button(g, 537, 338, 172, 24, "대장간으로", x, y);
 
             if (sel == null) {
-                g.drawCenteredString(font, "제련할 무기를 선택하세요.", 368, 142, MUTED);
-                g.drawCenteredString(font, "가방에 있는 제작 무기가 표시됩니다.", 368, 161, MUTED);
+                g.drawCenteredString(font, "제련할 장비를 선택하세요.", 368, 142, MUTED);
+                g.drawCenteredString(font, "가방에 있는 제작 무기·방어구가 표시됩니다.", 368, 161, MUTED);
                 return;
             }
             // centre: only the resources returned by smelting
@@ -197,12 +199,12 @@ final class SmeltScreen extends Screen {
             }
             if (sel.refund.isEmpty()) g.drawCenteredString(font, "돌려받는 재료가 없습니다", 368, 150, MUTED);
             if (sel.warn) {
-                g.drawCenteredString(font, "강화·인챈트가 적용된 무기입니다. 모두 사라집니다", 368, 300, RED);
+                g.drawCenteredString(font, "강화·인챈트가 적용된 장비입니다. 모두 사라집니다", 368, 300, RED);
                 g.drawCenteredString(font, armed ? "한 번 더 누르면 영구 파쇄됩니다" : "파쇄하면 복구할 수 없습니다", 368, 314, armed ? RED : MUTED);
             }
             button(g, 290, 338, 156, 24, armed ? "파쇄 확인" : "파쇄", x, y);
 
-            // right: weapon info
+            // right: gear info
             GearCard.Data d = sel.info;
             panel(g, 535, 38, 176, 290, false);
             g.renderItem(sel.stack, 542, 44);

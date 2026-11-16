@@ -1,5 +1,0 @@
-Configuration:
-  General:
-    Language: 'english-us'
-  Storage:
-    Driver: JSON

@@ -320,6 +320,7 @@ final class ClassSkills implements Listener {
     // ---------------------------------------------------------------- casting
 
     boolean cast(Player player, int slot) {
+        if (player.getScoreboardTags().contains(RaidDeepDark.GHOST)) return true; // raid spectator: no skills
         if (!combatWorld(player)) {
             player.sendMessage("튜토리얼 밖의 월드에서 서바이벌 또는 모험 모드로 사용하세요.");
             return true;

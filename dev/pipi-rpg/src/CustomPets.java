@@ -17,8 +17,24 @@ import com.ticxo.modelengine.api.model.ActiveModel;
 final class CustomPets implements Listener {
  private final PipiLife plugin;private final NamespacedKey species;private final Map<UUID,ActiveModel> models=new HashMap<>();private final Map<UUID,String> animations=new HashMap<>();private final Map<String,Worker> workers=new HashMap<>();private boolean warned;
  private static final Map<String,EntityType> TYPES=Map.ofEntries(Map.entry("sparrow",EntityType.CHICKEN),Map.entry("frog",EntityType.FROG),Map.entry("cat",EntityType.CAT),Map.entry("rabbit",EntityType.RABBIT),Map.entry("fox",EntityType.FOX),Map.entry("redpanda",EntityType.PANDA),Map.entry("otter",EntityType.AXOLOTL),Map.entry("tortoise",EntityType.TURTLE),Map.entry("raccoon",EntityType.PANDA),Map.entry("hornrabbit",EntityType.RABBIT),Map.entry("mole",EntityType.SILVERFISH),Map.entry("thundersheep",EntityType.SHEEP),Map.entry("moonbear",EntityType.POLAR_BEAR),Map.entry("ferret",EntityType.FOX),Map.entry("angelpig",EntityType.PIG),Map.entry("sunlizard",EntityType.AXOLOTL),Map.entry("imugi",EntityType.SILVERFISH),Map.entry("vampbat",EntityType.BAT));
- private static class Worker { LivingEntity entity;int food=100;long mealUntil,visitAfter;boolean visiting; Worker(LivingEntity e){entity=e;} }
- CustomPets(PipiLife plugin){this.plugin=plugin;species=new NamespacedKey(plugin,"pet_species");for(World w:Bukkit.getWorlds())for(Entity e:w.getEntities())if(e.getScoreboardTags().contains("pipi_pet_worker"))e.remove();}
+ private static class Worker { LivingEntity entity;int food=100;long mealUntil,visitAfter;boolean visiting;TextDisplay label;String shown; Worker(LivingEntity e){entity=e;} }
+ private static final String LABEL_TAG="pipi_pet_label";
+ /** Floating worker-status label (작업 중 / 식사하러 가는 중 / ...) that follows the pet; non-persistent, removed with the pet. */
+ private void label(Worker w,String status){
+  if(status==null||status.isEmpty()){dropLabel(w);return;}
+  LivingEntity e=w.entity;
+  if(w.label==null||!w.label.isValid()){
+   dropLabel(w);
+   w.label=e.getWorld().spawn(labelSpot(e),TextDisplay.class,d->{d.addScoreboardTag(LABEL_TAG);d.setPersistent(false);d.setBillboard(Display.Billboard.CENTER);d.setBackgroundColor(Color.fromARGB(115,0,0,0));d.setDefaultBackground(false);d.setShadowed(false);d.setSeeThrough(false);d.setAlignment(TextDisplay.TextAlignment.CENTER);d.setLineWidth(400);d.setTeleportDuration(2);d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(),new org.joml.AxisAngle4f(),new org.joml.Vector3f(.65f,.65f,.65f),new org.joml.AxisAngle4f()));});
+   w.shown=null;
+  }
+  if(!status.equals(w.shown)){w.label.setText(statusColor(status)+status);w.shown=status;}
+ }
+ private static String statusColor(String s){return s.startsWith("식량 없음")?"§c":s.equals("식사 중")?"§b":s.equals("작업 중")?"§a":"§e";}
+ private static Location labelSpot(LivingEntity e){return e.getLocation().add(0,Math.max(e.getHeight(),.5)+.45,0);}
+ private void dropLabel(Worker w){if(w.label!=null){if(w.label.isValid())w.label.remove();w.label=null;}w.shown=null;}
+ private void followLabels(){for(Worker w:workers.values()){if(w.label==null)continue;if(!w.label.isValid()||!w.entity.isValid()){dropLabel(w);continue;}Location at=labelSpot(w.entity);if(!w.label.getWorld().equals(at.getWorld())||w.label.getLocation().distanceSquared(at)>.0004)w.label.teleport(at);}}
+ CustomPets(PipiLife plugin){this.plugin=plugin;species=new NamespacedKey(plugin,"pet_species");for(World w:Bukkit.getWorlds())for(Entity e:w.getEntities())if(e.getScoreboardTags().contains("pipi_pet_worker")||e.getScoreboardTags().contains(LABEL_TAG))e.remove();Bukkit.getScheduler().runTaskTimer(plugin,this::followLabels,40,2);}
  private boolean ready(String skin){return skin!=null&&TYPES.containsKey(skin);}
  private String skin(LivingEntity e){return e.getPersistentDataContainer().get(species,PersistentDataType.STRING);}
  private boolean attach(LivingEntity e){String skin=skin(e);if(dedicated(e)){var previous=ModelEngineAPI.getModeledEntity(e);if(previous!=null){previous.removeModel("pipi_"+skin);previous.setBaseEntityVisible(true);}return true;}if(!ready(skin))return false;if(models.containsKey(e.getUniqueId()))return true;
@@ -137,21 +153,33 @@ final class CustomPets implements Listener {
  @EventHandler(priority=EventPriority.MONITOR,ignoreCancelled=true)public void hurt(EntityDamageEvent e){if(e.getEntity() instanceof LivingEntity l&&models.containsKey(l.getUniqueId())&&!l.getScoreboardTags().contains("pipi_pet_worker")){var m=models.get(l.getUniqueId());m.getAnimationHandler().playAnimation("hurt",0,.1,1,true);}}
  @EventHandler public void interact(PlayerInteractEntityEvent e){if(e.getRightClicked().getScoreboardTags().contains("pipi_pet_worker")){e.setCancelled(true);if(e.getHand()!=org.bukkit.inventory.EquipmentSlot.HAND)return;for(var en:workers.entrySet())if(en.getValue().entity.equals(e.getRightClicked())){plugin.releaseWorkerByClick(e.getPlayer(),en.getKey());break;}}}
  private void release(UUID id){var model=models.remove(id);animations.remove(id);var base=Bukkit.getEntity(id);if(model!=null){var modeled=base==null?null:ModelEngineAPI.getModeledEntity(base);if(modeled!=null){modeled.setBaseEntityVisible(true);modeled.removeModel(model.getBlueprint().getName());}model.destroy();}}
+ // Worker pets/labels are setPersistent(false), but this hybrid server still saves them to chunk files, so saved copies come back as
+ // untracked orphans on every reload (634 piled up). Remove untracked ones on load, remove tracked ones before unload, and sweep periodically.
+ private boolean transientTag(Entity e){var t=e.getScoreboardTags();return t.contains("pipi_pet_worker")||t.contains(LABEL_TAG);}
+ private boolean tracked(UUID id){for(Worker w:workers.values())if(w.entity.getUniqueId().equals(id)||(w.label!=null&&w.label.getUniqueId().equals(id)))return true;return false;}
+ private int purgeOrphans(Collection<? extends Entity> entities){int n=0;for(Entity e:entities)if(transientTag(e)&&!tracked(e.getUniqueId())){release(e.getUniqueId());e.remove();n++;}return n;}
+ @EventHandler public void orphansOnLoad(EntitiesLoadEvent event){purgeOrphans(new ArrayList<>(event.getEntities()));}
+ @EventHandler public void workersOnUnload(EntitiesUnloadEvent event){Set<UUID> gone=new HashSet<>();for(Entity e:event.getEntities())gone.add(e.getUniqueId());
+  for(var it=workers.entrySet().iterator();it.hasNext();){Worker w=it.next().getValue();if(gone.contains(w.entity.getUniqueId())||(w.label!=null&&gone.contains(w.label.getUniqueId()))){dropLabel(w);release(w.entity.getUniqueId());w.entity.remove();it.remove();}}
+  for(Entity e:event.getEntities())if(transientTag(e)&&e.isValid())e.remove();}
+ private int sweepTick;
  void tick(){
+  if(++sweepTick%20==0){int n=0;for(World w:Bukkit.getWorlds())n+=purgeOrphans(new ArrayList<>(w.getEntities()));if(n>0)plugin.getLogger().info("저장돼 있던 작업 펫 사본 "+n+"개 정리");}
   for(World w:Bukkit.getWorlds())for(Player p:w.getPlayers())for(Entity e:p.getNearbyEntities(32,20,32))if(e instanceof LivingEntity l&&skin(l)!=null&&!l.getScoreboardTags().contains("pipi_pet_worker")){if(!dedicated(l)){double hp=l.getHealth();LivingEntity replacement=spawn(l.getLocation(),skin(l),false);if(replacement!=null){replacement.setHealth(Math.min(hp,replacement.getMaxHealth()));release(l.getUniqueId());l.remove();}}else attach(l);}
   for(UUID id:new ArrayList<>(models.keySet())){Entity e=Bukkit.getEntity(id);if(!(e instanceof LivingEntity l)||!e.isValid()||l.isDead()){release(id);continue;}models.get(id).setScale(l.getPersistentDataContainer().has(NamespacedKey.fromString("pipilife:capture_restore"),PersistentDataType.INTEGER)?0:.65);if(!e.getScoreboardTags().contains("pipi_pet_worker"))animation(l,l.getVelocity().lengthSquared()>.006?"walk":"idle");}
   Set<String>wanted=new HashSet<>();long now=System.currentTimeMillis();var scenes=plugin.petScenes();for(var scene:scenes){
    try{tickScene(scene,wanted,now);}catch(RuntimeException ex){if(failedScenes.add(scene.key()))plugin.getLogger().warning("펫 작업 장면 오류 ("+scene.key()+"): "+ex);}
-  }for(String key:new ArrayList<>(workers.keySet()))if(!wanted.contains(key)){Worker w=workers.remove(key);release(w.entity.getUniqueId());w.entity.remove();}
+  }for(String key:new ArrayList<>(workers.keySet()))if(!wanted.contains(key)){Worker w=workers.remove(key);dropLabel(w);release(w.entity.getUniqueId());w.entity.remove();}
   workAudio(scenes);
  }
  private final Set<String> failedScenes=new HashSet<>();
  private boolean chunkLoaded(Location l){return l.getWorld()!=null&&l.getWorld().isChunkLoaded(l.getBlockX()>>4,l.getBlockZ()>>4);}
  private void tickScene(PipiLife.PetScene scene,Set<String>wanted,long now){
-   if(!ready(scene.species())||!chunkLoaded(scene.station()))return;wanted.add(scene.key());Worker worker=workers.get(scene.key());if(worker==null||!worker.entity.isValid()){LivingEntity e=spawn(scene.station(),scene.species(),true);if(e==null)return;worker=new Worker(e);workers.put(scene.key(),worker);}
-   if(scene.feeder()!=null && now>worker.visitAfter && (scene.food()<=10 || scene.food()>worker.food+5)){worker.visiting=true;worker.mealUntil=0;worker.visitAfter=now+15_000;}
+   if(!ready(scene.species())||!chunkLoaded(scene.station()))return;wanted.add(scene.key());Worker worker=workers.get(scene.key());if(worker==null||!worker.entity.isValid()){if(worker!=null)dropLabel(worker);LivingEntity e=spawn(scene.station(),scene.species(),true);if(e==null)return;worker=new Worker(e);workers.put(scene.key(),worker);}
+   worker.visiting=scene.feeder()!=null;
+   String status=scene.status();if("작업 중".equals(status)&&!scene.working())status="대기 중";label(worker,status);
    worker.food=scene.food();Location target=worker.visiting?scene.feeder():scene.station();if(target==null)target=scene.station();var e=worker.entity;double dist=e.getLocation().distanceSquared(target);
-   int action=scene.working()?2:0;if(worker.visiting&&arrived(e,target)){action=3;if(worker.mealUntil==0)worker.mealUntil=now+2000;if(scene.food()>0&&now>=worker.mealUntil)worker.visiting=false;}
+   int action=scene.working()?2:0;if(worker.visiting&&scene.eating()&&arrived(e,target))action=3;
    try{Object nms=e.getClass().getMethod("getHandle").invoke(e);Class.forName("dev.pipi.facilities.PipiPets").getMethod("worker",Object.class,int.class,double.class,double.class,double.class,int.class,String.class).invoke(null,nms,action,target.getX(),target.getY(),target.getZ(),scene.task(),scene.soundGroup());Location focus=worker.visiting?target.clone().add(0,0,1):scene.focus();Class.forName("dev.pipi.facilities.PipiPets").getMethod("face",Object.class,double.class,double.class).invoke(null,nms,focus.getX(),focus.getZ());}catch(ReflectiveOperationException ex){if(!warned){warned=true;plugin.getLogger().warning("펫 작업 동작 연결 실패: "+ex);}}
  }
  private boolean arrived(LivingEntity e,Location target){try{Object nms=e.getClass().getMethod("getHandle").invoke(e);return (boolean)Class.forName("dev.pipi.facilities.PipiPets").getMethod("reached",Object.class,double.class,double.class,double.class).invoke(null,nms,target.getX(),target.getY(),target.getZ());}catch(ReflectiveOperationException ex){return false;}}
@@ -163,6 +191,6 @@ final class CustomPets implements Listener {
   }
  }
 
- @EventHandler public void unload(ChunkUnloadEvent event){for(Entity e:event.getChunk().getEntities())if(models.containsKey(e.getUniqueId()))release(e.getUniqueId());}
- void close(){for(Worker w:workers.values()){release(w.entity.getUniqueId());w.entity.remove();}workers.clear();for(UUID id:new ArrayList<>(models.keySet()))release(id);}
+ @EventHandler public void unload(ChunkUnloadEvent event){for(Entity e:event.getChunk().getEntities()){if(e.getScoreboardTags().contains(LABEL_TAG))e.remove();else if(models.containsKey(e.getUniqueId()))release(e.getUniqueId());}}
+ void close(){for(Worker w:workers.values()){dropLabel(w);release(w.entity.getUniqueId());w.entity.remove();}workers.clear();for(UUID id:new ArrayList<>(models.keySet()))release(id);}
 }

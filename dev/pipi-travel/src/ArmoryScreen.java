@@ -212,9 +212,7 @@ final class ArmoryScreen extends Screen {
                         for (int a = 0; a < 3; a++) for (int b = 0; b < 3; b++)
                             g.fill(ix + a * 6, iy + b * 6, ix + a * 6 + 4, iy + b * 6 + 4, i == tab ? GOLD : 0xff7d8aa8);
                     }
-                    case 1 -> g.renderItem(new ItemStack(Items.IRON_SWORD), ix, iy);
-                    case 2 -> g.renderItem(new ItemStack(Items.BOW), ix, iy);
-                    default -> g.renderItem(new ItemStack(Items.BLAZE_ROD), ix, iy);
+                    default -> ClassIcons.draw(g, i - 1, tx + 3f, 37f, 20f, i == tab ? 1f : .7f);
                 }
                 if (in(vx, vy, tx, 34, 26, 26)) hoverTab = TABS[i];
             }
@@ -268,7 +266,7 @@ final class ArmoryScreen extends Screen {
                 g.drawCenteredString(font, font.plainSubstrByWidth(title(selected), 210), cx, 194, 0xfff6e7b0);
                 int cls = classOf(selected);
                 if (cls > 0) {
-                    g.blit(emblem(cls), cx - 16, 208, 32, 32, 0, 0, 32, 32, 32, 32);
+                    ClassIcons.draw(g, cls - 1, cx - 16, 208, 32);
                     g.drawCenteredString(font, TABS[cls], cx, 244, MUTED);
                 }
                 if (overSlot && dragging == null) hoverEntry = selected;

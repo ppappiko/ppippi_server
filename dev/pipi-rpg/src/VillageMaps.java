@@ -36,28 +36,26 @@ final class VillageMaps {
     World open(String name) {
         World loaded = Bukkit.getWorld(name);
         if (loaded != null) return loaded;
+        if (name.equals(village()) && !name.equals(Village2.WORLD)) return null; // the old village world is retired: never created or loaded again
         if (!new File(Bukkit.getWorldContainer(), name + "/level.dat").isFile()) return null;
         return Bukkit.createWorld(new WorldCreator(name));
     }
 
     void build(Player player, BooleanSupplier finish) {
         if (building) { player.sendMessage("맵을 만드는 중입니다."); return; }
-        String village = village();
-        if (!village.matches("[a-zA-Z0-9_-]+") || village.equals(TUTORIAL) ||
-            exists(village) || exists(TUTORIAL)) {
-            player.sendMessage("새 월드 이름이 필요합니다. 마을 또는 튜토리얼 월드가 이미 존재하는지 확인하세요.");
+        if (exists(TUTORIAL)) { // tutorial only: the old village world is retired (pipi_village2 is the residence)
+            player.sendMessage("튜토리얼 월드가 이미 존재합니다.");
             return;
         }
         building = true;
-        World town = create(village), tutorial = create(TUTORIAL);
-        if (town == null || tutorial == null) {
+        World tutorial = create(TUTORIAL);
+        if (tutorial == null) {
             building = false;
             player.sendMessage("월드를 생성하지 못했습니다.");
             return;
         }
-        town(town);
         tutorial(tutorial);
-        player.sendMessage("마을과 튜토리얼 맵을 생성하고 있습니다.");
+        player.sendMessage("튜토리얼 맵을 생성하고 있습니다.");
         new BukkitRunnable() {
             private int index;
             @Override public void run() {
@@ -65,11 +63,10 @@ final class VillageMaps {
                     int end = Math.min(index + 512, blocks.size());
                     while (index < end) blocks.get(index++).run();
                     if (index < blocks.size()) return;
-                    town.save();
                     tutorial.save();
                     player.sendMessage(finish.getAsBoolean()
-                        ? "맵과 부지 10개 준비 완료. /pipilife maps visit tutorial"
-                        : "맵은 생성됐지만 부지 설정 저장에 실패했습니다.");
+                        ? "튜토리얼 맵 준비 완료. /pipilife maps visit tutorial"
+                        : "맵은 생성됐지만 설정 저장에 실패했습니다.");
                 } catch (RuntimeException ex) {
                     plugin.getLogger().severe("Map build failed: " + ex);
                     player.sendMessage("맵 생성 중 오류가 발생했습니다.");

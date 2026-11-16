@@ -66,10 +66,35 @@ final class CombatStats implements Listener {
                 if(now-lastCombat.getOrDefault(p.getUniqueId(),0L)<quiet)continue;
                 var attr=p.getAttribute(Attribute.GENERIC_MAX_HEALTH);if(attr==null)continue;
                 double max=attr.getValue(),hp=p.getHealth();if(hp>=max)continue;
-                double rate=p.getWorld().getName().equals(plugin.villageName())?town:normal;
-                if(rate>0)p.setHealth(Math.min(max,hp+max*rate/100));
+                double rate=plugin.isResidenceWorld(p.getWorld().getName())?town:normal;
+                double gain=rate>0?raidRegenAllow(p,max*rate/100):0;
+                if(gain>0)p.setHealth(Math.min(max,hp+gain));
             }
         },40L,20L);
+    }
+    /** Raid world (pipi_deepdark): total passive regen per player is capped at raid.deepdark.regen-per-second HP per 1 s window (skill heals use setHealth directly and are not counted). */
+    private final java.util.Map<java.util.UUID,double[]> raidRegen=new java.util.HashMap<>();
+    private double raidRegenAllow(Player p,double amount){
+        if(amount<=0||p.getWorld()==null||!DeepDarkMap.WORLD.equals(p.getWorld().getName()))return amount;
+        double cap=Math.max(0,plugin.getConfig().getDouble("raid.deepdark.regen-per-second",10));
+        long now=System.currentTimeMillis();
+        raidRegen.keySet().removeIf(id->Bukkit.getPlayer(id)==null);
+        double[] b=raidRegen.computeIfAbsent(p.getUniqueId(),k->new double[]{now,0});
+        if(now-b[0]>=1000){b[0]=now;b[1]=0;}
+        double ok=Math.max(0,Math.min(amount,cap-b[1]));
+        b[1]+=ok;
+        return ok;
+    }
+    /** Vanilla / effect regeneration (natural, saturation, Regeneration effect, food) shares the raid regen budget. Instant heals and plugin heal() calls (CUSTOM / MAGIC) are untouched. */
+    @EventHandler(priority=EventPriority.HIGH,ignoreCancelled=true)
+    public void raidRegenCap(org.bukkit.event.entity.EntityRegainHealthEvent event){
+        if(!(event.getEntity() instanceof Player p))return;
+        switch(event.getRegainReason()){
+            case REGEN,SATIATED,MAGIC_REGEN,EATING->{}
+            default->{return;}
+        }
+        double ok=raidRegenAllow(p,event.getAmount());
+        if(ok<=0)event.setCancelled(true);else if(ok<event.getAmount())event.setAmount(ok);
     }
     private final java.util.Map<java.util.UUID,double[]> hpSample=new java.util.HashMap<>();
     private final java.util.Set<java.util.UUID> damagedSince=new java.util.HashSet<>();
@@ -203,7 +228,8 @@ final class CombatStats implements Listener {
         lore.add(0,"§6아이템레벨 "+itemLevel(item));
         lore.addAll(1,baseLines(item,"§7"));
     }
-    /** strength/dexterity/intelligence/luck are final totals (base + flat options, then percent options). */
+    /** strength/dexterity/intelligence/luck are final totals (base + flat options, then percent options).
+     *  치명타 확률 = 행운 x 0.1% + 치명타 확률 옵션(crit%), max 100%. */
     record Stats(double ilvl,double strength,double dexterity,double intelligence,double luck,double attackBase,double defenseBase,double armorHp,double crit,double buff,double cdr,
                  double hpFlat,double hpPct,double moveFlat,double movePct,double defFlat,double defPct,double atkFlat,double atkPct,double dmgPct,double bossPct) {
         /** 공격력: gear 공격력 + 힘x0.5 + 민첩x0.5 + 지능x1.5, with 공격력 options. */
@@ -243,7 +269,7 @@ final class CombatStats implements Listener {
             }
         }
         double str=(base[3]+strF+allF)*(1+(strP+allP)/100),dex=(base[4]+dexF+allF)*(1+(dexP+allP)/100),intel=(base[5]+intF+allF)*(1+(intP+allP)/100),luck=(base[6]+luckF+allF)*(1+allP/100);
-        return new Stats(total/5,str,dex,intel,luck,base[0],base[1],base[2],Math.min(100,intel*.5+luck+critP),buff,Math.min(60,cdr),hpFlat,hpPct,moveFlat,movePct,defFlat,defPct,atkF,atkP,dmgP,bossP);
+        return new Stats(total/5,str,dex,intel,luck,base[0],base[1],base[2],Math.min(100,luck*.1+critP),buff,Math.min(60,cdr),hpFlat,hpPct,moveFlat,movePct,defFlat,defPct,atkF,atkP,dmgP,bossP);
     }
     /** damage reduction percent = defense x percent-per-point, capped (config combat.defense-percent-per-point / defense-max-reduction). */
     private static double defensePercentPerPoint=.02,defenseMaxReduction=80;

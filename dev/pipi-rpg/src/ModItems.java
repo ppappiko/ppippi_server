@@ -72,6 +72,7 @@ final class ModItems {
         var tags = meta.getPersistentDataContainer();
         String tag = tags.get(processed, PersistentDataType.STRING);
         Material target = null;
+        boolean renamed = false;
         if (tag != null) {
             if (tag.equals("ingot")) return new ItemStack(Material.IRON_INGOT, old.getAmount());
             if (tag.equals("starter_fish")) { // retired 민물고기 -> 생 연어 (same amount)
@@ -84,11 +85,12 @@ final class ModItems {
                 return salmon;
             }
             target = forTag(tag);
+            if (tag.equals("blueprint_paper")) renamed = renameBlueprint(meta); // 도면 -> 하급 도면 (name/lore stored on the stack)
         } else if (tags.has(repairKey, PersistentDataType.BYTE)) target = repairKit();
         else if (tags.has(trapKey, PersistentDataType.INTEGER))
             target = trap(tags.getOrDefault(trapKey, PersistentDataType.INTEGER, 0));
         if (target == null) return null;
-        if (old.getType() == target && !meta.hasCustomModelData()) return null;
+        if (old.getType() == target && !meta.hasCustomModelData() && !renamed) return null;
         ItemStack replacement = new ItemStack(target, old.getAmount());
         meta.setCustomModelData(null);
         if (!replacement.setItemMeta(meta)) {
@@ -96,6 +98,23 @@ final class ModItems {
             return null;
         }
         return replacement;
+    }
+
+    /** Renames the stored 도면 name/lore to 하급 도면; true when the meta changed. */
+    private static boolean renameBlueprint(ItemMeta meta) {
+        boolean changed = false;
+        if (meta.hasDisplayName() && org.bukkit.ChatColor.stripColor(meta.getDisplayName()).equals("도면")) {
+            meta.setDisplayName("하급 도면");
+            changed = true;
+        }
+        var lore = meta.getLore();
+        if (lore != null && lore.contains("청사진 제작에 쓰이는 공통 도면")) {
+            var fixed = new java.util.ArrayList<String>();
+            for (String line : lore) fixed.add(line.equals("청사진 제작에 쓰이는 공통 도면") ? "청사진 제작에 쓰이는 하급 도면" : line);
+            meta.setLore(fixed);
+            changed = true;
+        }
+        return changed;
     }
 
     /** Retired item tags: stacks carrying them are deleted by the migration. */

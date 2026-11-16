@@ -62,7 +62,7 @@ final class DamageNumbers implements Listener {
         Entity damager = event.getDamager();
         if (damager instanceof Projectile pr && pr.getShooter() instanceof Entity shooter) damager = shooter;
         if (!(damager instanceof Player) || !(event.getEntity() instanceof LivingEntity victim)
-            || victim instanceof Player || victim instanceof ArmorStand) return;
+            || victim instanceof Player || victim instanceof ArmorStand || victim.getScoreboardTags().contains(RaidDeepDark.TAG)) return;
         boolean crit = takeCrit(victim);
         double amount = event.getFinalDamage();
         if (dummies != null && dummies.isDummy(victim)) amount = dummies.record(victim, amount, event.getFinalDamage());
@@ -70,6 +70,13 @@ final class DamageNumbers implements Listener {
         long shown = Math.round(amount);
         if (shown <= 0) return;
         spawn(victim, shown, crit);
+    }
+
+    /** Raid boss: its real damage is tracked by RaidDeepDark, which shows the number itself (consumes a pending crit mark). */
+    void show(LivingEntity victim, double amount) {
+        boolean crit = takeCrit(victim);
+        long shown = Math.round(amount);
+        if (shown > 0 && plugin.getConfig().getBoolean("combat.damage-numbers", true)) spawn(victim, shown, crit);
     }
 
     private void spawn(LivingEntity victim, long amount, boolean crit) {

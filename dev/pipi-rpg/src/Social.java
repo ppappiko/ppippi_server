@@ -29,7 +29,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-/** Social features: /자랑 (item brag with hover tooltip) and the sneak + right-click player menu (거래 / 상태창). */
+/** Social features: /자랑 (item brag with hover tooltip) and the sneak + right-click player menu (거래 / 파티 초대 / 상태창). */
 final class Social implements Listener {
     private final PipiLife plugin;
     private final TownSystems town;
@@ -131,6 +131,7 @@ final class Social implements Listener {
         PlayerMenu menu = new PlayerMenu(target.getUniqueId());
         menu.inventory = Bukkit.createInventory(menu, 27, "삐삐서버 · " + target.getName());
         menu.inventory.setItem(11, plugin.statusIcon(Material.EMERALD, "거래", "거래창에서 아이템과 골드를 안전하게 교환합니다"));
+        menu.inventory.setItem(13, plugin.statusIcon(Material.CAKE, "파티 초대", "이 플레이어를 내 파티에 초대합니다 (최대 4명)"));
         menu.inventory.setItem(15, plugin.statusIcon(Material.BOOK, "상태창", "장비와 전투 스탯을 읽기 전용으로 봅니다"));
         player.openInventory(menu.inventory);
     }
@@ -154,6 +155,9 @@ final class Social implements Listener {
                 player.closeInventory();
                 if (trades != null) trades.request(player, target);
                 else player.sendMessage("§c거래창을 사용할 수 없습니다.");
+            } else if (slot == 13) {
+                player.closeInventory();
+                town.partySystem.invite(player, target);
             } else if (slot == 15) {
                 combat.open(player, target);
             }

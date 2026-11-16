@@ -260,7 +260,7 @@ final class Armory implements Listener {
     }
 
     private boolean spawnNpc(Player player) {
-        if (!player.getWorld().getName().equals(plugin.villageName())) { player.sendMessage("공동 마을에서 관리자만 설치할 수 있습니다."); return true; }
+        if (!plugin.isResidenceWorld(player.getWorld().getName())) { player.sendMessage("공동 마을에서 관리자만 설치할 수 있습니다."); return true; }
         if (npcs.exists(player.getWorld(), "armory", player.getLocation())) { player.sendMessage("무기 관리인은 이미 등록되어 있습니다."); return true; }
         player.getWorld().spawn(player.getLocation(), org.bukkit.entity.Villager.class, npc -> {
             npc.setCustomName("무기 관리인");
@@ -272,6 +272,25 @@ final class Armory implements Listener {
             npcs.register(npc, "armory");
         });
         player.sendMessage("무기 관리인을 설치했습니다.");
+        return true;
+    }
+
+    /** Places the armory manager at a plaza spot (pipi_village2) unless one is already registered for that world. */
+    boolean installNpcAt(org.bukkit.World world, int x, int z) {
+        org.bukkit.Location location = new org.bukkit.Location(world, x + .5, 64, z + .5, 180, 0);
+        location.getChunk().load();
+        if (npcs.exists(world, "armory", location)) return false;
+        if (!location.getBlock().isPassable() || !location.clone().add(0, 1, 0).getBlock().isPassable()
+            || !location.clone().add(0, -1, 0).getBlock().getType().isSolid()) return false;
+        world.spawn(location, org.bukkit.entity.Villager.class, npc -> {
+            npc.setCustomName("무기 관리인");
+            npc.setCustomNameVisible(true);
+            npc.setProfession(org.bukkit.entity.Villager.Profession.WEAPONSMITH);
+            npc.setAI(false);
+            npc.setInvulnerable(true);
+            npc.setPersistent(true);
+            npcs.register(npc, "armory");
+        });
         return true;
     }
 

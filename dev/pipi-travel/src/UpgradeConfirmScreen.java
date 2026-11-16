@@ -50,7 +50,7 @@ final class UpgradeConfirmScreen extends ContainerScreen {
             g.pose().scale(scale, scale, 1);
             panel(g, 0, 0, W, H, false);
             g.fillGradient(5, 5, W - 5, 28, 0xff2d4054, 0xff1c2a3b);
-            g.drawString(font, "시설 업그레이드", 11, 13, TEXT, false);
+            g.drawString(font, "업그레이드 확인", 11, 13, TEXT, false);
 
             // facility + level change + unlock text
             panel(g, 16, 38, 62, 61, true);
@@ -86,7 +86,7 @@ final class UpgradeConfirmScreen extends ContainerScreen {
             if (!money.isEmpty()) g.drawString(font, money.getFirst(), W - 16 - font.width(money.getFirst()), 230, MUTED, false);
 
             // buttons
-            if (canConfirm()) button(g, 80, 258, 120, 26, "업그레이드", x, y, true);
+            if (canConfirm()) button(g, 80, 258, 120, 26, "확인", x, y, true);
             else button(g, 80, 258, 120, 26, "재료 부족", x, y, false);
             button(g, 220, 258, 120, 26, "취소", x, y, true);
         } finally { g.pose().popPose(); }

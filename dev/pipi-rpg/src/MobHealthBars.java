@@ -11,7 +11,7 @@ final class MobHealthBars implements Listener {
  private final PipiLife plugin; private final NamespacedKey capturing;
  private final Map<UUID,List<BlockDisplay>> labels=new HashMap<>(); private int updates;
  MobHealthBars(PipiLife plugin){this.plugin=plugin;capturing=new NamespacedKey(plugin,"capture_restore");for(World w:Bukkit.getWorlds())for(Entity e:w.getEntities())if(e.getScoreboardTags().contains("pipi_mob_health"))e.remove();}
- private boolean shown(LivingEntity e){return !(e instanceof Player)&&!(e instanceof ArmorStand)&&!(e instanceof Villager)&&!e.isDead()&&e.isValid()&&!e.isInvisible()&&!e.getPersistentDataContainer().has(capturing,PersistentDataType.INTEGER);}
+ private boolean shown(LivingEntity e){return !(e instanceof Player)&&!(e instanceof ArmorStand)&&!(e instanceof Villager)&&!e.isDead()&&e.isValid()&&!e.isInvisible()&&!e.getScoreboardTags().contains("pipi_raid_boss")&&!e.getPersistentDataContainer().has(capturing,PersistentDataType.INTEGER);}
  static double ratio(double hp,double max){return Math.clamp(hp/Math.max(1,max),0,1);}
  // Retained only for diagnostics, not rendered as text.
  static String text(double hp,double max){return String.format(Locale.ROOT,"%.1f / %.1f",hp,max);}
