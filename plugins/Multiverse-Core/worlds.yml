@@ -632,14 +632,14 @@ worlds:
     generator: 'null'
     playerLimit: '-1'
     allowFlight: 'true'
-  DIM-1:
+  pipi_town:
     ==: MVWorld
     hidden: 'false'
     alias: ''
     color: WHITE
     style: NORMAL
     pvp: 'true'
-    scale: '8.0'
+    scale: '1.0'
     respawnWorld: ''
     allowWeather: 'true'
     difficulty: EASY
@@ -667,15 +667,15 @@ worlds:
     spawnLocation:
       ==: MVSpawnLocation
       x: 0.0
-      y: 58.0
-      z: 0.0
+      y: 65.0
+      z: 4.0
       pitch: 0.0
       yaw: 0.0
     autoLoad: 'true'
     bedRespawn: 'true'
     worldBlacklist: []
-    environment: NETHER
-    seed: '8458736757142532084'
+    environment: NORMAL
+    seed: '-8216942640313847087'
     generator: 'null'
     playerLimit: '-1'
     allowFlight: 'true'
@@ -726,14 +726,14 @@ worlds:
     generator: 'null'
     playerLimit: '-1'
     allowFlight: 'true'
-  pipi_town:
+  DIM-1:
     ==: MVWorld
     hidden: 'false'
     alias: ''
     color: WHITE
     style: NORMAL
     pvp: 'true'
-    scale: '1.0'
+    scale: '8.0'
     respawnWorld: ''
     allowWeather: 'true'
     difficulty: EASY
@@ -761,15 +761,15 @@ worlds:
     spawnLocation:
       ==: MVSpawnLocation
       x: 0.0
-      y: 65.0
-      z: 4.0
+      y: 58.0
+      z: 0.0
       pitch: 0.0
       yaw: 0.0
     autoLoad: 'true'
     bedRespawn: 'true'
     worldBlacklist: []
-    environment: NORMAL
-    seed: '-8216942640313847087'
+    environment: NETHER
+    seed: '8458736757142532084'
     generator: 'null'
     playerLimit: '-1'
     allowFlight: 'true'

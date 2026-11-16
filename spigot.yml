@@ -46,6 +46,7 @@ messages:
 commands:
   spam-exclusions:
   - /skill
+  - /pipilife
   replace-commands:
   - setblock
   - summon
