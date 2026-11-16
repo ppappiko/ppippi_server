@@ -63,8 +63,6 @@ public final class PipiLife extends JavaPlugin implements Listener {
         Material product() {
             return switch (aptitude) {
                 case FARM -> ModItems.byId("straw");
-                case CARROT_FARM -> ModItems.byId("pet_carrot");
-                case POTATO_FARM -> Material.POTATO;
                 case LUMBER -> Material.OAK_LOG;
                 default -> Material.IRON_INGOT;
             };
@@ -101,6 +99,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private NamespacedKey stationKey;
     private static NamespacedKey facilityLevelKey;
     private VillageMaps maps;
+    private Village2 village2;
+    private TownMap townMap;
+    private WildRegions wildRegions;
     private ClassSkills skills;
     private TownSystems town;
     private CombatStats combat;
@@ -119,6 +120,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private DamageNumbers damageNumbers;
     private HitEffects hitEffects;
     private Tutorial tutorial;
+    private RaidDeepDark raid;
 
     @Override public void onEnable() {
         saveDefaultConfig();
@@ -142,6 +144,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
         }
         sanitizePlacements();
         maps = new VillageMaps(this);
+        village2 = new Village2(this);
+        townMap = new TownMap(this);
+        wildRegions = new WildRegions(this);
+        retireOldVillage();
         town = new TownSystems(this);
         armory = new Armory(this, town.npcs());
         getServer().getPluginManager().registerEvents(armory, this);
@@ -167,28 +173,29 @@ public final class PipiLife extends JavaPlugin implements Listener {
             getLogger().warning("자원 노드를 시작하지 못했습니다: " + ex);
         }
         autoSetupMaps();
-        if (data.getBoolean("maps-ready")) {
-            maps.open(VillageMaps.TUTORIAL);
-            World village = maps.open(maps.village());
-            if (village != null) {
-                migrateFacilityBlocks(village);
-                installTownNpcs(village);
-            }
-        } else autoBuildMaps();
+        // the old village world ("village") is retired and no longer loaded: only the tutorial opens here
+        if (data.getBoolean("maps-ready")) maps.open(VillageMaps.TUTORIAL);
+        if (data.getBoolean("maps-v2-ready")) {
+            World village2World = village2.open();
+            if (village2World != null) getLogger().info(installV2Npcs(village2World));
+        }
+        if (townReady()) {
+            World townWorld = townMap.open();
+            if (townWorld != null) getLogger().info(setupTown(townWorld));
+        }
         try {
             regions = new Regions(this);
             getServer().getPluginManager().registerEvents(regions, this);
             // plots claimed before deed protection existed get their owner region once the village world is up
             getServer().getScheduler().runTaskLater(this, () -> {
-                var plots = data.getConfigurationSection("plots");
-                org.bukkit.World village = Bukkit.getWorld(getConfig().getString("village-world", "village"));
-                if (regions == null || plots == null || village == null) return;
-                for (String name : plots.getKeys(false)) {
-                    String owner = plots.getString(name + ".owner");
-                    if (owner == null || regions.hasRegion(name)) continue;
+                if (regions == null) return;
+                for (String name : allPlotIds()) {
+                    String owner = data.getString(plotPath(name) + ".owner");
+                    org.bukkit.World plotWorld = Bukkit.getWorld(plotWorldName(name));
+                    if (owner == null || plotWorld == null || regions.hasRegion(name)) continue;
                     String ownerName;
                     try { ownerName = Bukkit.getOfflinePlayer(UUID.fromString(owner)).getName(); } catch (IllegalArgumentException ex) { continue; }
-                    regions.claimPlot(name, owner, ownerName, village, plots.getInt(name + ".x"), plots.getInt(name + ".z"));
+                    regions.claimPlot(name, owner, ownerName, plotWorld, plotX(name), plotZ(name));
                 }
             }, 120L);
         } catch (RuntimeException ex) {
@@ -202,6 +209,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
             warps = null;
             getLogger().warning("워프석을 시작하지 못했습니다: " + ex);
         }
+        retireVillageAux();
+        if (data.getBoolean("maps-v2-ready")) scheduleGateway(0);
+        if (townReady()) scheduleTownStones(0);
+        wildRegions.scheduleStones(0); // 야생 워프석 3개: 처음 한 번만 자동 설치 (data flag)
+        wildRegions.publicStones(); // 야생 워프석 = 공개 웨이포인트 (기존 warps.yml 항목도 public: true)
+        wildRegions.scheduleResume(); // 재시작 전에 짓던 지역이 있으면 이어서 건설
+        getServer().getPluginManager().registerEvents(wildRegions, this);
         try {
             getServer().getPluginManager().registerEvents(new WorldRules(this), this);
         } catch (RuntimeException | LinkageError ex) {
@@ -230,9 +244,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
         try { hitEffects = new HitEffects(this); getServer().getPluginManager().registerEvents(hitEffects, this); } catch (Throwable t) { getLogger().warning("HitEffects disabled: " + t); }
         damageNumbers = new DamageNumbers(this, dummies);
         getServer().getPluginManager().registerEvents(damageNumbers, this);
+        try { raid = new RaidDeepDark(this, town, damageNumbers); getServer().getPluginManager().registerEvents(raid, this); } catch (Throwable t) { raid = null; getLogger().warning("레이드(딥 다크 시티)를 시작하지 못했습니다: " + t); }
+        try { getServer().getPluginManager().registerEvents(new ReturnStone(this), this); } catch (Throwable t) { getLogger().warning("귀환석을 시작하지 못했습니다: " + t); }
         getServer().getScheduler().runTaskTimer(this, this::previewStations, 5, 5);
-        getServer().getScheduler().runTaskTimer(this, this::feedAssignedPets, 20, 20);
-        getServer().getScheduler().runTaskTimer(this, this::checkHungryWorkers, 20, 20);
+        getServer().getScheduler().runTaskTimer(this, this::hungerTick, 40, 40);
         getServer().getScheduler().runTaskTimer(this, this::refreshLumber, 20, 20);
     }
 
@@ -403,7 +418,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         String village = getConfig().getString("village-world", "village");
         for (World w : Bukkit.getWorlds())
             if (w.getEnvironment() == World.Environment.NETHER && !w.getName().equals(wild)
-                && !w.getName().equals(village) && !w.getName().equals("pipi_tutorial")) return w.getName();
+                && !w.getName().equals(village) && !w.getName().equals(Village2.WORLD) && !w.getName().equals("pipi_tutorial")) return w.getName();
         return null;
     }
 
@@ -411,9 +426,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return name != null && (name.equals(wildWorldName()) || name.equals(wildNetherWorldName()));
     }
 
+    /** Wild overworlds (capture, ore cores ...): the main wild world. */
+    boolean isWildOverworld(String name) {
+        return name != null && name.equals(wildWorldName());
+    }
+
     boolean inWild(Player player) {
-        return player.getWorld().getName().equals(getConfig().getString("wild-world", WILD))
-            && player.getGameMode() == GameMode.SURVIVAL;
+        return isWildOverworld(player.getWorld().getName()) && player.getGameMode() == GameMode.SURVIVAL;
     }
 
     boolean canUseTrap(Player player) {
@@ -479,13 +498,15 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     String plotAt(Location location) {
-        if (!location.getWorld().getName().equals(getConfig().getString("village-world", "village"))) return null;
-        var plots = data.getConfigurationSection("plots");
+        String worldName = location.getWorld().getName();
+        boolean v2 = worldName.equals(Village2.WORLD);
+        if (!v2 && (retiredVillage() || !worldName.equals(getConfig().getString("village-world", "village")))) return null;
+        var plots = data.getConfigurationSection(v2 ? "plots-v2" : "plots");
         if (plots == null) return null;
         for (String name : plots.getKeys(false)) {
             int x = plots.getInt(name + ".x"), z = plots.getInt(name + ".z");
             if (location.getBlockX() >= x && location.getBlockX() < x + 44
-                && location.getBlockZ() >= z && location.getBlockZ() < z + 44) return name;
+                && location.getBlockZ() >= z && location.getBlockZ() < z + 44) return v2 ? V2_PREFIX + name : name;
         }
         return null;
     }
@@ -494,6 +515,14 @@ public final class PipiLife extends JavaPlugin implements Listener {
         String uuid = player.getUniqueId().toString();
         if (args[0].equalsIgnoreCase("register") && args.length == 2 && player.isOp()
             && args[1].matches("[a-z0-9_-]{1,32}")) {
+            if (player.getWorld().getName().equals(Village2.WORLD)) {
+                player.sendMessage("새 거주지의 부지는 /pipilife maps buildv2 로 만들 때 등록됩니다.");
+                return true;
+            }
+            if (retiredVillage()) {
+                player.sendMessage("옛 마을은 폐쇄되어 부지를 등록할 수 없습니다. 거주지는 새 거주지 월드만 사용합니다.");
+                return true;
+            }
             if (!player.getWorld().getName().equals(getConfig().getString("village-world", "village"))) {
                 player.sendMessage("마을 월드에서 등록하세요.");
                 return true;
@@ -521,17 +550,18 @@ public final class PipiLife extends JavaPlugin implements Listener {
         }
         String plot = plotAt(player.getLocation());
         if (plot == null) {
-            player.sendMessage("등록된 거주지 안에서 사용하세요.");
+            player.sendMessage(retiredVillage() && player.getWorld().getName().equals(maps.village())
+                ? "옛 마을은 폐쇄되었습니다. 새 거주지의 빈 부지에서 땅 문서를 사용하세요."
+                : "등록된 거주지 안에서 사용하세요.");
             return true;
         }
-        String path = "plots." + plot + ".owner";
+        String path = plotPath(plot) + ".owner";
         String owner = data.getString(path);
         if (args[0].equalsIgnoreCase("plot")) {
-            player.sendMessage(plot + (owner == null ? " · 빈 부지" : owner.equals(uuid) ? " · 내 부지" : " · 배정됨"));
+            player.sendMessage(plotLabel(plot) + (owner == null ? " · 빈 부지" : owner.equals(uuid) ? " · 내 부지" : " · 배정됨"));
             return true;
         }
-        var plots = data.getConfigurationSection("plots");
-        for (String name : plots.getKeys(false)) if (uuid.equals(plots.getString(name + ".owner"))) {
+        if (ownedPlot(player) != null) {
             player.sendMessage("이미 거주지가 있습니다.");
             return true;
         }
@@ -544,8 +574,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
             data.set(path, null);
             player.sendMessage("선점 저장 실패.");
         } else {
-            player.sendMessage(plot + " 부지를 선점했습니다. 이제 내 땅이라 다른 사람은 건드릴 수 없어요.");
-            if (regions != null) regions.claimPlot(plot, uuid, player.getName(), player.getWorld(), data.getInt("plots." + plot + ".x"), data.getInt("plots." + plot + ".z"));
+            player.sendMessage(plotLabel(plot) + " 부지를 선점했습니다. 이제 내 땅이라 다른 사람은 건드릴 수 없어요.");
+            if (regions != null) regions.claimPlot(plot, uuid, player.getName(), player.getWorld(), plotX(plot), plotZ(plot));
+            if (warps != null) warps.refreshPlots();
         }
         return true;
     }
@@ -553,9 +584,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            out.addAll(List.of("capture", "pets", "petstorage", "skill", "workstation", "warp"));
+            out.addAll(List.of("capture", "pets", "petstorage", "skill", "workstation", "warp", "raid", "party", "auction"));
             out.add("tutorial");
-            if (sender.isOp()) out.addAll(List.of("petspawn", "spawninfo", "armory"));
+            if (sender.isOp()) out.addAll(List.of("petspawn", "spawninfo", "armory", "bossclear"));
             if (regions != null && (sender.isOp() || sender.hasPermission("pipilife.admin"))) out.add("region");
             if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("dummy");
         } else if (dummies != null && args[0].equalsIgnoreCase("dummy") && (sender.isOp() || sender.hasPermission("pipilife.admin"))) {
@@ -569,6 +600,14 @@ public final class PipiLife extends JavaPlugin implements Listener {
                     out.add(String.valueOf(args.length == 3 ? b.getX() : args.length == 4 ? b.getY() : b.getZ()));
                 }
             }
+        } else if (raid != null && args[0].equalsIgnoreCase("raid")) {
+            out.addAll(raid.complete(sender, args));
+        } else if (args[0].equalsIgnoreCase("bossclear") && sender.isOp()) {
+            if (args.length == 2) for (Player online : Bukkit.getOnlinePlayers()) out.add(online.getName());
+            else if (args.length == 3) out.addAll(TownSystems.BOSSES);
+            else if (args.length == 4) out.add("remove");
+        } else if (args[0].equalsIgnoreCase("party")) {
+            out.addAll(town.partySystem.complete(sender, args));
         } else if (warps != null && args[0].equalsIgnoreCase("warp")) {
             out.addAll(warps.complete(sender, args));
         } else if (regions != null && args[0].equalsIgnoreCase("region")) {
@@ -596,6 +635,14 @@ public final class PipiLife extends JavaPlugin implements Listener {
             return regions.command(player, args);
         }
         if (args.length > 0 && args[0].equalsIgnoreCase("dummy")) return dummies.command(player, args);
+        if (args.length > 0 && args[0].equalsIgnoreCase("raid")) {
+            if (raid == null) { player.sendMessage("레이드 기능을 불러오지 못했습니다."); return true; }
+            return raid.command(player, args);
+        }
+        if (args.length > 0 && args[0].equalsIgnoreCase("auction")) { // 전리품 경매: open | bid <amount> | instant
+            if (raid == null) { player.sendMessage("레이드 기능을 불러오지 못했습니다."); return true; }
+            return raid.auctionCommand(player, args);
+        }
         if(args.length>0 && args[0].equals("petspawn")){if(customPets!=null)return customPets.command(player,args);player.sendMessage("ModelEngine과 전용 펫 모델을 먼저 로드하세요.");return true;}
         if(args.length>0 && args[0].equals("spawninfo")){if(!player.isOp()){player.sendMessage("§c관리자 전용 명령어입니다.");return true;}if(customPets!=null)return customPets.spawnInfo(player,args);player.sendMessage("ModelEngine과 전용 펫 모델을 먼저 로드하세요.");return true;}
         if(args.length>0 && args[0].equals("capture")) return captures.command(player,args);
@@ -624,6 +671,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             player.sendMessage("/pipilife skill attack <1|2|3> · heal · shield · ult · basic · dodge");
             return true;
         }
+        if (args.length > 0 && args[0].equalsIgnoreCase("bossclear")) return town.bossClearCommand(player, args);
         if (args.length > 0 && args[0].equals("testgive")) return town.testGive(player, args);
         if (args.length > 0 && args[0].equals("workstation")) return workstation(player, args);
         if (args.length > 0 && args[0].equals("cook")) return cooking.command(player, args);
@@ -670,7 +718,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         }
         String plot = plotAt(player.getLocation());
         if (!args[0].equalsIgnoreCase("status") && (plot == null
-            || !player.getUniqueId().toString().equals(data.getString("plots." + plot + ".owner")))) {
+            || !player.getUniqueId().toString().equals(data.getString(plotPath(plot) + ".owner")))) {
             player.sendMessage("내 거주지 안에서 작업장을 이용하세요.");
             return true;
         }
@@ -781,7 +829,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     boolean owns(Player player, String plot) {
-        return plot != null && player.getUniqueId().toString().equals(data.getString("plots." + plot + ".owner"));
+        return plot != null && player.getUniqueId().toString().equals(data.getString(plotPath(plot) + ".owner"));
     }
 
 
@@ -818,7 +866,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     private String facilityKey(String plot, Facility facility) {
-        return "plots." + plot + ".facilities." + facility.name();
+        return plotPath(plot) + ".facilities." + facility.name();
     }
 
     private List<List<Integer>> facilityPositions(String plot, Facility facility) {
@@ -836,7 +884,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     private List<org.bukkit.block.Block> facilityBlocks(String plot, Facility facility) {
-        World world = Bukkit.getWorld(maps.village());
+        if (plot == null) return List.of();
+        World world = Bukkit.getWorld(plotWorldName(plot));
         if (world == null) return List.of();
         return facilityPositions(plot, facility).stream()
             .map(point -> world.getBlockAt(point.get(0), point.get(1), point.get(2)))
@@ -861,11 +910,12 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     boolean legacyStation(org.bukkit.block.Block block, String plot) {
-        return plot != null && block.getType() == Material.BARREL && data.getIntegerList("plots." + plot + ".station")
+        return plot != null && block.getType() == Material.BARREL && data.getIntegerList(plotPath(plot) + ".station")
             .equals(List.of(block.getX(), block.getY(), block.getZ()));
     }
 
     ItemStack stationItem(Facility facility) {
+        facility = facility.refund(); // retired -> replacement blueprint
         ItemStack result = statusIcon(facility.blueprintMaterial(), facility.label + " 청사진", "내 거주지 바닥을 우클릭하여 설치");
         var meta = result.getItemMeta();
         meta.getPersistentDataContainer().set(stationKey, PersistentDataType.STRING, facility.name());
@@ -875,6 +925,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     /** Blueprint that keeps the dismantled facility's level (>= 2); the plain item for level 1. */
     ItemStack stationItem(Facility facility, int level) {
+        facility = facility.refund(); // retired -> replacement blueprint
         ItemStack result = stationItem(facility);
         if (level < 2) return result;
         level = Math.min(level, MAX_FACILITY_LEVEL);
@@ -928,7 +979,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (item == null || !item.hasItemMeta()) return null;
         String kind = item.getItemMeta().getPersistentDataContainer().get(stationKey, PersistentDataType.STRING);
         if (kind == null) return null;
-        try { Facility f = Facility.valueOf(kind); return f == Facility.GOLD_MINE ? null : f; }
+        try { Facility f = Facility.valueOf(kind); return f.retired() ? null : f; }
         catch (IllegalArgumentException ignored) { return null; }
     }
 
@@ -938,6 +989,22 @@ public final class PipiLife extends JavaPlugin implements Listener {
         var inventory = player.getInventory();
         for (int slot = 0; slot < inventory.getSize(); slot++) {
             ItemStack old = inventory.getItem(slot);
+            if (old != null && old.hasItemMeta()) {
+                String retiredKind = old.getItemMeta().getPersistentDataContainer().get(stationKey, PersistentDataType.STRING);
+                if ("CARROT_FARM".equals(retiredKind) || "POTATO_FARM".equals(retiredKind)) { // retired farms: exchange for a wheat farm blueprint
+                    ItemStack farm = stationItem(Facility.FARM);
+                    farm.setAmount(old.getAmount());
+                    inventory.setItem(slot, farm);
+                    continue;
+                }
+                if ("GOLD_MINE".equals(retiredKind)) { // retired gold quarry: exchange for an iron quarry blueprint, keeping the level
+                    Integer keptLevel = old.getItemMeta().getPersistentDataContainer().get(facilityLevelKey, PersistentDataType.INTEGER);
+                    ItemStack mine = stationItem(Facility.MINE, keptLevel == null ? 1 : keptLevel);
+                    mine.setAmount(old.getAmount());
+                    inventory.setItem(slot, mine);
+                    continue;
+                }
+            }
             Facility facility = blueprint(old);
             if (facility == null || old.getType() == facility.blueprintMaterial()) continue;
             ItemStack replacement = new ItemStack(facility.blueprintMaterial(), old.getAmount());
@@ -1288,7 +1355,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         String kind = item.getItemMeta().getPersistentDataContainer().get(stationKey, PersistentDataType.STRING);
         if (kind == null) return;
         Facility facility;
-        try { facility = Facility.valueOf(kind); if (facility == Facility.GOLD_MINE) throw new IllegalArgumentException(); }
+        try { facility = Facility.valueOf(kind); if (facility.retired()) throw new IllegalArgumentException(); }
         catch (IllegalArgumentException ex) { event.setCancelled(true); return; }
         var block = event.getBlockPlaced();
         Player player = event.getPlayer();
@@ -1350,7 +1417,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (anchor == null) { admin.sendMessage("§c그 위치에서 시설 데이터를 찾지 못했습니다. (" + target.getX() + "," + target.getY() + "," + target.getZ() + ")"); return true; }
 
         String plot = plotAt(anchor.getLocation());
-        String ownerId = plot == null ? null : data.getString("plots." + plot + ".owner");
+        String ownerId = plot == null ? null : data.getString(plotPath(plot) + ".owner");
         String coords = coordinates(anchor);
         String viewKey = facilityViewKey(anchor);
         List<Integer> point = List.of(anchor.getX(), anchor.getY(), anchor.getZ());
@@ -1379,7 +1446,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             if (!job.isEmpty()) report.add("제작 주문 삭제됨: " + job + " (재료/완성품은 환급되지 않습니다. 필요하면 수동 보상)");
             String worker = data.getString(prefix + ".craft-worker");
             if (worker != null && !worker.isEmpty()) report.add("제작 펫 배치 해제: " + worker);
-            for (String suffix : List.of(".process", ".process-hungry", ".process-paused", ".craft-worker")) data.set(prefix + suffix, null);
+            for (String suffix : List.of(".process", ".process-hungry", ".process-hpause", ".process-paused", ".craft-worker")) data.set(prefix + suffix, null);
             if (!primary) data.set(prefix, null);
         }
 
@@ -1434,7 +1501,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         report.add("표시 엔티티 " + removedDisplays + "개 제거");
 
         // 8) hand the item to the admin
-        if (facility != null && facility != Facility.GOLD_MINE) {
+        if (facility != null) {
             var left = admin.getInventory().addItem(stationItem(facility, keptLevel));
             left.values().forEach(rest -> admin.getWorld().dropItemNaturally(admin.getLocation(), rest));
             report.add(facility.label + (keptLevel >= 2 ? " Lv." + keptLevel : "") + " 아이템 지급" + (left.isEmpty() ? "" : " (가방이 가득 차 바닥에 드롭)"));
@@ -1502,7 +1569,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             anchor.getWorld().getNearbyEntities(anchor.getLocation().add(1.5, 1, 1.5), 4, 4, 4).stream() // tag is per-anchor; wide box covers 3x3 quarry displays (lifted by scale/2)
                 .filter(entity -> entity.getScoreboardTags().contains(tag)).forEach(org.bukkit.entity.Entity::remove);
             event.setDropItems(false);
-            if (facility != Facility.GOLD_MINE)             event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), stationItem(facility, keptLevel)).setOwner(player.getUniqueId());
+            event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), stationItem(facility, keptLevel)).setOwner(player.getUniqueId());
         }
     }
 
@@ -1526,94 +1593,272 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (event.getBlocks().stream().anyMatch(block -> facilityAt(block) != null || feederAnchor(block) != null)) event.setCancelled(true);
     }
 
-    private void feedAssignedPets() {
-        long now = System.currentTimeMillis();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            for (var block : facilityBlocks(ownedPlot(player), Facility.FEEDER)) {
-            Inventory inventory = feederInventory(block);
-            Set<String> workers = craftWorkers(player);
-            for (String entry : craftEntries(player)) {
-                String key = craftEntryPath(player, entry);
-                Workshop state = productionState(player, entry, now);
-                if (!state.active() && !workers.contains(entry)) continue;
-                boolean waitingForFood = facilityBlocks(ownedPlot(player), Facility.CRAFT).stream().anyMatch(station ->
-                    entry.equals(craftWorkerEntry(player, station))
-                        && data.getLong(craftKey(player, station, "process") + "-hungry") > 0);
-                if (state.food() > 10 && !waitingForFood && !data.getBoolean(key + ".refilling")) continue;
-                ItemStack[] contents = inventory.getStorageContents();
-                int food = state.food();
-                for (int i = 0; i < contents.length && food < MAX_FOOD; i++) {
-                    ItemStack stack = contents[i];
-                    int nutrition = town.storageNutrition(stack);
-                    if (nutrition <= 0) continue;
-                    int amount = Math.min(stack.getAmount(), (MAX_FOOD - food + nutrition - 1) / nutrition);
-                    food = Math.min(MAX_FOOD, food + nutrition * amount);
-                    contents[i] = amount == stack.getAmount() ? null : stack.clone();
-                    if (contents[i] != null) contents[i].setAmount(stack.getAmount() - amount);
-                }
-                if (food == state.food()) continue;
-                Object previous = data.get(key + ".refilling");
-                data.set(key + ".refilling", food < MAX_FOOD ? true : null);
-                if (save(key, new Workshop(food, state.stock(), state.food() == 0 ? now : state.since(), state.active())))
-                    { inventory.setStorageContents(contents); saveFeederInventory(inventory); }
-                else data.set(key + ".refilling", previous);
-            }
-            }
-        }
+    // ---- worker hunger: time-based decay while working, walk to the nearest stocked feeder to eat ----
+    private static final int EAT_THRESHOLD = 20;
+    private static final long EAT_MILLIS = 3000L;
+    private static final long MAX_CATCH_UP = 12L * 3_600_000L;
+    private enum Meal { WORK, GO, EAT, BACK, WAIT }
+    private static final class Eater { Meal phase = Meal.WORK; long until; org.bukkit.block.Block feeder; }
+    private record WCtx(Player player, String entry, String path, Facility facility, org.bukkit.block.Block block, String anchor, String plot, int slot) {
+        String key() { return player.getUniqueId() + ":" + entry; }
+    }
+    private final Map<String, Eater> eaters = new HashMap<>();
+    private boolean hungerDirty;
+    private long lastHungerPersist;
+
+    /** Food lost per minute while a pet is actually working: Lv.1 3, Lv.2 6, Lv.3 12. */
+    static int hungerPerMinute(int level) { return level >= 3 ? 12 : level == 2 ? 6 : 3; }
+
+    private Location feederSpot(org.bukkit.block.Block feeder) { return feeder.getLocation().add(.5, 0, -.5); }
+
+    private Location stationSpot(WCtx c) {
+        return c.facility() == Facility.CRAFT ? c.block().getLocation().add(1.5, 0, -.7)
+            : c.block().getLocation().add(.4 + c.slot() * .45, 0, -.7);
     }
 
-    private final Map<String, Long> hungerDeadlines = new HashMap<>();
-
-    private void checkHungryWorkers() {
-        long now = System.currentTimeMillis();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            for (var block : facilityBlocks(ownedPlot(player), Facility.CRAFT)) {
-                withCraftStation(block, () -> town.checkHungryCraft(player, now));
-            }
-            for (Facility facility : Facility.values()) {
-                if (!facility.isProducer()) continue;
-                for (var station : facilityBlocks(ownedPlot(player), facility)) withCraftStation(station, () -> {
-                String key = lumberKey(player, facility) + ".paused";
-                boolean hungry = lumberPause(player, facility) == 0 && craftEntries(player).stream()
-                    .anyMatch(entry -> assignedHere(player, entry, facility) && productionSlot(player, entry) > 0
-                        && productionState(player, entry, now).food() == 0);
-                if (!hungry) { hungerDeadlines.remove(key); return; }
-                long deadline = hungerDeadlines.computeIfAbsent(key, ignored -> now + 5000);
-                if (now >= deadline && store(key, now)) {
-                    hungerDeadlines.remove(key);
-                    player.sendMessage(facility.label + " 작업 중단 · 펫 먹이가 필요합니다.");
-                    if (player.getOpenInventory().getTopInventory().getHolder() instanceof StationMenu menu
-                        && station.equals(menu.station))
-                        openMenu(player, menu.selected, menu.station, menu.craftPage, menu.craftSelection);
-                }
-                });
-            }
-        }
+    private static long travelMillis(Location from, Location to) {
+        if (from.getWorld() == null || !from.getWorld().equals(to.getWorld())) return 1500L;
+        return Math.min(40_000L, Math.max(1500L, (long) (from.distance(to) / 3.0 * 1000.0)));
     }
 
-    /** Food cost per produced item by aptitude level: Lv.1 = 1, Lv.2 = 3, Lv.3 = 5. */
-    static int foodCost(int level) { return level >= 3 ? 5 : level == 2 ? 3 : 1; }
-
-    private int craftUnitCost(Player player) { return foodCost(Math.max(1, craftLevel(player))); }
-
-    /** Food needed for a craft of {@code count} items; the last item may be paid only partly (down to 0). */
-    boolean craftCanAfford(Player player, int count) {
-        int cost = craftUnitCost(player);
-        return craftFood(player) >= Math.max(1, count * cost - cost + 1);
-    }
-
-    boolean reserveCraftFood(Player player, int count, List<String> updated) {
-        String worker = data.getString(craftWorkerKey(player));
-        if (worker == null || !craftCanAfford(player, count)) return false;
-        String foodKey = craftEntryPath(player, worker) + ".food";
-        String waitingKey = processKey(player) + "-hungry";
-        Object originalFood = data.get(foodKey), originalWaiting = data.get(waitingKey);
-        data.set(foodKey, Math.max(0, craftFood(player) - count * craftUnitCost(player)));
-        data.set(waitingKey, null);
-        if (store(processKey(player), updated)) return true;
-        data.set(foodKey, originalFood);
-        data.set(waitingKey, originalWaiting);
+    private boolean feederHasFood(org.bukkit.block.Block feeder) {
+        if (!feeder.getWorld().isChunkLoaded(feeder.getX() >> 4, feeder.getZ() >> 4)) return false;
+        for (ItemStack stack : feederInventory(feeder).getStorageContents())
+            if (stack != null && town.storageNutrition(stack) > 0) return true;
         return false;
+    }
+
+    /** Nearest feeder (by distance from {@code from}) on the owner's plot that currently has food; null when none has. */
+    private org.bukkit.block.Block pickFeeder(WCtx c, Location from) {
+        org.bukkit.block.Block best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (var feeder : facilityBlocks(c.plot(), Facility.FEEDER)) {
+            if (!feeder.getWorld().equals(from.getWorld())) continue;
+            double distance = feederSpot(feeder).distanceSquared(from);
+            if (distance < bestDistance && feederHasFood(feeder)) { best = feeder; bestDistance = distance; }
+        }
+        return best;
+    }
+
+    private boolean eatFrom(WCtx c, org.bukkit.block.Block feeder) {
+        Inventory inventory = feederInventory(feeder);
+        ItemStack[] contents = inventory.getStorageContents();
+        int start = data.getInt(c.path() + ".food"), food = start;
+        for (int i = 0; i < contents.length && food < MAX_FOOD; i++) {
+            ItemStack stack = contents[i];
+            int nutrition = town.storageNutrition(stack);
+            if (nutrition <= 0) continue;
+            int amount = Math.min(stack.getAmount(), (MAX_FOOD - food + nutrition - 1) / nutrition);
+            food = Math.min(MAX_FOOD, food + nutrition * amount);
+            contents[i] = amount == stack.getAmount() ? null : stack.clone();
+            if (contents[i] != null) contents[i].setAmount(stack.getAmount() - amount);
+        }
+        if (food == start) return false;
+        data.set(c.path() + ".food", food);
+        inventory.setStorageContents(contents);
+        saveFeederInventory(inventory);
+        hungerDirty = true;
+        return true;
+    }
+
+    private void hungerTick() {
+        long now = System.currentTimeMillis();
+        Set<String> seen = new HashSet<>();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            String plot = ownedPlot(player);
+            if (plot == null) continue;
+            try {
+                for (var station : facilityBlocks(plot, Facility.CRAFT)) {
+                    String entry = craftWorkerEntry(player, station);
+                    if (entry == null) continue;
+                    stepGroup(List.of(new WCtx(player, entry, craftEntryPath(player, entry), Facility.CRAFT, station, coordinates(station), plot, 0)), now, seen);
+                }
+                Map<String, List<WCtx>> groups = new LinkedHashMap<>();
+                for (String entry : craftEntries(player)) {
+                    Facility facility = productionFacility(player, entry);
+                    int slot = productionSlot(player, entry);
+                    if (facility == null || slot <= 0 || productionAptitude(player, entry, facility) < 1) continue;
+                    String anchor = assignedProducer(player, entry, facility);
+                    var block = facilityBlocks(plot, facility).stream().filter(b -> coordinates(b).equals(anchor)).findFirst().orElse(null);
+                    if (block == null) continue;
+                    groups.computeIfAbsent(facility.name() + "/" + anchor, k -> new ArrayList<>())
+                        .add(new WCtx(player, entry, craftEntryPath(player, entry), facility, block, anchor, plot, slot));
+                }
+                for (List<WCtx> group : groups.values()) stepGroup(group, now, seen);
+            } catch (RuntimeException ex) {
+                getLogger().warning("펫 포만감 처리 오류 (" + player.getName() + "): " + ex);
+            }
+        }
+        eaters.keySet().retainAll(seen);
+        if (hungerDirty && now - lastHungerPersist >= 30_000L) {
+            hungerDirty = false;
+            lastHungerPersist = now;
+            persist();
+        }
+    }
+
+    /** Advances one station (craft table: one pet, producer facility: its pet group) from its saved timestamp up to {@code now}. */
+    private void stepGroup(List<WCtx> group, long now, Set<String> seen) {
+        WCtx first = group.get(0);
+        boolean producer = first.facility() != Facility.CRAFT;
+        long last = Long.MAX_VALUE;
+        for (WCtx c : group) {
+            seen.add(c.key());
+            long stamp = data.getLong(c.path() + ".hts");
+            if (stamp <= 0) { long since = data.getLong(c.path() + ".since"); stamp = producer && since > 0 ? since : now; }
+            last = Math.min(last, stamp);
+        }
+        last = Math.max(last, now - MAX_CATCH_UP);
+        if (!producer) {
+            String legacy = craftKey(first.player(), first.block(), "process") + "-hungry";
+            if (data.contains(legacy)) data.set(legacy, null);
+        }
+        while (last < now) {
+            long t = now - last > 60_000L ? last + 10_000L : now;
+            long step = t - last;
+            Eater[] eating = new Eater[group.size()];
+            boolean[] working = new boolean[group.size()];
+            int groupStock = 0, cap = CAPACITY;
+            long paused = 0;
+            if (producer) {
+                for (WCtx c : group) groupStock += data.getInt(c.path() + ".stock");
+                cap = facilityCapacity(first.player(), first.facility(), first.anchor());
+                paused = data.getLong(producerKey(first.plot(), first.facility(), first.anchor()) + ".paused");
+            }
+            for (int i = 0; i < group.size(); i++) {
+                WCtx c = group.get(i);
+                eating[i] = eaterOf(c, t);
+                working[i] = eating[i].phase == Meal.WORK && !data.getBoolean(c.path() + ".away") && data.getInt(c.path() + ".food") > 0
+                    && (producer ? paused == 0 && groupStock < cap : craftRunning(c, t));
+            }
+            if (producer) settleFacilityRaw(first.player(), first.facility(), first.anchor(), paused > 0 ? Math.min(paused, t) : t);
+            for (int i = 0; i < group.size(); i++) if (working[i]) decay(group.get(i), step);
+            for (int i = 0; i < group.size(); i++) mealStep(group.get(i), eating[i], t);
+            last = t;
+            hungerDirty = true;
+        }
+        for (WCtx c : group) data.set(c.path() + ".hts", last);
+    }
+
+    /** True while the craft table's order is progressing (not finished and not paused by anyone). */
+    private boolean craftRunning(WCtx c, long t) {
+        List<String> job = data.getStringList(craftKey(c.player(), c.block(), "process"));
+        if (job.size() < 6) return false;
+        try {
+            long ready = Long.parseLong(job.get(1));
+            long paused = job.size() >= 7 ? Long.parseLong(job.get(6)) : 0;
+            return paused == 0 && t < ready;
+        } catch (NumberFormatException ex) { return false; }
+    }
+
+    private Eater eaterOf(WCtx c, long t) {
+        Eater eater = eaters.get(c.key());
+        if (eater != null) return eater;
+        eater = new Eater();
+        eaters.put(c.key(), eater);
+        if (data.getBoolean(c.path() + ".away")) {   // restarted while the pet was out: head for a feeder again (or just come back)
+            var target = pickFeeder(c, stationSpot(c));
+            eater.phase = target != null ? Meal.GO : Meal.BACK;
+            eater.feeder = target;
+            eater.until = t;
+        }
+        return eater;
+    }
+
+    private void decay(WCtx c, long step) {
+        int level = Math.max(1, c.facility() == Facility.CRAFT ? craftAptitude(c.player(), c.entry()) : productionAptitude(c.player(), c.entry(), c.facility()));
+        double acc = data.getDouble(c.path() + ".food-acc", 0) + hungerPerMinute(level) * step / 60000.0;
+        int drop = (int) acc;
+        acc -= drop;
+        int food = data.getInt(c.path() + ".food");
+        if (drop >= food) { drop = food; acc = 0; }
+        if (drop > 0) data.set(c.path() + ".food", food - drop);
+        data.set(c.path() + ".food-acc", acc == 0 ? null : acc);
+    }
+
+    /** Pauses / resumes the craft order of a hunger-stopped pet (progress is kept, the finish time is pushed back by the pause). */
+    private void setWorkPaused(WCtx c, boolean pause, long t) {
+        if (c.facility() != Facility.CRAFT) return;
+        String processKey = craftKey(c.player(), c.block(), "process"), flag = processKey + "-hpause";
+        List<String> job = data.getStringList(processKey);
+        if (job.size() < 6) { if (data.contains(flag)) data.set(flag, null); return; }
+        try {
+            long ready = Long.parseLong(job.get(1)), paused = job.size() >= 7 ? Long.parseLong(job.get(6)) : 0;
+            if (pause) {
+                if (paused > 0 || t >= ready) return;
+                data.set(processKey, List.of(job.get(0), job.get(1), job.get(2), job.get(3), job.get(4), job.get(5), Long.toString(t)));
+                data.set(flag, true);
+            } else if (data.getBoolean(flag)) {
+                if (paused > 0) data.set(processKey, List.of(job.get(0), Long.toString(ready + Math.max(0, t - paused)),
+                    job.get(2), job.get(3), job.get(4), job.get(5), "0"));
+                data.set(flag, null);
+            }
+        } catch (NumberFormatException ex) { data.set(flag, null); }
+    }
+
+    private void goEat(WCtx c, Eater eater, org.bukkit.block.Block feeder, Location from, long t) {
+        data.set(c.path() + ".away", true);
+        setWorkPaused(c, true, t);
+        eater.phase = Meal.GO;
+        eater.feeder = feeder;
+        eater.until = t + travelMillis(from, feederSpot(feeder));
+    }
+
+    /**
+     * Meal state machine. WORK: at hunger <= 20 walk to the nearest feeder that has food (none: keep working, stop at 0 and WAIT).
+     * GO: on arrival, eat if the feeder still has food, else try the next nearest, else walk back. EAT: refill, then BACK.
+     * BACK: on arrival resume work. WAIT: idle at the station until any feeder gets food.
+     */
+    private void mealStep(WCtx c, Eater eater, long t) {
+        int food = data.getInt(c.path() + ".food");
+        Location home = stationSpot(c);
+        switch (eater.phase) {
+            case WORK, WAIT -> {
+                if (food <= EAT_THRESHOLD) {
+                    var target = pickFeeder(c, home);
+                    if (target != null) { goEat(c, eater, target, home, t); return; }
+                    if (food <= 0) { eater.phase = Meal.WAIT; setWorkPaused(c, true, t); return; }
+                }
+                eater.phase = Meal.WORK;
+                if (food > 0) setWorkPaused(c, false, t);
+            }
+            case GO -> {
+                if (t < eater.until) return;
+                if (eater.feeder != null && feederHasFood(eater.feeder)) { eater.phase = Meal.EAT; eater.until = t + EAT_MILLIS; return; }
+                Location at = eater.feeder == null ? home : feederSpot(eater.feeder);
+                var next = pickFeeder(c, at);
+                if (next != null) { eater.feeder = next; eater.until = t + travelMillis(at, feederSpot(next)); }
+                else { eater.phase = Meal.BACK; eater.until = t + travelMillis(at, home); }
+            }
+            case EAT -> {
+                if (t < eater.until) return;
+                if (!eatFrom(c, eater.feeder)) { eater.phase = Meal.GO; eater.until = t; return; }
+                eater.phase = Meal.BACK;
+                eater.until = t + travelMillis(feederSpot(eater.feeder), home);
+            }
+            case BACK -> {
+                if (t < eater.until) return;
+                data.set(c.path() + ".away", null);
+                eater.phase = Meal.WORK;
+                eater.feeder = null;
+                if (food > 0) setWorkPaused(c, false, t);
+                else if (pickFeeder(c, home) == null) { eater.phase = Meal.WAIT; setWorkPaused(c, true, t); }
+            }
+        }
+    }
+
+    /** HUD text for an assigned worker: 작업 중 / 식사하러 가는 중 / 식사 중 / 복귀 중 / 식량 없음 - 대기 중. */
+    String workerStatus(Player player, String entry) {
+        Eater eater = eaters.get(player.getUniqueId() + ":" + entry);
+        if (eater != null) switch (eater.phase) {
+            case GO -> { return "식사하러 가는 중"; }
+            case EAT -> { return "식사 중"; }
+            case BACK -> { return "작업대로 복귀 중"; }
+            case WAIT -> { return "식량 없음 - 대기 중"; }
+            default -> { }
+        }
+        if (data.getInt(craftEntryPath(player, entry) + ".food") <= 0) return "식량 없음 - 대기 중";
+        return "작업 중";
     }
 
     private final Map<String, Inventory> foodInventories = new HashMap<>();
@@ -1625,8 +1870,34 @@ public final class PipiLife extends JavaPlugin implements Listener {
         @Override public Inventory getInventory() { return inventory; }
     }
 
+    /** 식량 저장소 usable slots (was 6). Stored food from the old extra slots is folded into these on load. */
+    private static final int FEEDER_SLOTS = 3;
+
+    private void compactFeeder(Inventory inventory, org.bukkit.block.Block block) {
+        ItemStack[] contents = inventory.getStorageContents();
+        List<ItemStack> extra = new ArrayList<>();
+        for (int i = FEEDER_SLOTS; i < contents.length; i++)
+            if (contents[i] != null && !contents[i].getType().isAir()) { extra.add(contents[i]); contents[i] = null; }
+        if (extra.isEmpty()) return;
+        Location drop = block.getLocation().add(.5, 1, .5);
+        for (ItemStack item : extra) {
+            ItemStack rest = item.clone();
+            for (int i = 0; i < FEEDER_SLOTS && rest.getAmount() > 0; i++) {
+                ItemStack existing = contents[i];
+                if (existing == null || existing.getType().isAir()) { contents[i] = rest.clone(); rest.setAmount(0); }
+                else if (existing.isSimilar(rest)) {
+                    int move = Math.min(rest.getAmount(), existing.getMaxStackSize() - existing.getAmount());
+                    if (move > 0) { existing.setAmount(existing.getAmount() + move); rest.setAmount(rest.getAmount() - move); }
+                }
+            }
+            if (rest.getAmount() > 0) block.getWorld().dropItemNaturally(drop, rest);
+        }
+        inventory.setStorageContents(contents);
+        getLogger().info("식량 저장소 칸 축소: " + block.getX() + "," + block.getY() + "," + block.getZ() + " 의 4~6번 칸 식량을 이전했습니다.");
+    }
+
     private Inventory feederInventory(org.bukkit.block.Block block) {
-        if (block.getState() instanceof org.bukkit.block.Barrel barrel) return barrel.getInventory();
+        if (block.getState() instanceof org.bukkit.block.Barrel barrel) { compactFeeder(barrel.getInventory(), block); return barrel.getInventory(); }
         String key = facilityViewKey(block) + ".food";
         return foodInventories.computeIfAbsent(key, ignored -> {
             FoodHolder holder = new FoodHolder(key);
@@ -1634,6 +1905,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
             List<?> items = data.getList(key, List.of());
             for (int i = 0; i < Math.min(items.size(), 27); i++)
                 if (items.get(i) instanceof ItemStack item) holder.inventory.setItem(i, item);
+            compactFeeder(holder.inventory, block);
+            saveFeederInventory(holder.inventory);
             return holder.inventory;
         });
     }
@@ -1649,6 +1922,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     @Override public void onDisable() {
+        if(wildRegions!=null)wildRegions.shutdown();
+        if(raid!=null)raid.shutdown();
         if(tutorial!=null)tutorial.close();
         if(customPets!=null)customPets.close();
         if(damageNumbers!=null)damageNumbers.shutdown();
@@ -1663,6 +1938,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (combat != null) combat.removeModifiers();
         if (town != null) town.close();
         for (Inventory inventory : foodInventories.values()) saveFeederInventory(inventory);
+        if (data != null) persist();
     }
 
     private void migrateFacilityBlocks(World world) {
@@ -1703,7 +1979,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             ItemStack input = event.getCurrentItem();
             if (town.storageNutrition(input) == 0) return;
             int remaining = input.getAmount();
-            for (int i = 0; i < 6 && remaining > 0; i++) {
+            for (int i = 0; i < FEEDER_SLOTS && remaining > 0; i++) {
                 ItemStack existing = top.getItem(i);
                 if (existing != null && !existing.getType().isAir() && !existing.isSimilar(input)) continue;
                 int previous = existing == null || existing.getType().isAir() ? 0 : existing.getAmount();
@@ -1718,7 +1994,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             event.setCurrentItem(remaining == 0 ? null : input);
         } else if (event.getClick() == ClickType.DOUBLE_CLICK
             || slot >= 0 && slot < top.getSize() && (event.getClick() != ClickType.LEFT && event.getClick() != ClickType.RIGHT
-                || !event.getCursor().getType().isAir() && (slot >= 6 || town.storageNutrition(event.getCursor()) == 0))) {
+                || !event.getCursor().getType().isAir() && (slot >= FEEDER_SLOTS || town.storageNutrition(event.getCursor()) == 0))) {
             event.setCancelled(true);
         }
     }
@@ -1835,11 +2111,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
         Workshop state = productionState(player, worker, now);
         if (state.active()) return false;
         data.set(processKey(player), List.of(recipe, Long.toString(ready), worker, Integer.toString(count), Long.toString(interval), "0"));
-        String waiting = processKey(player) + "-hungry";
-        boolean hungry = !craftCanAfford(player, count);
-        if (hungry) data.set(waiting, now);
-        if (save(craftEntryPath(player, worker), new Workshop(hungry ? state.food() : Math.max(0, state.food() - count * craftUnitCost(player)), state.stock(), now, false))) return true;
-        data.set(waiting, null);
+        data.set(processKey(player) + "-hpause", null);
+        data.set(processKey(player) + "-hungry", null);
+        if (save(craftEntryPath(player, worker), new Workshop(state.food(), state.stock(), now, false))) return true;
         data.set(processKey(player), null);
         return false;
     }
@@ -1881,6 +2155,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         Pet pet = entryPet(entry);
         if (pet == null) return false;
         Workshop state = productionState(player, entry, System.currentTimeMillis());
+        data.set(craftEntryPath(player, entry) + ".away", null);
         if (save(craftEntryPath(player, entry), new Workshop(state.food(), state.stock(), System.currentTimeMillis(), false)))
             player.sendMessage("§a" + pet.label + "의 배치를 해제했습니다.");
         return true;
@@ -1938,6 +2213,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             else if (facilityAt(block) == Facility.PET_STORAGE) openPetStorage(event.getPlayer());
             else if (facilityAt(block) == Facility.RESEARCH) town.openSmith(event.getPlayer(), true);
             else if (facilityAt(block) == Facility.COOKING_TABLE) cooking.open(event.getPlayer());
+            else if (installed != null && installed.retired()) event.getPlayer().sendMessage("§e" + installed.label + "은(는) 더 이상 사용하지 않는 시설입니다. 철거하면 " + installed.refund().label + " 청사진으로 돌려받습니다.");
             else if (installed != null && installed.comingSoon()) event.getPlayer().sendMessage(installed.label + " 기능은 준비 중입니다.");
             else openMenu(event.getPlayer(), null, block);
         }
@@ -2000,7 +2276,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         p.openInventory(h.inventory);
     }
     private void openPetMarketBuyer(Player p,String plot,int page){
-        String ownerId=data.getString("plots."+plot+".owner");UUID owner;try{owner=UUID.fromString(ownerId);}catch(RuntimeException ex){p.sendMessage("가판대 주인을 확인할 수 없습니다.");return;}
+        String ownerId=data.getString(plotPath(plot)+".owner");UUID owner;try{owner=UUID.fromString(ownerId);}catch(RuntimeException ex){p.sendMessage("가판대 주인을 확인할 수 없습니다.");return;}
         String name=Bukkit.getOfflinePlayer(owner).getName();
         PetMarket h=new PetMarket(0,owner,plot,false);h.inventory=Bukkit.createInventory(h,54,"삐삐서버 · 펫 가판대");
         fillMarketRows(h.inventory,owner,false);
@@ -2187,7 +2463,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             level + "," + (page + 1) + "," + pages + "," + owned + "," + (level * 100)));
         inventory.setItem(45, statusIcon(Material.ARROW, "이전 페이지"));
         inventory.setItem(53, statusIcon(Material.ARROW, "다음 페이지"));
-        inventory.setItem(50, statusIcon(Material.GOLD_INGOT, "레벨업", TownSystems.upgradeLines(Facility.PET_STORAGE, level).toArray(String[]::new)));
+        inventory.setItem(50, statusIcon(Material.GOLD_INGOT, "레벨업", level >= MAX_STORAGE_LEVEL ? "최대 레벨" : "클릭하면 확인 창이 열립니다"));
         player.openInventory(inventory);
     }
 
@@ -2264,7 +2540,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private static final Map<Integer, String> STATION_ACTIONS =
         Map.of(21, "assign", 22, "feed", 23, "collect", 31, "sell", 32, "stop");
 
-    record PetScene(String key,String species,Location station,Location focus,boolean working,int food,Location feeder,int task,String soundGroup){}
+    record PetScene(String key,String species,Location station,Location focus,boolean working,int food,Location feeder,int task,String soundGroup,boolean eating,String status){}
+    /** Status shown on the pet label: a plain "작업 중" is only kept while the pet really works; otherwise the reason it idles. */
+    private static String idleStatus(String status,boolean working,String idle){return "작업 중".equals(status)&&!working?idle:status;}
     private String petSkin(Pet pet){return pet==null?null:pet.name().toLowerCase(Locale.ROOT);}
     private String petSkin(String entry){return petSkin(entryPet(entry));}
     private Location stationFocus(org.bukkit.block.Block b,Facility facility){boolean wide=facility==Facility.FEEDER?wideFeeder(b):wideStation(b);return b.getLocation().add(wide?facility.width()/2.0:.5,0,wide?facility.depth()/2.0:.5);}
@@ -2272,18 +2550,19 @@ public final class PipiLife extends JavaPlugin implements Listener {
         List<PetScene> scenes=new ArrayList<>();long now=System.currentTimeMillis();
         for(Player p:Bukkit.getOnlinePlayers()){
             String plot=ownedPlot(p);if(plot==null)continue;
-            Location feeder=facilityBlocks(plot,Facility.FEEDER).stream().findFirst().map(b->b.getLocation().add(.5,0,-.5)).orElse(null);
             for(var b:facilityBlocks(plot,Facility.CRAFT)){
                 String entry=craftWorkerEntry(p,b);if(entry==null)continue;
-                int food=data.getInt(craftEntryPath(p,entry)+".food");var process=data.getStringList(craftKey(p,b,"process"));boolean work=false;
-                try{work=food>0&&process.size()>1&&Long.parseLong(process.get(1))>now&&!data.contains(craftKey(p,b,"process")+"-paused")&&!data.contains(craftKey(p,b,"process")+"-hungry");}catch(NumberFormatException ignored){}
-                scenes.add(new PetScene(p.getUniqueId()+":"+entry,petSkin(entry),b.getLocation().add(1.5,0,-.7),stationFocus(b,Facility.CRAFT),work,food,feeder,4,b.getWorld().getUID()+":"+coordinates(b)));
+                String path=craftEntryPath(p,entry);int food=data.getInt(path+".food");var process=data.getStringList(craftKey(p,b,"process"));boolean work=false;
+                Eater er=eaters.get(p.getUniqueId()+":"+entry);boolean out=er!=null&&(er.phase==Meal.GO||er.phase==Meal.EAT)&&er.feeder!=null;
+                try{work=food>0&&!data.getBoolean(path+".away")&&(er==null||er.phase==Meal.WORK)&&process.size()>=6&&Long.parseLong(process.get(1))>now&&(process.size()<7||Long.parseLong(process.get(6))==0);}catch(NumberFormatException ignored){}
+                scenes.add(new PetScene(p.getUniqueId()+":"+entry,petSkin(entry),b.getLocation().add(1.5,0,-.7),stationFocus(b,Facility.CRAFT),work,food,out?feederSpot(er.feeder):null,4,b.getWorld().getUID()+":"+coordinates(b),er!=null&&er.phase==Meal.EAT,idleStatus(workerStatus(p,entry),work,"대기 중")));
             }
             for(String entry:craftEntries(p)){
                 String skin=petSkin(entry);Facility f=productionFacility(p,entry);if(f==null||productionSlot(p,entry)<=0)continue;
                 String anchor=assignedProducer(p,entry,f);var block=facilityBlocks(plot,f).stream().filter(b->coordinates(b).equals(anchor)).findFirst().orElse(null);if(block==null)continue;
-                Workshop state=productionState(p,entry,now);boolean work=state.food()>0&&state.stock()<state.cap()&&data.getLong(producerKey(plot,f,anchor)+".paused")==0;
-                scenes.add(new PetScene(p.getUniqueId()+":"+entry,skin,block.getLocation().add(.4+productionSlot(p,entry)*.45,0,-.7),stationFocus(block,f),work,state.food(),feeder,f==Facility.LUMBER||f==Facility.REDWOOD_LUMBER?2:aptitudeLabel(f).equals("농사")?0:1,block.getWorld().getUID()+":"+coordinates(block)));
+                Workshop state=productionState(p,entry,now);Eater er=eaters.get(p.getUniqueId()+":"+entry);boolean out=er!=null&&(er.phase==Meal.GO||er.phase==Meal.EAT)&&er.feeder!=null;
+                boolean work=state.food()>0&&!data.getBoolean(craftEntryPath(p,entry)+".away")&&(er==null||er.phase==Meal.WORK)&&state.stock()<state.cap()&&data.getLong(producerKey(plot,f,anchor)+".paused")==0;
+                scenes.add(new PetScene(p.getUniqueId()+":"+entry,skin,block.getLocation().add(.4+productionSlot(p,entry)*.45,0,-.7),stationFocus(block,f),work,state.food(),out?feederSpot(er.feeder):null,f==Facility.LUMBER||f==Facility.REDWOOD_LUMBER?2:aptitudeLabel(f).equals("농사")?0:1,block.getWorld().getUID()+":"+coordinates(block),er!=null&&er.phase==Meal.EAT,idleStatus(workerStatus(p,entry),work,data.getLong(producerKey(plot,f,anchor)+".paused")>0||lumberPause(p,f)>0?"작업 대기 중":state.stock()>=state.cap()?"보관함 가득 참":"대기 중")));
             }
         }return scenes;
     }
@@ -2298,7 +2577,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     private String legacyProducerKey(String plot, Facility facility) {
-        return "plots." + plot + (facility == Facility.LUMBER ? ".lumber" : ".production." + facility.name());
+        return plotPath(plot) + (facility == Facility.LUMBER ? ".lumber" : ".production." + facility.name());
     }
 
     private String coordinates(org.bukkit.block.Block block) {
@@ -2461,13 +2740,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private String petAssignment(Player player, String entry) {
         for (var block : facilityBlocks(ownedPlot(player), Facility.CRAFT)) {
             if (entry.equals(craftWorkerEntry(player, block)))
-                return "기본 작업대 (" + block.getX() + ", " + block.getY() + ", " + block.getZ() + ") 배치 중";
+                return "기본 작업대 (" + block.getX() + ", " + block.getY() + ", " + block.getZ() + ") 배치 중 · " + workerStatus(player, entry);
         }
         Facility facility = productionFacility(player, entry);
         if (facility != null && productionSlot(player, entry) > 0) {
             String anchor = assignedProducer(player, entry, facility);
             long pause = data.getLong(producerKey(ownedPlot(player), facility, anchor) + ".paused");
-            return facility.label + " (" + anchor.replace("_", ", ") + ")" + (pause > 0 ? " 작업 대기 중" : " 배치 중");
+            return facility.label + " (" + anchor.replace("_", ", ") + ")" + (pause > 0 ? " 작업 대기 중" : " 배치 중 · " + workerStatus(player, entry));
         }
         return "창고 대기";
     }
@@ -2602,19 +2881,30 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     /**
      * Facility-level production: the placed pets work as one unit, producing 1 item per facilityPeriod(n) where n is the
-     * number of pets with food; every item costs food from each working pet by its aptitude level (Lv.1 -1, Lv.2 -3, Lv.3 -5). Settles (in memory) up to {@code end}.
+     * number of pets with food that are at the station. Food is not spent per item: it decays with time (see {@link #hungerTick}). Settles (in memory) up to {@code end}.
      */
     private void settleFacility(Player player, Facility facility, String anchor, long end) {
+        // never settle past the time the hunger engine has processed (hunger decay / meals are applied up to that stamp)
+        for (String entry : facilityGroup(player, facility, anchor)) {
+            long stamp = data.getLong(craftEntryPath(player, entry) + ".hts");
+            if (stamp > 0) end = Math.min(end, stamp);
+        }
+        settleFacilityRaw(player, facility, anchor, end);
+    }
+
+    private void settleFacilityRaw(Player player, Facility facility, String anchor, long end) {
         List<String> group = facilityGroup(player, facility, anchor);
         int size = group.size();
         if (size == 0) return;
         int[] food = new int[size], stock = new int[size], lvl = new int[size];
+        boolean[] away = new boolean[size];
         long clock = end;
         int cap = facilityCapacity(player, facility, anchor);
         for (int i = 0; i < size; i++) {
             lvl[i] = Math.max(1, productionAptitude(player, group.get(i), facility));
             String key = craftEntryPath(player, group.get(i));
             food[i] = data.getInt(key + ".food");
+            away[i] = data.getBoolean(key + ".away");
             stock[i] = data.getInt(key + ".stock");
             long since = data.getLong(key + ".since");
             clock = Math.min(clock, since > 0 ? since : end);
@@ -2623,20 +2913,18 @@ public final class PipiLife extends JavaPlugin implements Listener {
             int working = 0, target = -1, held = 0;
             int[] levels = new int[size];
             for (int i = 0; i < size; i++) held += stock[i];
-            for (int i = 0; i < size; i++) if (food[i] > 0) {
+            for (int i = 0; i < size; i++) if (food[i] > 0 && !away[i]) {
                 levels[working++] = lvl[i];
                 if (target < 0 && held < cap) target = i;
             }
-            if (working == 0 || target < 0) { clock = end; break; }
+            if (working == 0 || target < 0) { clock = Math.max(clock, end); break; }
             long period = facilityPeriod(Arrays.copyOf(levels, working));
             if (clock + period > end) break;
             clock += period;
             stock[target]++;
-            for (int i = 0; i < size; i++) if (food[i] > 0) food[i] = Math.max(0, food[i] - foodCost(lvl[i]));
         }
         for (int i = 0; i < size; i++) {
             String key = craftEntryPath(player, group.get(i));
-            data.set(key + ".food", food[i]);
             data.set(key + ".stock", stock[i]);
             data.set(key + ".since", clock);
         }
@@ -2699,7 +2987,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             int slot = productionSlot(player, entry);
             if (slot == 0) continue;
             shown.add(new String[]{entry, Integer.toString(slot)});
-            if (state.food() == 0) continue;
+            if (state.food() == 0 || data.getBoolean(craftEntryPath(player, entry) + ".away")) continue;
             working++;
             workLevels.add(Math.max(1, productionAptitude(player, entry, facility)));
             cap = Math.max(cap, state.cap());
@@ -2714,7 +3002,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             inventory.setItem(10 + Integer.parseInt(item[1]), statusIcon(petIcon(pet), pet.label,
                 "작업 중인 펫 " + working + "마리 · 개당 " + formatSeconds(perItem) + "초",
                 "먹이 " + state.food() + "/100", "생산품 " + state.stock() + "/" + state.cap(),
-                paused > 0 ? "작업 대기 중" : "배치 중"));
+                paused > 0 ? "작업 대기 중" : workerStatus(player, item[0])));
         }
         inventory.setItem(34, statusIcon(product(facility), "생산품 " + total + "개",
             total + "," + start + "," + cycle + "," + paused));
@@ -2836,6 +3124,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 : state.food() == 0 ? "먹이 부족" : "작업 중";
             List<String> details = new ArrayList<>();
             for (Facility kind : Facility.values()) {
+                if (kind.retired()) continue;
                 int level = aptitude(player, selection, kind);
                 if (level > 0) {
                     details.add(aptitudeLabel(kind) + " 적성 Lv." + level);
@@ -2862,7 +3151,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (facility == Facility.CRAFT) {
             String worker = data.getString(craftWorkerKey(player));
             inventory.setItem(13, worker == null ? statusIcon(Material.BARRIER, "배치된 펫 없음")
-                : statusIcon(petIcon(entryPet(worker)), entryPet(worker).label, "제작 적성 Lv." + craftLevel(player), "포만도 " + craftFood(player) + "/100"));
+                : statusIcon(petIcon(entryPet(worker)), entryPet(worker).label, "제작 적성 Lv." + craftLevel(player), "포만도 " + craftFood(player) + "/100", workerStatus(player, worker)));
             inventory.setItem(32, worker == null ? null : statusIcon(Material.BARRIER, "다시 선택"));
             inventory.setItem(34, town.craftJobIcon(player));
             drawStationStorage(player, holder, craftPage, craftSelection);
@@ -2873,8 +3162,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         }
         if (facility != null && facility.isProducer()) {
             int level = lumberLevel(player, facility);
-            inventory.setItem(4, level >= MAX_FACILITY_LEVEL ? statusIcon(product(facility), "Lv. " + level)
-                : statusIcon(product(facility), "Lv. " + level, TownSystems.upgradeLines(facility, level).toArray(String[]::new)));
+            inventory.setItem(4, statusIcon(product(facility), "Lv. " + level));
             inventory.setItem(32, statusIcon(Material.LEVER, lumberPause(player, facility) == 0 ? "작업 중단" : "작업 개시"));
             for (int i = 0; i < 5; i++)
                 inventory.setItem(11 + i, i < facilitySlots(level) ? null : statusIcon(Material.IRON_BARS, "잠긴 슬롯"));
@@ -3021,21 +3309,91 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args[0].equalsIgnoreCase("maps")) {
             if (!player.isOp()) return true;
             if (args.length == 2 && args[1].equalsIgnoreCase("build")) {
-                if (data.isConfigurationSection("plots")) {
-                    player.sendMessage("기존 부지가 있습니다. 새 서버의 PipiLife 데이터로 실행하세요.");
+                if (data.getBoolean("maps-ready")) {
+                    player.sendMessage("튜토리얼 맵이 이미 있습니다.");
                     return true;
                 }
-                maps.build(player, this::finishMapBuild);
-            } else if (args.length == 3 && args[1].equalsIgnoreCase("visit")
-                && Set.of("tutorial", "village").contains(args[2])) {
-                World world = maps.open(args[2].equals("tutorial") ? VillageMaps.TUTORIAL : maps.village());
+                maps.build(player, () -> { // tutorial only: the old village world is retired
+                    data.set("maps-ready", true);
+                    if (persist()) return true;
+                    data.set("maps-ready", null);
+                    return false;
+                });
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("wildstones")) {
+                String result = wildRegions.ensureStones();
+                player.sendMessage(result == null ? "워프석 블록(모드 pipifacilities)이 아직 로드되지 않았습니다." : result);
+            } else if ((args.length == 3 || args.length == 4) && args[1].equalsIgnoreCase("buildregion")) {
+                wildRegions.build(player, args[2], args.length == 4 && args[3].equalsIgnoreCase("force"));
+            } else if (args.length == 4 && args[1].equalsIgnoreCase("visit") && args[2].equalsIgnoreCase("region")) {
+                wildRegions.visit(player, args[3]);
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("buildv2")) {
+                if (data.isConfigurationSection("plots-v2")) {
+                    player.sendMessage("거주지(v2) 부지가 이미 등록돼 있습니다.");
+                    return true;
+                }
+                village2.build(player, list -> {
+                    for (Village2.Plot plot : list)
+                        data.createSection("plots-v2." + plot.name(), Map.of("x", plot.x(), "z", plot.z(), "y", plot.y(), "raised", plot.raised()));
+                    data.set("maps-v2-ready", true);
+                    if (persist()) {
+                        World built = village2.open();
+                        if (built != null) { getLogger().info(installV2Npcs(built)); scheduleGateway(0); }
+                        return true;
+                    }
+                    data.set("plots-v2", null);
+                    data.set("maps-v2-ready", null);
+                    return false;
+                });
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("warpv2")) {
+                World world = village2.open();
+                String result = world == null ? "먼저 /pipilife maps buildv2를 실행하세요."
+                    : warps == null ? "워프석 시스템이 꺼져 있습니다." : warps.ensureGateway(world, true);
+                player.sendMessage(result == null ? "워프석 블록(모드 pipifacilities)이 아직 로드되지 않았습니다." : result);
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("npcsv2")) {
+                World world = village2.open();
+                player.sendMessage(world == null ? "먼저 /pipilife maps buildv2를 실행하세요." : installV2Npcs(world));
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("builddeepdark")) {
+                if (raid == null) player.sendMessage("레이드 기능을 불러오지 못했습니다."); else raid.build(player);
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("repairdeepdark")) {
+                if (raid == null) player.sendMessage("레이드 기능을 불러오지 못했습니다."); else raid.repair(player);
+            } else if (args.length == 3 && args[1].equalsIgnoreCase("visit") && args[2].equalsIgnoreCase("deepdark")) {
+                Location spawn = raid == null ? null : raid.visitSpawn();
+                if (spawn != null) player.teleport(spawn); else player.sendMessage("먼저 /pipilife maps builddeepdark 를 실행하세요.");
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("buildtown")) {
+                townMap.build(player, () -> {
+                    data.set("maps-town-ready", true);
+                    if (!persist()) { data.set("maps-town-ready", null); return false; }
+                    World built = townMap.open();
+                    if (built != null) getLogger().info(setupTown(built));
+                    return built != null;
+                });
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("repairtown")) {
+                townMap.repair(player);
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("npcstown")) {
+                World world = townMap.open();
+                player.sendMessage(world == null ? "먼저 /pipilife maps buildtown을 실행하세요." : setupTown(world));
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("warptown")) {
+                World world = townMap.open();
+                String result = world == null ? "먼저 /pipilife maps buildtown을 실행하세요."
+                    : warps == null ? "워프석 시스템이 꺼져 있습니다." : warps.ensureTownStones(world, townMap.stones());
+                player.sendMessage(result == null ? "워프석 블록(모드 pipifacilities)이 아직 로드되지 않았습니다." : result);
+            } else if (args.length == 3 && args[1].equalsIgnoreCase("visit") && args[2].equalsIgnoreCase("town")) {
+                World world = townMap.open();
+                if (world != null) player.teleport(townMap.spawn(world));
+                else player.sendMessage("먼저 /pipilife maps buildtown을 실행하세요.");
+            } else if (args.length == 3 && args[1].equalsIgnoreCase("visit") && args[2].equalsIgnoreCase("village2")) {
+                World world = village2.open();
+                if (world != null) player.teleport(village2.spawn(world));
+                else player.sendMessage("먼저 /pipilife maps buildv2를 실행하세요.");
+            } else if (args.length == 3 && args[1].equalsIgnoreCase("visit") && args[2].equalsIgnoreCase("tutorial")) {
+                World world = maps.open(VillageMaps.TUTORIAL);
                 if (world != null && data.getBoolean("maps-ready")) player.teleport(world.getSpawnLocation());
                 else player.sendMessage("먼저 /pipilife maps build를 실행하세요.");
             } else if (args.length == 2 && args[1].equalsIgnoreCase("refresh-tutorial")) {
                 player.sendMessage(maps.refreshTutorial()
                     ? "튜토리얼 맵을 새 구성(펫 안내소)으로 갱신했습니다."
                     : "튜토리얼 맵을 찾지 못했거나 맵을 만드는 중입니다.");
-            } else player.sendMessage("/pipilife maps build · refresh-tutorial · visit <tutorial|village>");
+            } else player.sendMessage("/pipilife maps build · buildv2 · buildtown · repairtown · npcsv2 · npcstown · warpv2 · warptown · wildstones · buildregion <nw|ne|se|status> [force] · builddeepdark · repairdeepdark · refresh-tutorial · visit <tutorial|village2|town|deepdark> · visit region <nw|ne|se>");
             return true;
         }
         if (!player.getWorld().getName().equals(VillageMaps.TUTORIAL) || !data.getBoolean("maps-ready")) {
@@ -3048,8 +3406,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 player.sendMessage("§e먼저 펫 안내소의 레시를 우클릭해 첫 펫으로 데려가세요.");
                 return true;
             }
-            World town = maps.open(maps.village());
-            if (town == null || !player.teleport(town.getSpawnLocation())) {
+            Location residence = residenceSpawn();
+            if (residence == null || !player.teleport(residence)) {
                 player.sendMessage("공동 마을로 이동하지 못했습니다.");
                 return true;
             }
@@ -3061,41 +3419,6 @@ public final class PipiLife extends JavaPlugin implements Listener {
             }
         } else player.sendMessage("/pipilife finish");
         return true;
-    }
-
-    /** 맵 생성이 끝난 뒤: 부지 10개 등록, 맵 준비 완료 저장, 마을 NPC 설치. */
-    private boolean finishMapBuild() {
-        for (VillageMaps.Plot plot : VillageMaps.plots())
-            data.createSection("plots." + plot.name(), Map.of("x", plot.x(), "z", plot.z()));
-        data.set("maps-ready", true);
-        if (persist()) {
-            World village = maps.open(maps.village());
-            if (village != null) installTownNpcs(village);
-            return true;
-        }
-        data.set("plots", null);
-        data.set("maps-ready", null);
-        return false;
-    }
-
-    /** 공동 마을 기본 NPC: 상인·대장장이·연금술사(방 포함)·무기 관리인. 이미 등록된 NPC는 건드리지 않는다. */
-    private void installTownNpcs(World village) {
-        town.installMarketNpcs(village);
-        getLogger().info(town.installAlchemyRoom(village));
-        getLogger().info(armory.installNpc(village));
-    }
-
-    /**
-     * 새 서버 첫 실행: 마을·튜토리얼 월드가 둘 다 없고 부지 데이터도 없으면 맵을 자동으로 만든다.
-     * config.yml 의 auto-build-maps: false 로 끌 수 있다.
-     */
-    private void autoBuildMaps() {
-        if (!getConfig().getBoolean("auto-build-maps", true) || data.isConfigurationSection("plots") || !maps.noMaps()) return;
-        getServer().getScheduler().runTask(this, () -> {
-            if (data.getBoolean("maps-ready") || !maps.noMaps()) return;
-            getLogger().info("마을·튜토리얼 맵이 없어 자동으로 생성합니다.");
-            maps.build(Bukkit.getConsoleSender(), this::finishMapBuild);
-        });
     }
 
     @EventHandler public void tutorialJoin(PlayerJoinEvent event) {
@@ -3153,14 +3476,14 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (!(event.getWhoClicked() instanceof Player player) || !event.isLeftClick() || !canTravel(player)) return;
         int slot = event.getRawSlot();
         if (slot != 11 && slot != 13 && slot != 15) return;
-        String name = slot == 11 ? maps.village() : getConfig().getString("wild-world", WILD);
+        String name = slot == 11 ? residenceWorldName() : getConfig().getString("wild-world", WILD);
         getServer().getScheduler().runTask(this, () -> {
             if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != menu || !canTravel(player)) return;
             if (slot == 13) { player.closeInventory(); player.performCommand("pipilife home"); return; }
             World destination = maps.open(name);
             if (destination == null) { player.sendMessage("이동할 월드를 찾지 못했습니다."); return; }
             player.closeInventory();
-            if (player.teleport(destination.getSpawnLocation())) player.setFallDistance(0);
+            if (player.teleport(destination.getName().equals(Village2.WORLD) ? village2.spawn(destination) : destination.getSpawnLocation())) player.setFallDistance(0);
             else player.sendMessage("이동이 취소되었습니다.");
         });
     }
@@ -3172,7 +3495,15 @@ public final class PipiLife extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void tutorialSpawn(org.spigotmc.event.player.PlayerSpawnLocationEvent event) {
         Player player = event.getPlayer();
-        if (!data.getBoolean("maps-ready") || data.getBoolean(tutorialPath(player) + ".done")) return;
+        if (!data.getBoolean("maps-ready")) return;
+        if (data.getBoolean(tutorialPath(player) + ".done")) {
+            // logged out in the retired old village: arrive at the pipi_village2 gateway instead
+            if (event.getSpawnLocation().getWorld() != null && isLegacyVillage(event.getSpawnLocation().getWorld().getName())) {
+                Location residence = residenceSpawn();
+                if (residence != null) event.setSpawnLocation(residence);
+            }
+            return;
+        }
         World world = Bukkit.getWorld(VillageMaps.TUTORIAL);
         if (world != null && (!player.hasPlayedBefore() || !world.equals(event.getSpawnLocation().getWorld()))) {
             event.setSpawnLocation(world.getSpawnLocation());
@@ -3246,15 +3577,241 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (event.getView().getTopInventory().getHolder() instanceof StatusMenu) event.setCancelled(true);
     }
 
+    /** The player's residence plot centre (or the residence gateway when they own no plot); null when no residence world exists. */
+    Location homeFor(Player player) {
+        String plot = ownedPlot(player);
+        World hw = plot == null ? null : plotWorld(plot);
+        if (hw != null) {
+            int hx = plotX(plot) + 22, hz = plotZ(plot) + 22;
+            return new Location(hw, hx + .5, hw.getHighestBlockYAt(hx, hz) + 1, hz + .5);
+        }
+        return residenceSpawn();
+    }
+
+    /**
+     * Every death, in every world, respawns at the residence (plot centre, else the gateway); beds and respawn anchors are ignored.
+     * Exceptions: players who have not finished the tutorial keep the vanilla/tutorial respawn, and raid participants return to the raid prep room.
+     */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void respawnToResidence(PlayerRespawnEvent event) {
+        Player player = event.getPlayer();
+        if (raid != null && raid.respawn(event)) return;
+        if (!canTravel(player)) return;
+        Location home = homeFor(player);
+        if (home != null) event.setRespawnLocation(home);
+    }
+
+    // ---- one-time retirement of the old village residence (pipi_village2 replaces it) ----
+
+    /** Copies a data file to "<name>.bak-<yyyyMMdd-HHmmss>-<tag>" next to it. Returns the copy or null. */
+    File backupData(String name, String tag) {
+        File src = new File(getDataFolder(), name);
+        if (!src.isFile()) return null;
+        File dst = new File(getDataFolder(), name + ".bak-" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + "-" + tag);
+        try {
+            Files.copy(src.toPath(), dst.toPath(), StandardCopyOption.COPY_ATTRIBUTES);
+            getLogger().info("데이터 백업: " + dst.getName());
+            return dst;
+        } catch (IOException ex) {
+            getLogger().warning("데이터 백업 실패 (" + name + "): " + ex);
+            return null;
+        }
+    }
+
+    /**
+     * Runs once, when pipi_village2 is built (maps-v2-ready): backs up workshops.yml, releases every old-village plot owner
+     * (the plots section itself, with its facilities/production data, is kept untouched and only logged as orphaned) and marks
+     * the old village retired. Former owners get a fresh 땅문서 (deed) on their next join and a new warp blueprint once they own a v2 plot.
+     */
+    private void retireOldVillage() {
+        if (data.getBoolean("village-retired") || !data.getBoolean("maps-v2-ready")) return;
+        var plots = data.getConfigurationSection("plots");
+        if (plots == null) return;
+        if (backupData("workshops.yml", "village-retire") == null) {
+            getLogger().warning("옛 마을 폐쇄 마이그레이션을 건너뜁니다 (workshops.yml 백업 실패). 다음 시작 때 다시 시도합니다.");
+            return;
+        }
+        Map<String, String> released = new LinkedHashMap<>();
+        Map<String, Object> keptBlueprint = new LinkedHashMap<>();
+        for (String name : plots.getKeys(false)) {
+            String owner = plots.getString(name + ".owner");
+            if (owner == null || owner.isEmpty()) continue;
+            released.put(name, owner);
+            keptBlueprint.put(owner, data.get("tutorial." + owner + ".warp-blueprint"));
+            var section = plots.getConfigurationSection(name);
+            List<String> orphaned = new ArrayList<>();
+            if (section != null) for (String key : section.getKeys(false)) if (!Set.of("x", "z", "owner").contains(key)) orphaned.add(key);
+            getLogger().warning("[옛 마을 폐쇄] " + name + " 소유자 " + owner + " 해제. 보존된 고아 데이터: plots." + name + "." + orphaned
+                + " (삭제하지 않았습니다. 월드 폴더 '" + maps.village() + "'도 그대로입니다)");
+        }
+        for (var entry : released.entrySet()) {
+            data.set("retired-village.owners." + entry.getKey(), entry.getValue());
+            data.set("plots." + entry.getKey() + ".owner", null);
+            data.set("tutorial." + entry.getValue() + ".warp-blueprint", null);
+        }
+        data.set("village-retired", true);
+        data.set("village-retired-at", System.currentTimeMillis());
+        if (!persist()) {
+            for (var entry : released.entrySet()) {
+                data.set("plots." + entry.getKey() + ".owner", entry.getValue());
+                data.set("retired-village.owners." + entry.getKey(), null);
+                data.set("tutorial." + entry.getValue() + ".warp-blueprint", keptBlueprint.get(entry.getValue()));
+            }
+            data.set("village-retired", null);
+            data.set("village-retired-at", null);
+            getLogger().severe("옛 마을 폐쇄 상태를 저장하지 못해 되돌렸습니다.");
+            return;
+        }
+        getLogger().warning("[옛 마을 폐쇄] 완료: 소유자 " + released.size() + "명 해제 (백업: workshops.yml.bak-*-village-retire). "
+            + "해당 플레이어는 다음 접속 시 새 땅문서를 받습니다.");
+    }
+
+    /** After regions/warps exist: drop the retired village's plot regions and home waypoints (their files are backed up first). */
+    private void retireVillageAux() {
+        if (!retiredVillage()) return;
+        try {
+            if (regions != null) {
+                int removed = regions.removeWorldPlotRegions(maps.village());
+                if (removed > 0) getLogger().warning("[옛 마을 폐쇄] 부지 보호 구역 " + removed + "개 제거 (regions.yml 백업됨).");
+            }
+            if (warps != null) {
+                List<String> gone = warps.retireWorld(maps.village());
+                if (!gone.isEmpty()) getLogger().warning("[옛 마을 폐쇄] 옛 마을 웨이포인트 제거: " + gone + " (warps.yml 백업됨, 월드의 블록은 그대로).");
+            }
+        } catch (RuntimeException ex) {
+            getLogger().warning("옛 마을 정리 중 오류: " + ex);
+        }
+    }
+
+    /** Places the public "마을 입구" warp stone at the pipi_village2 plaza; retries while the mod's stone block is not registered yet. */
+    private void scheduleGateway(int attempt) {
+        getServer().getScheduler().runTaskLater(this, () -> {
+            if (warps == null) return;
+            World world = village2.open();
+            if (world == null) return;
+            String result;
+            try { result = warps.ensureGateway(world, false); }
+            catch (RuntimeException ex) { getLogger().warning("마을 입구 워프석 설치 실패: " + ex); return; }
+            if (result == null) {
+                if (attempt < 12) scheduleGateway(attempt + 1);
+                else getLogger().warning("마을 입구 워프석: 워프석 블록(모드 pipifacilities)을 찾지 못했습니다. /pipilife maps warpv2 로 다시 시도하세요.");
+            } else getLogger().info(result);
+        }, attempt == 0 ? 60L : 100L);
+    }
+
     boolean townHome(Player player) { return town.command(player, new String[]{"home"}); }
     YamlConfiguration data() { return data; }
     String villageName() { return maps.village(); }
     World openWorld(String name) { return maps.open(name); }
 
+    // ---- residence worlds: the old village ("plots.<name>") and pipi_village2 ("plots-v2.<name>", plot id "v2_<name>") ----
+    static final String V2_PREFIX = "v2_";
+
+    /** True for both residence worlds (old village world and pipi_village2). */
+    boolean isResidenceWorld(String name) {
+        return name != null && (name.equals(Village2.WORLD) || name.equals(TownMap.WORLD) || !retiredVillage() && name.equals(maps.village()));
+    }
+
+    /** The old village world after the one-time retirement (see retireOldVillage). */
+    boolean retiredVillage() { return data != null && data.getBoolean("village-retired"); }
+
+    boolean isLegacyVillage(String name) { return name != null && retiredVillage() && name.equals(maps.village()) && !name.equals(Village2.WORLD); }
+
+    /** Worlds whose terrain is protected for everyone but their plot owners: pipi_village2 plus the (retired) old village. */
+    boolean isTownWorld(String name) {
+        return name != null && (name.equals(Village2.WORLD) || name.equals(TownMap.WORLD) || name.equals(maps.village()));
+    }
+
+    String plotPath(String plot) {
+        return plot != null && plot.startsWith(V2_PREFIX) ? "plots-v2." + plot.substring(V2_PREFIX.length()) : "plots." + plot;
+    }
+
+    String plotWorldName(String plot) { return plot != null && plot.startsWith(V2_PREFIX) ? Village2.WORLD : maps.village(); }
+    World plotWorld(String plot) { return maps.open(plotWorldName(plot)); }
+    int plotX(String plot) { return data.getInt(plotPath(plot) + ".x"); }
+    int plotZ(String plot) { return data.getInt(plotPath(plot) + ".z"); }
+    String plotLabel(String plot) { return plot != null && plot.startsWith(V2_PREFIX) ? plot.substring(V2_PREFIX.length()) + "(새 거주지)" : plot; }
+
+    List<String> allPlotIds() {
+        List<String> ids = new ArrayList<>();
+        var old = retiredVillage() ? null : data.getConfigurationSection("plots");
+        if (old != null) ids.addAll(old.getKeys(false));
+        var v2 = data.getConfigurationSection("plots-v2");
+        if (v2 != null) for (String name : v2.getKeys(false)) ids.add(V2_PREFIX + name);
+        return ids;
+    }
+
+    /** Config residence-default-world: "village" (default, the old village-world) or "pipi_village2". */
+    String residenceWorldName() {
+        String configured = getConfig().getString("residence-default-world", Village2.WORLD);
+        boolean v2Exists = Bukkit.getWorld(Village2.WORLD) != null || new File(Bukkit.getWorldContainer(), Village2.WORLD + "/level.dat").isFile();
+        boolean wantsV2 = configured != null && (configured.equalsIgnoreCase(Village2.WORLD) || configured.equalsIgnoreCase("village2"));
+        if (v2Exists && (wantsV2 || retiredVillage())) return Village2.WORLD;
+        return Village2.WORLD; // the old village world is retired: pipi_village2 is the only residence
+    }
+
+    /** Where new players arrive after the tutorial / from the travel menu (null when that world is missing). */
+    Location residenceSpawn() {
+        World world = maps.open(residenceWorldName());
+        if (world == null) return null;
+        return world.getName().equals(Village2.WORLD) ? village2.spawn(world) : world.getSpawnLocation();
+    }
+
+    boolean townReady() { return data != null && data.getBoolean("maps-town-ready"); }
+
+    /** Town NPCs (market, smith, alchemist, armory) live in pipi_town once it is built; the temporary village2 plaza NPCs are removed then. */
+    String setupTown(World world) {
+        if (world == null) return "마을 월드를 찾지 못했습니다.";
+        int added = 0;
+        for (TownMap.Npc n : townMap.npcSpots()) if (town.spawnTownNpc(world, n.role(), n.x(), n.y(), n.z(), n.yaw())) added++;
+        World v2 = Bukkit.getWorld(Village2.WORLD);
+        String removed = v2 != null ? " / " + removeV2Npcs(v2) : "";
+        scheduleTownStones(0);
+        return "마을 NPC 새로 설치 " + added + "명 (이미 있는 NPC는 그대로 둡니다)" + removed;
+    }
+
+    /** Removes the temporary NPCs (and the brewing stand) from the pipi_village2 gateway plaza. */
+    String removeV2Npcs(World world) {
+        for (int cx = -2; cx <= 1; cx++) for (int cz = -2; cz <= 1; cz++) world.getChunkAt(cx, cz).load();
+        Location plaza = new Location(world, 0.5, 64, 4.5);
+        int n = 0;
+        for (String role : List.of("merchant", "npc", "alchemist", "armory")) n += town.npcs().remove(world, role, plaza, 14);
+        org.bukkit.block.Block stand = world.getBlockAt(3, 64, 5);
+        if (stand.getType() == Material.BREWING_STAND) stand.setType(Material.AIR, false);
+        return "거주지 광장의 임시 NPC " + n + "명 제거.";
+    }
+
+    /** The warp-stone system (null when it failed to start). */
+    Warps warpSystem() { return warps; }
+
+    private void scheduleTownStones(int attempt) {
+        getServer().getScheduler().runTaskLater(this, () -> {
+            if (warps == null) return;
+            World world = townMap.open();
+            if (world == null) return;
+            String result;
+            try { result = warps.ensureTownStones(world, townMap.stones()); }
+            catch (RuntimeException ex) { getLogger().warning("마을 워프석 설치 실패: " + ex); return; }
+            if (result == null) {
+                if (attempt < 12) scheduleTownStones(attempt + 1);
+                else getLogger().warning("마을 워프석: 워프석 블록(모드 pipifacilities)을 찾지 못했습니다. /pipilife maps warptown 으로 다시 시도하세요.");
+            } else getLogger().info(result);
+        }, attempt == 0 ? 80L : 100L);
+    }
+
+    /** Town NPCs (market, smith, alchemist, armory) around the pipi_village2 gateway plaza until pipi_town is built. Safe to run repeatedly. */
+    String installV2Npcs(World world) {
+        if (world == null) return "거주지(v2) 월드를 찾지 못했습니다.";
+        if (townReady()) return removeV2Npcs(world);
+        int count = town.installResidenceNpcs(world) + (armory.installNpcAt(world, -2, 5) ? 1 : 0);
+        return "거주지(v2) 광장 NPC 새로 설치 " + count + "명 (이미 있는 NPC는 그대로 둡니다).";
+    }
+
     String ownedPlot(Player player) {
-        var plots = data.getConfigurationSection("plots");
-        if (plots == null) return null;
-        for (String plot : plots.getKeys(false)) if (owns(player, plot)) return plot;
+        var plots = retiredVillage() ? null : data.getConfigurationSection("plots");
+        if (plots != null) for (String plot : plots.getKeys(false)) if (owns(player, plot)) return plot;
+        var v2 = data.getConfigurationSection("plots-v2");
+        if (v2 != null) for (String plot : v2.getKeys(false)) if (owns(player, V2_PREFIX + plot)) return V2_PREFIX + plot;
         return null;
     }
 
@@ -3267,17 +3824,12 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private void autoSetupMaps() {
         if (data.getBoolean("maps-ready")) return;
         File container = Bukkit.getWorldContainer();
-        if (!new File(container, maps.village() + "/level.dat").isFile()
-            || !new File(container, VillageMaps.TUTORIAL + "/level.dat").isFile()) return;
-        boolean addedPlots = !data.isConfigurationSection("plots");
-        if (addedPlots) for (VillageMaps.Plot plot : VillageMaps.plots())
-            data.createSection("plots." + plot.name(), Map.of("x", plot.x(), "z", plot.z()));
+        if (!new File(container, VillageMaps.TUTORIAL + "/level.dat").isFile()) return; // the old village world is retired: tutorial only
         data.set("maps-ready", true);
         if (persist()) {
-            getLogger().info("맵을 찾아 튜토리얼을 자동으로 켰습니다" + (addedPlots ? " (기본 부지 10개 등록)." : "."));
+            getLogger().info("맵을 찾아 튜토리얼을 자동으로 켰습니다.");
             return;
         }
-        if (addedPlots) data.set("plots", null);
         data.set("maps-ready", null);
         getLogger().warning("맵 자동 설정을 저장하지 못했습니다.");
     }

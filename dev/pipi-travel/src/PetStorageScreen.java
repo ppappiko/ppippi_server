@@ -81,14 +81,7 @@ final class PetStorageScreen extends ContainerScreen {
                     g.drawCenteredString(font,"방출",470,288,0xffffb0b0);
                 }
             }
-            if(state[0]<MAX_LEVEL){
-                int ly=310;
-                g.drawString(font,"레벨업 (+2페이지)",392,ly,MUTED,false);
-                for(Component line:menu.getSlot(50).getItem().getOrDefault(DataComponents.LORE,ItemLore.EMPTY).lines()){
-                    ly+=11;
-                    g.drawString(font,font.plainSubstrByWidth(line.getString(),160),392,ly,MUTED,false);
-                }
-            }
+            // level-up cost/effect is shown only in the confirm window after pressing 레벨업
             if(confirming){
                 g.pose().translate(0,0,400);
                 g.fill(0,0,W,H,0xaa000000);

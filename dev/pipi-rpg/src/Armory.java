@@ -260,7 +260,7 @@ final class Armory implements Listener {
     }
 
     private boolean spawnNpc(Player player) {
-        if (!player.getWorld().getName().equals(plugin.villageName())) { player.sendMessage("공동 마을에서 관리자만 설치할 수 있습니다."); return true; }
+        if (!plugin.isResidenceWorld(player.getWorld().getName())) { player.sendMessage("공동 마을에서 관리자만 설치할 수 있습니다."); return true; }
         if (npcs.exists(player.getWorld(), "armory", player.getLocation())) { player.sendMessage("무기 관리인은 이미 등록되어 있습니다."); return true; }
         player.getWorld().spawn(player.getLocation(), org.bukkit.entity.Villager.class, npc -> {
             npc.setCustomName("무기 관리인");
@@ -275,18 +275,14 @@ final class Armory implements Listener {
         return true;
     }
 
-    /** 공동 마을 대장간 정자 안(대장장이 오른쪽)의 무기 관리인 자리. */
-    static final double NPC_X = 28.5, NPC_Z = 12.5;
-
-    /** 맵 생성 직후·서버 시작 시: 무기 관리인이 등록돼 있지 않으면 대장간 정자 안에 세운다. */
-    String installNpc(World world) {
-        Location at = new Location(world, NPC_X, 64, NPC_Z, 180, 0);
-        at.getChunk().load();
-        if (npcs.exists(world, "armory", at)) return "무기 관리인이 이미 설치되어 있습니다.";
-        if (!at.getBlock().isPassable() || !at.clone().add(0, 1, 0).getBlock().isPassable()
-            || !at.clone().add(0, -1, 0).getBlock().getType().isSolid())
-            return "무기 관리인 자리(X 28, Y 64, Z 12)가 막혀 있어 설치하지 못했습니다. /pipilife armory npc 로 직접 세우세요.";
-        world.spawn(at, org.bukkit.entity.Villager.class, npc -> {
+    /** Places the armory manager at a plaza spot (pipi_village2) unless one is already registered for that world. */
+    boolean installNpcAt(org.bukkit.World world, int x, int z) {
+        org.bukkit.Location location = new org.bukkit.Location(world, x + .5, 64, z + .5, 180, 0);
+        location.getChunk().load();
+        if (npcs.exists(world, "armory", location)) return false;
+        if (!location.getBlock().isPassable() || !location.clone().add(0, 1, 0).getBlock().isPassable()
+            || !location.clone().add(0, -1, 0).getBlock().getType().isSolid()) return false;
+        world.spawn(location, org.bukkit.entity.Villager.class, npc -> {
             npc.setCustomName("무기 관리인");
             npc.setCustomNameVisible(true);
             npc.setProfession(org.bukkit.entity.Villager.Profession.WEAPONSMITH);
@@ -295,7 +291,7 @@ final class Armory implements Listener {
             npc.setPersistent(true);
             npcs.register(npc, "armory");
         });
-        return "대장간에 무기 관리인을 설치했습니다.";
+        return true;
     }
 
     @EventHandler(ignoreCancelled = true)

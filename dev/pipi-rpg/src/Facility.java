@@ -61,6 +61,18 @@ enum Facility {
         || this == AMBER_QUARRY || this == CABBAGE_FARM || this == REDWOOD_LUMBER; }
 
     /** Facilities that exist as items/blocks but whose function is not implemented yet. */
+    /** Retired facilities: no blueprint/recipe/placement any more; already placed ones can still be dismantled (refunded as {@link #refund()}). */
+    boolean retired() { return this == CARROT_FARM || this == POTATO_FARM || this == GOLD_MINE; }
+
+    /** Blueprint facility handed back for a retired facility (itself when not retired). */
+    Facility refund() {
+        return switch (this) {
+            case CARROT_FARM, POTATO_FARM -> FARM;
+            case GOLD_MINE -> MINE;
+            default -> this;
+        };
+    }
+
     boolean comingSoon() { return this == RANCH; }
 
     static long duration(long base, int level) {

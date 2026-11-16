@@ -19,7 +19,7 @@ final class CraftScreen extends ContainerScreen {
     static final String TITLE = "삐삐서버 · 기본 작업대";
     static final String LUMBER_TITLE = "삐삐서버 · 벌목장";
     static boolean isProductionTitle(String title) {
-        return java.util.Set.of(LUMBER_TITLE, "삐삐서버 · 밀 농장", "삐삐서버 · 당근 농장", "삐삐서버 · 감자 농장", "삐삐서버 · 철광석 채석장", "삐삐서버 · 금광석 채석장", "삐삐서버 · 다이아 채석장").contains(title);
+        return java.util.Set.of(LUMBER_TITLE, "삐삐서버 · 밀 농장", "삐삐서버 · 철광석 채석장", "삐삐서버 · 금광석 채석장", "삐삐서버 · 다이아 채석장").contains(title);
     }
     private final boolean lumber;
     private final String facilityTitle;
@@ -146,14 +146,7 @@ final class CraftScreen extends ContainerScreen {
         String level = name(item(4));
         g.drawString(font, level, 391, 58, CYAN, false);
         button(g, 435, 53, 81, 19, level.equals("Lv. 3") ? "최대 레벨" : "레벨업", x, y, !level.equals("Lv. 3"));
-        if (!level.equals("Lv. 3")) {
-            int costY = 76;
-            for (String costLine : lore(item(4))) {
-                if (costY > 94) break;
-                g.drawString(font, costLine, 391, costY, MUTED, false);
-                costY += 10;
-            }
-        }
+        // upgrade cost/effect is shown only in the confirm window opened by 레벨업
         for (int i = 0; i < 5; i++) {
             int px = 212 + i * 61;
             ItemStack pet = item(11 + i);
@@ -277,8 +270,7 @@ final class CraftScreen extends ContainerScreen {
         }
         String timing = level == 0 || perItem <= 0 ? "제작 예상 시간  —" : "제작 예상 시간  " + duration(perItem * count);
         g.drawCenteredString(font, timing, 361, 291, CYAN);
-        button(g, 205, 311, 150, 24, "다시 선택", x,y,assigned);
-        button(g, 362, 311, 154, 24, "제작", x,y,assigned && !target.isEmpty());
+        button(g, 283, 311, 154, 24, "제작", x,y,assigned && !target.isEmpty());
     }
 
     private void drawPetInfo(GuiGraphics g, int x, int y) {
@@ -293,10 +285,6 @@ final class CraftScreen extends ContainerScreen {
             for(var row:font.split(Component.literal(text),109)){if(lineY>265)break;g.drawString(font,row,587,lineY,MUTED,false);lineY+=12;}
         }
         if(!item(25).isEmpty())wrapped(g,name(item(25)),587,278,109,CYAN,1);
-        if(!lumber&&item(34).isEmpty()){
-            button(g,587,292,109,18,"먹이 넣기",x,y,true);
-            if(menu.getCarried().isEmpty())button(g,587,315,109,20,"제작대에 배치",x,y,!item(21).isEmpty());
-        }
     }
     private void wrapped(GuiGraphics g,String text,int x,int y,int width,int color,int maxLines){int n=0;for(var line:font.split(Component.literal(text),width)){if(n++>=maxLines)break;g.drawString(font,line,x,y,color,false);y+=12;}}
 
@@ -443,8 +431,6 @@ final class CraftScreen extends ContainerScreen {
                     return true;
                 }
             }
-            if (hit(x,y,587,315,109,20) && !item(21).isEmpty()) command("assign");
-            else if (hit(x,y,587,292,109,18)) command("feed");
             return true;
         }
         if (hit(x,y,205,133,311,24)) { recipe = -1; return true; }        if (hit(x,y,213,266,296,18)) { sliding=true; slider(x); return true; }
@@ -452,10 +438,7 @@ final class CraftScreen extends ContainerScreen {
         else if (hit(x,y,244,239,23,22)) change(-1);
         else if (hit(x,y,455,239,23,22)) change(1);
         else if (hit(x,y,482,239,27,22)) change(10);
-        else if (hit(x,y,205,311,150,24) && item(34).isEmpty()) command("release");
-        else if (hit(x,y,587,315,109,20) && item(34).isEmpty() && !item(21).isEmpty()) command("assign");
-        else if (hit(x,y,587,292,109,18) && item(34).isEmpty()) command("feed");
-        else if (hit(x,y,362,311,154,24)) {
+        else if (hit(x,y,283,311,154,24)) {
             if (item(34).isEmpty()) {
                 if (workerLevel(item(13)) > 0 && !item(RECIPES[recipe]).isEmpty() && request())
                     minecraft.getConnection().sendCommand("pipilife process batch " + RECIPES[recipe] + " " + count);

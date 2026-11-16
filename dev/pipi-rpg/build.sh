@@ -46,6 +46,8 @@ javac --release 21 -proc:none -encoding UTF-8 -nowarn -cp "$CP" -d "$TMP/classes
 rm -f "$TMP"/jar/dev/pipi/life/*.class
 mkdir -p "$TMP/jar/dev/pipi/life"
 cp -r "$TMP/classes/." "$TMP/jar/"
+# bundled resources (e.g. village2_layout.json)
+[ -d "$REPO/dev/pipi-rpg/res" ] && cp -r "$REPO/dev/pipi-rpg/res/." "$TMP/jar/"
 
 YML="$TMP/jar/plugin.yml"
 OLD="$(grep -m1 -oE '^version: *[0-9]+\.[0-9]+\.[0-9]+' "$YML" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"

@@ -1,3 +1,113 @@
+village-world: village
+raid:
+  deepdark:
+    vote-seconds: 15
+    vanilla-bossbar: false
+    enabled: true
+    max-players: 4
+    auto-start: true
+    countdown-seconds: 5
+    prep-timeout-minutes: 20
+    time-limit-minutes: 25
+    hp:
+      base: 500000
+      per-extra-player: 150000
+    threshold:
+      p2: 35
+      gate: 70
+    rage:
+      per-hit: 1
+    scale: 3.0
+    move-speed: 0.28
+    darkness:
+      enabled: false
+      radius: 20
+      interval-ticks: 120
+      duration-ticks: 100
+    damage:
+      multiplier: 1.0
+      enrage-multiplier: 1.25
+      sonic: 28
+      slam: 22
+      charge: 55
+      survive: 20
+    attack:
+      interval-ticks: 40
+    sonic:
+      radius: 7.0
+      telegraph-ticks: 28
+    slam:
+      range: 11.0
+      half-angle: 55
+      windup-ticks: 10
+      gap-ticks: 20
+      chain-ticks: 4
+      target-range: 10.0
+      run-speed: 0.55
+      run-stop-range: 7.0
+      run-max-ticks: 80
+    charge:
+      windup-ticks: 100
+      lock-ticks: 20
+      speed: 2.0
+      pillar-radius: 24
+      pillar-height: 9
+    groggy:
+      ticks: 200
+      damage-multiplier: 1.5
+    orbs:
+      count: 10
+      min-radius: 6
+      max-radius: 32
+      pickup-radius: 1.7
+    heartbeat:
+      spacing-ticks: 26
+      volume: 2.5
+      pitch: 0.85
+      custom-sound:
+        '1': ''
+        '2': ''
+        '3': ''
+        '4': ''
+        '5': ''
+        '6': ''
+        '7': ''
+        '8': ''
+        '9': ''
+        '10': ''
+      custom-ticks:
+        '1': 100
+        '2': 100
+        '3': 100
+        '4': 100
+        '5': 100
+        '6': 100
+        '7': 100
+        '8': 100
+        '9': 100
+        '10': 100
+    sonic-charge-seconds: 20
+    regen-per-second: 10
+    reward:
+      gold: 260000
+      steel: 60
+      soul-stone: 1
+      level-vouchers: 5
+      auction-skillbooks:
+      - 어둠 가르기
+      - 정적의 화살
+      - 공명 폭발
+      - 심연의 방벽
+      - 고요한 질주
+    auction:
+      step: 55
+      start: 55
+      solo-start-first: 200000
+      solo-start-other: 1000000
+      lot-seconds: 20
+      extend-seconds: 10
+      gap-seconds: 3
+      accessory-count: 1
 hourly-sale-limit-per-pet: 16
 food-cleared-floor-objective: pipi_cleared_floor
 combat:
@@ -52,10 +162,9 @@ combat:
     tower_10:
       item-level: 550
 wild-world: world
-village-world: village
-# 새 서버 첫 실행 때 마을·튜토리얼 월드가 둘 다 없으면 자동으로 생성합니다 (상인·대장장이·연금술사·무기 관리인 포함).
-auto-build-maps: true
-# 야생 월드의 네더. 비워두면 자동으로 village·pipi_tutorial을 제외한 첫 네더 월드를 사용합니다.
+# 거주지(튜토리얼 완료 후 도착 · 공동 마을 이동 메뉴 · 리스폰)로 쓰는 월드. 옛 village는 폐쇄되었습니다.
+residence-default-world: pipi_village2
+# 야생 월드의 네더. 비워두면 자동으로 pipi_tutorial 등을 제외한 첫 네더 월드를 사용합니다.
 wild-nether-world: ''
 # 야생 펫 스폰 설정
 pet-spawn:
@@ -94,3 +203,5 @@ resource-nodes:
   tree-respawn-seconds: 600
   # 양배추를 캔 뒤 다시 자라기까지 (초). 600 = 10분
   cabbage-respawn-seconds: 600
+# MythicMobs 예제 몹(Skeleton King / Skeletal Knight / Skeletal Minion)이 나오면 1틱 뒤 제거합니다.
+block-example-mythic-mobs: true

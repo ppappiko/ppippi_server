@@ -16,6 +16,10 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 public final class PipiTravel {
     public PipiTravel(IEventBus bus) {
         bus.addListener(this::registerHud);
+        bus.addListener((net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent e) -> { e.register(WarpScreen.VIEW_KEY); e.register(HudInfo.OBJECTIVE_KEY); e.register(RaidHud.YES_KEY); e.register(RaidHud.NO_KEY); e.register(PartyHud.TOGGLE_KEY); });
+        NeoForge.EVENT_BUS.addListener(WarpScreen::keyTick);
+        bus.addListener(ArmorIcons::register);
+        bus.addListener(PipiArmor::registerReload);
         NeoForge.EVENT_BUS.addListener(CombatBar::receiveCooldown);
         NeoForge.EVENT_BUS.addListener(CombatBar::layerPre);
         NeoForge.EVENT_BUS.addListener(HudBar::receive);
@@ -27,6 +31,14 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(HudBar::layerPost);
         NeoForge.EVENT_BUS.addListener(HudInfo::receive);
         NeoForge.EVENT_BUS.addListener(HudInfo::key);
+        NeoForge.EVENT_BUS.addListener(RaidHud::receive);
+        NeoForge.EVENT_BUS.addListener(RaidHud::key);
+        NeoForge.EVENT_BUS.addListener(RaidHud::layerPre);
+        NeoForge.EVENT_BUS.addListener(AuctionScreen::receive);
+        NeoForge.EVENT_BUS.addListener(AuctionScreen::clientTick);
+        NeoForge.EVENT_BUS.addListener(PartyHud::receive);
+        NeoForge.EVENT_BUS.addListener(PartyHud::key);
+        NeoForge.EVENT_BUS.addListener(WarpScreen::receive);
         NeoForge.EVENT_BUS.addListener(CaptureInput::tick);
         NeoForge.EVENT_BUS.addListener(CaptureInput::receive);
         NeoForge.EVENT_BUS.addListener(BragChat::receive);
@@ -64,7 +76,7 @@ public final class PipiTravel {
                 event.getCurrentScreen() instanceof ShopScreen shop ? shop : null));
         else if (AlchemyScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new AlchemyScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
-        else if (WarpScreen.TITLE.equals(incoming.getTitle().getString()))
+        else if (WarpScreen.TITLE.equals(incoming.getTitle().getString()) || WarpScreen.VIEW_TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new WarpScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (CookingScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new CookingScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
@@ -88,6 +100,8 @@ public final class PipiTravel {
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "capture_aim"), (graphics, delta) -> CaptureInput.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "combat_bar"), (graphics, delta) -> HudBar.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "hud_info"), (graphics, delta) -> HudInfo.draw(graphics));
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "party_list"), (graphics, delta) -> PartyHud.draw(graphics));
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "raid_hud"), (graphics, delta) -> RaidHud.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "menu_bar"), (graphics, delta) -> {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null && client.level != null && !client.options.hideGui
@@ -100,7 +114,7 @@ public final class PipiTravel {
         return screen instanceof PipiMenu || screen instanceof ResearchScreen || screen instanceof CraftScreen || screen instanceof PetStorageScreen
             || screen instanceof ForgeScreen || screen instanceof AlchemyScreen || screen instanceof CookingScreen || screen instanceof InheritScreen
             || screen instanceof ShopScreen || screen instanceof UpgradeScreen || screen instanceof CharacterScreen || screen instanceof PetMarketScreen
-            || screen instanceof FoodStorageScreen || screen instanceof WarpScreen || screen instanceof UpgradeConfirmScreen || screen instanceof ArmoryScreen || screen instanceof SmeltScreen || screen instanceof TradeScreen;
+            || screen instanceof FoodStorageScreen || screen instanceof WarpScreen || screen instanceof UpgradeConfirmScreen || screen instanceof ArmoryScreen || screen instanceof SmeltScreen || screen instanceof TradeScreen || screen instanceof AuctionScreen;
     }
 
     static void drawBar(GuiGraphics graphics, boolean expanded) {
