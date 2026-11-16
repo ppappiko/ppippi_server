@@ -29,11 +29,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 /** Warp stones: admin-registered waypoints, per-player activation, chest-menu map for the client WarpScreen. */
 final class Warps implements Listener {
     static final String TITLE = "삐삐서버 · 웨이포인트";
+    static final String VIEW_TITLE = TITLE + " (보기)";
     static final String VILLAGE_CATEGORY = "마을";
-    private static final Set<String> SUB = Set.of("create", "remove", "list", "rename", "category", "move", "go", "home", "menu");
+    private static final Set<String> SUB = Set.of("create", "remove", "list", "rename", "category", "move", "go", "home", "menu", "view");
 
     private static final class Menu implements InventoryHolder {
         final String[] ids = new String[45];
+        boolean view; // view-only session (opened by /pipilife warp view): never allowed to teleport
         Inventory inv;
         @Override public Inventory getInventory() { return inv; }
     }
@@ -65,6 +67,9 @@ final class Warps implements Listener {
         }
         return stoneType;
     }
+
+    /** True once the mod's warp-stone block is registered. */
+    boolean stoneAvailable() { return stone() != null; }
 
     private boolean save() {
         try { cfg.save(file); return true; }
@@ -115,7 +120,21 @@ final class Warps implements Listener {
 
     private boolean unlocked(Player p, String id) {
         if (restricted(id)) return owner(p, id);
-        return VILLAGE_CATEGORY.equals(category(id)) || cfg.getStringList("players." + p.getUniqueId()).contains(id);
+        return VILLAGE_CATEGORY.equals(category(id)) || isPublic(id) || cfg.getStringList("players." + p.getUniqueId()).contains(id);
+    }
+
+    /** Public waypoints (warps.<id>.public: true) are unlocked for everybody and registered on join. */
+    private boolean isPublic(String id) { return cfg.getBoolean("warps." + id + ".public"); }
+
+    @EventHandler
+    public void registerPublicOnJoin(org.bukkit.event.player.PlayerJoinEvent e) { registerPublic(e.getPlayer()); }
+
+    private void registerPublic(Player p) {
+        String key = "players." + p.getUniqueId();
+        List<String> list = new ArrayList<>(cfg.getStringList(key));
+        boolean changed = false;
+        for (String id : ids()) if (isPublic(id) && !restricted(id) && !list.contains(id)) { list.add(id); changed = true; }
+        if (changed) { cfg.set(key, list); save(); }
     }
 
     // ---- residence warp stones (owner-only waypoints) ----
@@ -197,12 +216,165 @@ final class Warps implements Listener {
         } catch (RuntimeException ignored) { }
     }
 
+    // ---- retired old village + public gateway stone ----
+    static final String GATE_ID = "village_gate";
+    private static final int[][] GATE_SPOTS = {{0, 64, 6}, {1, 64, 6}, {-1, 64, 6}, {0, 64, 7}};
+
+    /** Removes every waypoint registered in a retired world (warps.yml is backed up first). Returns the removed ids. */
+    List<String> retireWorld(String world) {
+        List<String> gone = new ArrayList<>();
+        for (String id : ids()) if (world.equals(cfg.getString("warps." + id + ".world"))) gone.add(id);
+        if (gone.isEmpty()) return gone;
+        plugin.backupData("warps.yml", "village-retire");
+        for (String id : gone) cfg.set("warps." + id, null);
+        save();
+        return gone;
+    }
+
+    /**
+     * Public waypoint "마을 입구" (category 마을: unlocked for everybody) with its warp stone next to the NPCs on the
+     * pipi_village2 gateway plaza. Idempotent; {@code force} re-registers it at the default spot (moving an old stone).
+     * Returns a message, or null when the mod's stone block is not registered yet (caller may retry).
+     */
+    String ensureGateway(World world, boolean force) {
+        Material m = stone();
+        if (m == null) return null;
+        if (world == null) return "거주지(v2) 월드를 찾지 못했습니다.";
+        if (has(GATE_ID) && !force) {
+            Location at = stoneLocation(GATE_ID);
+            if (at == null) return "마을 입구 워프석의 월드를 불러오지 못했습니다.";
+            at.getChunk().load();
+            if (at.getBlock().getType() == m) return "마을 입구 워프석은 이미 있습니다.";
+            at.getBlock().setType(m, false);
+            applyFacing(at.getBlock(), at.getYaw());
+            return "마을 입구 워프석 블록을 복구했습니다.";
+        }
+        Block spot = null;
+        for (int[] c : GATE_SPOTS) {
+            Block b = world.getBlockAt(c[0], c[1], c[2]);
+            b.getChunk().load();
+            boolean free = b.getType().isAir() || b.isPassable() && !b.isLiquid() || b.getType() == m;
+            if (free && b.getRelative(BlockFace.DOWN).getType().isSolid()) { spot = b; break; }
+        }
+        if (spot == null) return "광장에 워프석을 놓을 빈 자리가 없습니다.";
+        if (has(GATE_ID)) {
+            Location old = stoneLocation(GATE_ID);
+            if (old != null && isProtected(old.getBlock())) old.getBlock().setType(Material.AIR, false);
+        }
+        String path = "warps." + GATE_ID;
+        cfg.set(path + ".world", world.getName());
+        cfg.set(path + ".x", spot.getX());
+        cfg.set(path + ".y", spot.getY());
+        cfg.set(path + ".z", spot.getZ());
+        cfg.set(path + ".yaw", 180.0);
+        cfg.set(path + ".category", VILLAGE_CATEGORY);
+        cfg.set(path + ".name", "마을 입구");
+        cfg.set(path + ".owners", null);
+        if (!save()) return "warps.yml 저장 실패.";
+        spot.setType(m, false);
+        applyFacing(spot, 180f);
+        return "마을 입구 워프석을 설치했습니다 (" + spot.getX() + ", " + spot.getY() + ", " + spot.getZ() + ").";
+    }
+
+    /**
+     * pipi_town waypoints (plaza + one per building), all in category 마을 so they are unlocked for everybody.
+     * Idempotent: missing ones are registered, existing ones only get their stone block restored.
+     * Returns a message, or null when the mod's stone block is not registered yet (caller may retry).
+     */
+    String ensureTownStones(World world, List<TownMap.Stone> stones) {
+        Material m = stone();
+        if (m == null) return null;
+        if (world == null) return "마을 월드를 찾지 못했습니다.";
+        int added = 0, fixed = 0;
+        for (TownMap.Stone s : stones) {
+            Block b = world.getBlockAt(s.x(), s.y(), s.z());
+            b.getChunk().load();
+            String path = "warps." + s.id();
+            if (!has(s.id())) {
+                cfg.set(path + ".world", world.getName());
+                cfg.set(path + ".x", s.x());
+                cfg.set(path + ".y", s.y());
+                cfg.set(path + ".z", s.z());
+                cfg.set(path + ".yaw", (double) s.yaw());
+                cfg.set(path + ".category", VILLAGE_CATEGORY);
+                cfg.set(path + ".name", s.name());
+                cfg.set(path + ".owners", null);
+                if (!save()) { cfg.set(path, null); return "warps.yml 저장 실패."; }
+                b.setType(m, false);
+                applyFacing(b, s.yaw());
+                added++;
+            } else if (b.getType() != m && world.getName().equals(cfg.getString(path + ".world"))) {
+                b.setType(m, false);
+                applyFacing(b, s.yaw());
+                fixed++;
+            }
+        }
+        return "마을 워프석: 새로 등록 " + added + "개, 복구 " + fixed + "개 (전체 " + stones.size() + "개).";
+    }
+
+    /**
+     * Waypoints of a wild map. {@code pub}: registered with {@code public: true} so every player has them unlocked (and gets
+     * them added to their list on join); otherwise a normal waypoint that a player registers the first time they right-click
+     * the stone ({@link #interact}). Idempotent like {@link #ensureTownStones}: missing ones are registered and placed, existing
+     * ones only get their stone block restored. Null when the mod's stone block is not registered yet.
+     */
+    String ensureWildStones(World world, List<TownMap.Stone> stones, String category, boolean pub) {
+        Material m = stone();
+        if (m == null) return null;
+        if (world == null) return category + " 월드를 찾지 못했습니다.";
+        int added = 0, fixed = 0;
+        for (TownMap.Stone s : stones) {
+            Block b = world.getBlockAt(s.x(), s.y(), s.z());
+            b.getChunk().load();
+            String path = "warps." + s.id();
+            if (!has(s.id())) {
+                cfg.set(path + ".world", world.getName());
+                cfg.set(path + ".x", s.x());
+                cfg.set(path + ".y", s.y());
+                cfg.set(path + ".z", s.z());
+                cfg.set(path + ".yaw", (double) s.yaw());
+                cfg.set(path + ".category", category);
+                cfg.set(path + ".name", s.name());
+                cfg.set(path + ".owners", null);
+                cfg.set(path + ".public", pub ? true : null);
+                if (!save()) { cfg.set(path, null); return "warps.yml 저장 실패."; }
+                b.setType(m, false);
+                applyFacing(b, s.yaw());
+                added++;
+            } else if (b.getType() != m && world.getName().equals(cfg.getString(path + ".world"))) {
+                b.setType(m, false);
+                applyFacing(b, s.yaw());
+                fixed++;
+            }
+        }
+        if (pub) {
+            List<String> ids = new ArrayList<>();
+            for (TownMap.Stone s : stones) ids.add(s.id());
+            makePublic(ids); // existing entries too; registers everybody online
+        }
+        return category + " 워프석: 새로 등록 " + added + "개, 복구 " + fixed + "개 (전체 " + stones.size() + "개" + (pub ? ", 모든 플레이어 등록)." : ", 처음 우클릭할 때 등록).");
+    }
+
+    /**
+     * Marks the existing waypoints among {@code ids} {@code public: true} (missing ids are skipped) and registers every public
+     * waypoint for all online players (players joining later get them via {@link #registerPublicOnJoin}). Returns how many
+     * entries were switched to public.
+     */
+    int makePublic(java.util.Collection<String> ids) {
+        List<String> changed = new ArrayList<>();
+        for (String id : ids) if (has(id) && !isPublic(id) && !restricted(id)) { cfg.set("warps." + id + ".public", true); changed.add(id); }
+        if (!changed.isEmpty() && !save()) { for (String id : changed) cfg.set("warps." + id + ".public", null); return 0; }
+        for (Player online : Bukkit.getOnlinePlayers()) registerPublic(online);
+        return changed.size();
+    }
+
     // ---- commands ----
     boolean command(Player p, String[] args) {
         String sub = args[1].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "home": return home(p);
             case "menu": return open(p, null);
+            case "view": return open(p, null, true);
             case "go":
                 if (args.length < 3) return tell(p, "/pipilife warp go <id>");
                 return go(p, args[2]);
@@ -287,7 +459,7 @@ final class Warps implements Listener {
         List<String> out = new ArrayList<>();
         boolean adm = s.isOp() || s.hasPermission("pipilife.admin");
         if (args.length == 2) {
-            out.addAll(List.of("go", "home", "menu"));
+            out.addAll(List.of("go", "home", "menu", "view"));
             if (adm) out.addAll(List.of("create", "remove", "list", "rename", "category", "move"));
         } else if (args.length == 3) {
             String sub = args[1].toLowerCase(Locale.ROOT);
@@ -314,7 +486,10 @@ final class Warps implements Listener {
         Location stone = stoneLocation(id);
         if (stone == null) return tell(p, "웨이포인트의 월드를 불러오지 못했습니다.");
         Location dest = safeSpot(stone);
-        if (dest == null) return tell(p, "도착 공간이 막혀 있습니다.");
+        if (dest == null) {
+            plugin.getLogger().warning("warp " + id + ": no standing spot near " + stone.getWorld().getName() + " " + stone.getBlockX() + " " + stone.getBlockY() + " " + stone.getBlockZ());
+            return tell(p, "도착 공간이 막혀 있습니다.");
+        }
         cooldown.put(p.getUniqueId(), now);
         p.closeInventory();
         if (!p.teleport(dest)) return tell(p, "이동이 취소되었습니다.");
@@ -323,33 +498,96 @@ final class Warps implements Listener {
         return true;
     }
 
+    private static boolean hazard(Material m) {
+        return switch (m) {
+            case FIRE, SOUL_FIRE, LAVA, CACTUS, MAGMA_BLOCK, CAMPFIRE, SOUL_CAMPFIRE, SWEET_BERRY_BUSH, WITHER_ROSE, POWDER_SNOW, COBWEB, BAMBOO_SAPLING -> true;
+            default -> false;
+        };
+    }
+
+    /** Standing room: passable, dry, harmless feet and head space. */
+    private static boolean room(Block b) {
+        return b.isPassable() && !b.isLiquid() && !hazard(b.getType());
+    }
+
+    /** Floor test by collision (not Material.isSolid, which is false for end rods, slabs-on-edges, lanterns ...). */
+    private static boolean floor(Block b) {
+        return !b.isPassable() && !b.isLiquid() && !hazard(b.getType());
+    }
+
+    /**
+     * A free standing spot around the stone: nearest ring around 2 blocks away first (the stone's front preferred),
+     * out to 4 blocks, then on top of the stone itself. Null only when nothing within reach has headroom and a floor.
+     */
     private Location safeSpot(Location stone) {
         double rad = Math.toRadians(stone.getYaw());
         double fx = -Math.sin(rad), fz = Math.cos(rad); // direction the stone faces
-        double[][] dirs = {{fx, fz}, {fz, -fx}, {-fz, fx}, {-fx, -fz}};
         World w = stone.getWorld();
-        for (double[] d : dirs) {
-            int bx = stone.getBlockX() + (int) Math.round(d[0] * 2), bz = stone.getBlockZ() + (int) Math.round(d[1] * 2);
+        int sx = stone.getBlockX(), sy = stone.getBlockY(), sz = stone.getBlockZ();
+        List<int[]> offsets = new ArrayList<>();
+        for (int dx = -4; dx <= 4; dx++) for (int dz = -4; dz <= 4; dz++) if (dx != 0 || dz != 0) offsets.add(new int[] {dx, dz});
+        offsets.sort(Comparator.comparingDouble((int[] o) -> Math.abs(Math.sqrt(o[0] * o[0] + o[1] * o[1]) - 2.0)
+            - 0.01 * (o[0] * fx + o[1] * fz) / Math.max(1.0, Math.sqrt(o[0] * o[0] + o[1] * o[1]))));
+        for (int[] o : offsets) {
+            int bx = sx + o[0], bz = sz + o[1];
             for (int dy = 1; dy >= -2; dy--) {
-                Block feet = w.getBlockAt(bx, stone.getBlockY() + dy, bz);
-                if (feet.isPassable() && !feet.isLiquid() && feet.getRelative(0, 1, 0).isPassable()
-                    && feet.getRelative(0, -1, 0).getType().isSolid()) {
-                    float yaw = (float) Math.toDegrees(Math.atan2(-d[0], d[1]));
+                Block feet = w.getBlockAt(bx, sy + dy, bz);
+                if (room(feet) && room(feet.getRelative(0, 1, 0)) && floor(feet.getRelative(0, -1, 0))) {
+                    float yaw = (float) Math.toDegrees(Math.atan2(-o[0], o[1]));
                     return new Location(w, bx + .5, feet.getY(), bz + .5, yaw, 0);
                 }
             }
         }
+        Block top = w.getBlockAt(sx, sy + 1, sz);
+        if (room(top) && room(top.getRelative(0, 1, 0))) return new Location(w, sx + .5, sy + 1, sz + .5, stone.getYaw(), 0);
         return null;
     }
 
+    // ---- residence plot data for the client map: PIPI_PLOTS:<world>;<size>;<name>,<x>,<z>,<ownerName>|... ----
+    static final String PLOT_WORLD = "pipi_village2";
+    private static final int PLOT_SIZE = 44;
+
+    /** Hidden line with every plots-v2 plot (min corner, size, owner name or empty). Names resolve via Bukkit.getOfflinePlayer. */
+    void sendPlots(Player p) {
+        var plots = plugin.data().getConfigurationSection("plots-v2");
+        if (plots == null) return;
+        StringBuilder sb = new StringBuilder("PIPI_PLOTS:" + PLOT_WORLD + ";" + PLOT_SIZE + ";");
+        boolean first = true;
+        for (String name : plots.getKeys(false)) {
+            String uuid = plots.getString(name + ".owner");
+            String owner = "";
+            if (uuid != null && !uuid.isEmpty()) {
+                owner = "주인";
+                try {
+                    String n = Bukkit.getOfflinePlayer(UUID.fromString(uuid)).getName();
+                    if (n != null) owner = n;
+                } catch (IllegalArgumentException ignored) { }
+                owner = owner.replaceAll("[,|;]", "");
+            }
+            if (!first) sb.append('|');
+            first = false;
+            sb.append(name).append(',').append(plots.getInt(name + ".x")).append(',').append(plots.getInt(name + ".z")).append(',').append(owner);
+        }
+        p.sendMessage(sb.toString());
+    }
+
+    /** Re-sends the plot list to everyone who currently has the warp map open (call after a plot is claimed). */
+    void refreshPlots() {
+        for (Player p : Bukkit.getOnlinePlayers())
+            if (p.getOpenInventory().getTopInventory().getHolder() instanceof Menu) sendPlots(p);
+    }
+
     // ---- menu ----
-    private boolean open(Player p, String here) {
+    private boolean open(Player p, String here) { return open(p, here, false); }
+
+    private boolean open(Player p, String here, boolean view) {
         List<String> order = new ArrayList<>(ids());
         order.removeIf(id -> !visible(p, id));
         order.sort(Comparator.comparing((String id) -> VILLAGE_CATEGORY.equals(category(id)) ? 0 : 1)
             .thenComparing(this::category).thenComparing(this::name));
         Menu menu = new Menu();
-        menu.inv = Bukkit.createInventory(menu, 54, TITLE);
+        menu.view = view;
+        menu.inv = Bukkit.createInventory(menu, 54, view ? VIEW_TITLE : TITLE);
         for (int i = 0; i < order.size() && i < 45; i++) {
             String id = order.get(i);
             boolean open = unlocked(p, id);
@@ -363,17 +601,34 @@ final class Warps implements Listener {
             menu.inv.setItem(i, it);
             menu.ids[i] = id;
         }
+        if (view) {
+            Location l = p.getLocation();
+            ItemStack me = new ItemStack(Material.COMPASS);
+            ItemMeta mm = me.getItemMeta();
+            mm.setDisplayName("내 위치");
+            mm.setLore(List.of("me|" + l.getWorld().getName() + "|" + l.getBlockX() + "|" + l.getBlockZ()));
+            me.setItemMeta(mm);
+            menu.inv.setItem(48, me);
+        }
         ItemStack home = new ItemStack(Material.RED_BED);
         ItemMeta hm = home.getItemMeta();
         hm.setDisplayName("내 거주지");
         hm.setLore(List.of("home"));
         home.setItemMeta(hm);
+        if (plugin.isWildWorld(p.getWorld().getName())) {
+            home = new ItemStack(Material.GRAY_DYE);
+            hm = home.getItemMeta();
+            hm.setDisplayName("내 거주지 (야생에서는 불가)");
+            hm.setLore(List.of("homeoff"));
+            home.setItemMeta(hm);
+        }
         menu.inv.setItem(49, home);
         ItemStack close = new ItemStack(Material.BARRIER);
         ItemMeta cm = close.getItemMeta();
         cm.setDisplayName("닫기");
         close.setItemMeta(cm);
         menu.inv.setItem(53, close);
+        sendPlots(p);
         p.openInventory(menu.inv);
         return true;
     }
@@ -448,7 +703,8 @@ final class Warps implements Listener {
         if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
         int slot = e.getRawSlot();
         if (slot == 53) { p.closeInventory(); return; }
-        if (slot == 49) { p.closeInventory(); home(p); return; }
+        if (slot == 49) { p.closeInventory(); home(p); return; } // home works in view-only too (refused in the wild)
+        if (menu.view) return; // view-only session: no waypoint teleporting
         if (slot >= 0 && slot < 45 && menu.ids[slot] != null) go(p, menu.ids[slot]);
     }
 }

@@ -11,3 +11,9 @@ worlds:
     difficulty: EASY
   world/DIM-1:
     difficulty: EASY
+  pipi_tutorial:
+    difficulty: EASY
+  pipi_village2:
+    difficulty: EASY
+  pipi_town:
+    difficulty: EASY

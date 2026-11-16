@@ -24,12 +24,39 @@ final class TownNpcRegistry implements Listener {
         for (String value : data.getStringList("confirmed-duplicates")) duplicates.add(UUID.fromString(value));
     }
 
+    /** pipi_village2 keeps its own NPC set ("<role>_v2"), pipi_town another ("<role>_town"). */
+    private static String scoped(World world, String role) {
+        if (world == null || role.endsWith("_v2") || role.endsWith("_town")) return role;
+        if (world.getName().equals("pipi_village2")) return role + "_v2";
+        if (world.getName().equals("pipi_town")) return role + "_town";
+        return role;
+    }
+
+    /** Removes the registered NPC of a role in this world (also strays carrying its tag within r blocks of around) and forgets it. */
+    int remove(World world, String baseRole, Location around, int r) {
+        final String role = scoped(world, baseRole);
+        around.getChunk().load();
+        int removed = 0;
+        String registered = data.getString("roles." + role);
+        if (registered != null) {
+            Entity e = Bukkit.getEntity(UUID.fromString(registered));
+            if (e != null) { e.remove(); removed++; }
+        }
+        for (Entity e : world.getNearbyEntities(around, r, 8, r)) {
+            if (e instanceof Villager && e.getPersistentDataContainer().has(key(role), PersistentDataType.BYTE)) { e.remove(); removed++; }
+        }
+        if (registered != null) { data.set("roles." + role, null); save(); }
+        return removed;
+    }
+
     boolean matches(Entity entity, String role) {
+        role = scoped(entity.getWorld(), role);
         String registered = data.getString("roles." + role);
         return registered != null && registered.equals(entity.getUniqueId().toString());
     }
 
-    boolean exists(World world, String role, Location location) {
+    boolean exists(World world, String baseRole, Location location) {
+        final String role = scoped(world, baseRole);
         location.getChunk().load();
         restoreLoaded(world);
         String registered = data.getString("roles." + role);
@@ -41,6 +68,7 @@ final class TownNpcRegistry implements Listener {
     }
 
     void register(Entity entity, String role) {
+        role = scoped(entity.getWorld(), role);
         data.set("roles." + role, entity.getUniqueId().toString());
         restore(entity, role);
         save();
@@ -70,7 +98,7 @@ final class TownNpcRegistry implements Listener {
             return;
         }
         for (String role : List.of("merchant", "npc", "alchemist", "armory"))
-            if (matches(entity, role)) restore(entity, role);
+            if (matches(entity, role)) restore(entity, scoped(entity.getWorld(), role));
     }
 
     @EventHandler

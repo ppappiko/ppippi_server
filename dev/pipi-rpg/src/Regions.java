@@ -144,6 +144,17 @@ final class Regions implements Listener {
         save();
     }
 
+    /** Retired residence world: drops every plot region of that world (regions.yml is backed up first). */
+    int removeWorldPlotRegions(String world) {
+        List<String> ids = new ArrayList<>();
+        for (Region r : regions.values()) if (r.id.startsWith("plot_") && world.equals(r.world)) ids.add(r.id);
+        if (ids.isEmpty()) return 0;
+        plugin.backupData("regions.yml", "village-retire");
+        for (String id : ids) regions.remove(id);
+        save();
+        return ids.size();
+    }
+
     boolean hasRegion(String plot) { return regions.containsKey("plot_" + plot.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_-]", "_")); }
 
     private static boolean bypass(Player p) {

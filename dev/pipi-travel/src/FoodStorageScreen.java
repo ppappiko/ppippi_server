@@ -18,12 +18,12 @@ final class FoodStorageScreen extends ContainerScreen {
         graphics.fill(x, y + 66, x + imageWidth, y + 68, 0xff35495d);
         for (int index = 0; index < menu.slots.size(); index++) {
             var slot = menu.getSlot(index);
-            if (index >= 6 && index < 27 && !slot.hasItem()) continue;
+            if (index >= 3 && index < 27 && !slot.hasItem()) continue;
             int sx = x + slot.x, sy = y + slot.y;
-            graphics.fill(sx - 1, sy - 1, sx + 17, sy + 17, index < 6 ? 0xff577187 : 0xff304457);
+            graphics.fill(sx - 1, sy - 1, sx + 17, sy + 17, index < 3 ? 0xff577187 : 0xff304457);
             graphics.fill(sx, sy, sx + 16, sy + 16, 0xff101a25);
         }
-        graphics.drawString(font, "먹이 전용  ·  6칸", x + 8, y + 47, 0xff9fb4c9, false);
+        graphics.drawString(font, "먹이 전용  ·  3칸", x + 8, y + 47, 0xff9fb4c9, false);
     }
 
     @Override protected void renderLabels(GuiGraphics graphics, int x, int y) {

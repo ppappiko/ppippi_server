@@ -6,7 +6,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.neoforged.neoforge.client.event.ClientChatReceivedEvent;
-import net.neoforged.neoforge.client.event.InputEvent;
+import com.mojang.blaze3d.platform.InputConstants;
+import net.minecraft.client.KeyMapping;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import org.lwjgl.glfw.GLFW;
 
 /** Top-left gold row + objective panel. Key: J = objectives. */
@@ -18,6 +20,8 @@ public final class HudInfo {
     private static List<String> questLines = List.of();
     private static Object owner;
     private static boolean questOpen = true;
+    /** bottom edge (GUI px) of the top-left panels, for the party list below them */
+    static int bottom = 75;
 
     private HudInfo() {}
 
@@ -40,10 +44,12 @@ public final class HudInfo {
         }
     }
 
-    static void key(InputEvent.Key event) {
+    static final KeyMapping OBJECTIVE_KEY = new KeyMapping("목표 패널", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "PipiTravel");
+
+    static void key(ClientTickEvent.Post event) {
         var client = client();
-        if (client.player == null || client.screen != null || event.getAction() != GLFW.GLFW_PRESS) return;
-        if (event.getKey() == GLFW.GLFW_KEY_J) questOpen = !questOpen;
+        if (client.player == null || client.screen != null) { while (OBJECTIVE_KEY.consumeClick()) { } return; }
+        while (OBJECTIVE_KEY.consumeClick()) questOpen = !questOpen;
     }
 
     private static boolean visible() {
@@ -90,7 +96,7 @@ public final class HudInfo {
             g.fill(8, top, 8 + w, top + h, 0xDE171D2C);
             g.fill(8, top, 11, top + h, 0xFFE8C579);
             g.drawString(font, (questOpen ? "▼ " : "▲ ") + questTitle, 17, top + 4, 0xFFF1F3FF);
-            g.drawString(font, "J", 8 + w - 12, top + 4, 0xFFE8C579);
+            g.drawString(font, OBJECTIVE_KEY.getTranslatedKeyMessage().getString(), 8 + w - 12, top + 4, 0xFFE8C579);
             if (questOpen) {
                 int y = top + 16;
                 for (String line : questLines) {
@@ -101,6 +107,7 @@ public final class HudInfo {
             }
             coordTop = top + h + 3;
         }
+        bottom = coordTop + 15;
         drawCoords(g, coordTop);
     }
 

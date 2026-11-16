@@ -111,7 +111,9 @@ final class UpgradeScreen extends ContainerScreen {
                     if (AlchemyScreen.isGradeLine(line)) filled++;
                 }
                 for (int j=0;j<slots;j++) g.drawString(font,j<filled?"◆":"◇",34+j*9,row+4,j<filled?GREEN:0xff56708a,false);
-                g.drawString(font,font.plainSubstrByWidth(name(i),165),34,row+16,gradeColor(item(i),TEXT),false);
+                int cls = ClassIcons.of(item(i));
+                if (cls >= 0) ClassIcons.draw(g, cls, 185f, row + 7f, 15f, .95f);
+                g.drawString(font,font.plainSubstrByWidth(name(i),cls >= 0 ? 148 : 165),34,row+16,gradeColor(item(i),TEXT),false);
             }
             if (!item(48).isEmpty()) button(g,8,338,82,24,"이전",x,y,!fx);
             if (!item(50).isEmpty()) button(g,120,338,82,24,"다음",x,y,!fx);
