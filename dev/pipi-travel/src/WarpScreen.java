@@ -43,6 +43,8 @@ final class WarpScreen extends ContainerScreen {
     private static final int TEXT = 0xffe8edf4, MUTED = 0xff9cacbf, GOLD = 0xffebc77f;
     private static final int MAP_X = 6, MAP_Y = 30, MAP_W = 440, MAP_H = 314;
     private static final int LIST_X = 452, LIST_Y = 30, LIST_W = 232, LIST_H = 314;
+    /** Area dropdown sits in the title bar so it never covers map markers. */
+    private static final int DD_X = 6, DD_Y = 3;
     private static final int AX0 = 44, AX1 = 408, AY0 = 100, AY1 = 290;
 
     // ---- painted maps: texture pixel (c, r) = world block (c / ppb + orgX, r / ppb + orgZ) ----
@@ -376,7 +378,7 @@ final class WarpScreen extends ContainerScreen {
                 g.fill(lx, ty, lx + tw, ty + 13, 0xdd101820);
                 g.drawCenteredString(font, tip, lx + tw / 2, ty + 3, houseHover.owner.isEmpty() ? MUTED : TEXT);
             }
-            if (sel != null) {
+            if (sel != null && !dropdown) {
                 int[] p = pos(here, sel);
                 int tw = font.width(sel.name) + 10;
                 int lx = Math.max(MAP_X + 6, Math.min(MAP_X + MAP_W - 6 - tw, p[0] - tw / 2));
@@ -441,12 +443,12 @@ final class WarpScreen extends ContainerScreen {
 
             // area dropdown (drawn last so it overlays)
             List<String> ws = worlds(all);
-            button(g, (world == null ? "-" : friendly(world)) + "  ∨", MAP_X + 8, MAP_Y + 8, 120, 20, x, y, true);
+            button(g, (world == null ? "-" : friendly(world)) + "  ∨", DD_X, DD_Y, 120, 20, x, y, true);
             if (dropdown) {
                 for (int i = 0; i < ws.size(); i++) {
-                    int ry = MAP_Y + 30 + i * 20;
-                    panel(g, MAP_X + 8, ry, 120, 20, hit(x, y, MAP_X + 8, ry, 120, 20) || ws.get(i).equals(world));
-                    g.drawCenteredString(font, friendly(ws.get(i)), MAP_X + 68, ry + 6, TEXT);
+                    int ry = DD_Y + 21 + i * 20;
+                    panel(g, DD_X, ry, 120, 20, hit(x, y, DD_X, ry, 120, 20) || ws.get(i).equals(world));
+                    g.drawCenteredString(font, friendly(ws.get(i)), DD_X + 60, ry + 6, TEXT);
                 }
             }
             if (System.currentTimeMillis() < hintUntil) {
@@ -491,11 +493,11 @@ final class WarpScreen extends ContainerScreen {
         if (hit(x, y, W - 22, 3, 18, 18)) { onClose(); return true; }
         if (dropdown) {
             for (int i = 0; i < ws.size(); i++)
-                if (hit(x, y, MAP_X + 8, MAP_Y + 30 + i * 20, 120, 20)) { world = ws.get(i); selected = null; scroll = 0; }
+                if (hit(x, y, DD_X, DD_Y + 21 + i * 20, 120, 20)) { world = ws.get(i); selected = null; scroll = 0; }
             dropdown = false;
             return true;
         }
-        if (hit(x, y, MAP_X + 8, MAP_Y + 8, 120, 20)) { dropdown = true; return true; }
+        if (hit(x, y, DD_X, DD_Y, 120, 20)) { dropdown = true; return true; }
         if (hit(x, y, 412, 38, 28, 24)) { click(49); return true; }
         List<Wp> here = new ArrayList<>();
         for (Wp w : all) if (w.world.equals(world)) here.add(w);
