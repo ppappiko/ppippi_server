@@ -275,6 +275,29 @@ final class Armory implements Listener {
         return true;
     }
 
+    /** 공동 마을 대장간 정자 안(대장장이 오른쪽)의 무기 관리인 자리. */
+    static final double NPC_X = 28.5, NPC_Z = 12.5;
+
+    /** 맵 생성 직후·서버 시작 시: 무기 관리인이 등록돼 있지 않으면 대장간 정자 안에 세운다. */
+    String installNpc(World world) {
+        Location at = new Location(world, NPC_X, 64, NPC_Z, 180, 0);
+        at.getChunk().load();
+        if (npcs.exists(world, "armory", at)) return "무기 관리인이 이미 설치되어 있습니다.";
+        if (!at.getBlock().isPassable() || !at.clone().add(0, 1, 0).getBlock().isPassable()
+            || !at.clone().add(0, -1, 0).getBlock().getType().isSolid())
+            return "무기 관리인 자리(X 28, Y 64, Z 12)가 막혀 있어 설치하지 못했습니다. /pipilife armory npc 로 직접 세우세요.";
+        world.spawn(at, org.bukkit.entity.Villager.class, npc -> {
+            npc.setCustomName("무기 관리인");
+            npc.setCustomNameVisible(true);
+            npc.setProfession(org.bukkit.entity.Villager.Profession.WEAPONSMITH);
+            npc.setAI(false);
+            npc.setInvulnerable(true);
+            npc.setPersistent(true);
+            npcs.register(npc, "armory");
+        });
+        return "대장간에 무기 관리인을 설치했습니다.";
+    }
+
     @EventHandler(ignoreCancelled = true)
     public void npc(PlayerInteractEntityEvent event) {
         if (event.getHand() != EquipmentSlot.HAND || !npcs.matches(event.getRightClicked(), "armory")) return;

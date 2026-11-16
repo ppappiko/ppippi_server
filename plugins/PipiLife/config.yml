@@ -53,6 +53,8 @@ combat:
       item-level: 550
 wild-world: world
 village-world: village
+# 새 서버 첫 실행 때 마을·튜토리얼 월드가 둘 다 없으면 자동으로 생성합니다 (상인·대장장이·연금술사·무기 관리인 포함).
+auto-build-maps: true
 # 야생 월드의 네더. 비워두면 자동으로 village·pipi_tutorial을 제외한 첫 네더 월드를 사용합니다.
 wild-nether-world: ''
 # 야생 펫 스폰 설정

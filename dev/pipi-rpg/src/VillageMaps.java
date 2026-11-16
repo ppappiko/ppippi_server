@@ -5,6 +5,7 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 import org.bukkit.*;
 import org.bukkit.block.Sign;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -40,7 +41,10 @@ final class VillageMaps {
         return Bukkit.createWorld(new WorldCreator(name));
     }
 
-    void build(Player player, BooleanSupplier finish) {
+    /** 마을·튜토리얼 월드가 아직 하나도 없을 때만 true (새 서버 첫 실행 자동 생성용). */
+    boolean noMaps() { return !exists(village()) && !exists(TUTORIAL); }
+
+    void build(CommandSender player, BooleanSupplier finish) {
         if (building) { player.sendMessage("맵을 만드는 중입니다."); return; }
         String village = village();
         if (!village.matches("[a-zA-Z0-9_-]+") || village.equals(TUTORIAL) ||
@@ -68,7 +72,7 @@ final class VillageMaps {
                     town.save();
                     tutorial.save();
                     player.sendMessage(finish.getAsBoolean()
-                        ? "맵과 부지 10개 준비 완료. /pipilife maps visit tutorial"
+                        ? "맵과 부지 10개, 마을 NPC(상인·대장장이·연금술사·무기 관리인) 준비 완료. /pipilife maps visit tutorial"
                         : "맵은 생성됐지만 부지 설정 저장에 실패했습니다.");
                 } catch (RuntimeException ex) {
                     plugin.getLogger().severe("Map build failed: " + ex);

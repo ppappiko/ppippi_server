@@ -172,10 +172,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
             World village = maps.open(maps.village());
             if (village != null) {
                 migrateFacilityBlocks(village);
-                getLogger().info(town.installAlchemyRoom(village));
-                town.installMarketNpcs(village);
+                installTownNpcs(village);
             }
-        }
+        } else autoBuildMaps();
         try {
             regions = new Regions(this);
             getServer().getPluginManager().registerEvents(regions, this);
@@ -3026,19 +3025,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                     player.sendMessage("기존 부지가 있습니다. 새 서버의 PipiLife 데이터로 실행하세요.");
                     return true;
                 }
-                maps.build(player, () -> {
-                    for (VillageMaps.Plot plot : VillageMaps.plots())
-                        data.createSection("plots." + plot.name(), Map.of("x", plot.x(), "z", plot.z()));
-                    data.set("maps-ready", true);
-                    if (persist()) {
-                        World village = maps.open(maps.village());
-                        if (village != null) town.installMarketNpcs(village);
-                        return true;
-                    }
-                    data.set("plots", null);
-                    data.set("maps-ready", null);
-                    return false;
-                });
+                maps.build(player, this::finishMapBuild);
             } else if (args.length == 3 && args[1].equalsIgnoreCase("visit")
                 && Set.of("tutorial", "village").contains(args[2])) {
                 World world = maps.open(args[2].equals("tutorial") ? VillageMaps.TUTORIAL : maps.village());
@@ -3076,6 +3063,41 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return true;
     }
 
+    /** 맵 생성이 끝난 뒤: 부지 10개 등록, 맵 준비 완료 저장, 마을 NPC 설치. */
+    private boolean finishMapBuild() {
+        for (VillageMaps.Plot plot : VillageMaps.plots())
+            data.createSection("plots." + plot.name(), Map.of("x", plot.x(), "z", plot.z()));
+        data.set("maps-ready", true);
+        if (persist()) {
+            World village = maps.open(maps.village());
+            if (village != null) installTownNpcs(village);
+            return true;
+        }
+        data.set("plots", null);
+        data.set("maps-ready", null);
+        return false;
+    }
+
+    /** 공동 마을 기본 NPC: 상인·대장장이·연금술사(방 포함)·무기 관리인. 이미 등록된 NPC는 건드리지 않는다. */
+    private void installTownNpcs(World village) {
+        town.installMarketNpcs(village);
+        getLogger().info(town.installAlchemyRoom(village));
+        getLogger().info(armory.installNpc(village));
+    }
+
+    /**
+     * 새 서버 첫 실행: 마을·튜토리얼 월드가 둘 다 없고 부지 데이터도 없으면 맵을 자동으로 만든다.
+     * config.yml 의 auto-build-maps: false 로 끌 수 있다.
+     */
+    private void autoBuildMaps() {
+        if (!getConfig().getBoolean("auto-build-maps", true) || data.isConfigurationSection("plots") || !maps.noMaps()) return;
+        getServer().getScheduler().runTask(this, () -> {
+            if (data.getBoolean("maps-ready") || !maps.noMaps()) return;
+            getLogger().info("마을·튜토리얼 맵이 없어 자동으로 생성합니다.");
+            maps.build(Bukkit.getConsoleSender(), this::finishMapBuild);
+        });
+    }
+
     @EventHandler public void tutorialJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         if (!data.getBoolean("maps-ready")) return;
@@ -3085,11 +3107,12 @@ public final class PipiLife extends JavaPlugin implements Listener {
             town.giveDeed(player);
             return;
         }
-        getServer().getScheduler().runTask(this, () -> {
-            if (!player.isOnline()) return;
+        // 다른 플러그인(Multiverse 첫 스폰 등)이 접속 직후 옮긴 뒤에도 튜토리얼 맵으로 오도록 조금 늦게 확인한다
+        getServer().getScheduler().runTaskLater(this, () -> {
+            if (!player.isOnline() || tutorialComplete(player)) return;
             World world = maps.open(VillageMaps.TUTORIAL);
             if (world != null && !world.equals(player.getWorld())) player.teleport(world.getSpawnLocation());
-        });
+        }, 5L);
     }
 
     private static final class TravelMenu implements InventoryHolder {
