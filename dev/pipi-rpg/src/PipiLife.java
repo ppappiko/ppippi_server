@@ -109,6 +109,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private Social social;
     private TradeWindow tradeWindow;
     private CustomPets customPets;
+    private Mounts mounts;
+    private Accessories accessories;
     private CaptureSystem captures;
     private ResourceNodes resourceNodes;
     private MobHealthBars healthBars;
@@ -147,6 +149,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         village2 = new Village2(this);
         townMap = new TownMap(this);
         wildRegions = new WildRegions(this);
+        adoptVillage2();
         retireOldVillage();
         town = new TownSystems(this);
         armory = new Armory(this, town.npcs());
@@ -155,6 +158,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
         combat.startHpSync();
         new HudSync(this, town).start();
         getServer().getPluginManager().registerEvents(combat, this);
+        accessories = new Accessories(this, combat);
+        getServer().getPluginManager().registerEvents(accessories, this);
         getServer().getScheduler().runTaskTimer(this, combat::tick, 1, 5);
         skills = new ClassSkills(this);
         getServer().getPluginManager().registerEvents(skills, this);
@@ -226,7 +231,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         getServer().getScheduler().runTaskLater(this, () -> {
             for (var world : getServer().getWorlds()) for (var chunk : world.getLoadedChunks()) refreshStationModels(chunk);
         }, 100L);
-        if(Bukkit.getPluginManager().isPluginEnabled("ModelEngine")){customPets=new CustomPets(this);getServer().getPluginManager().registerEvents(customPets,this);getServer().getScheduler().runTaskTimer(this,customPets::tick,40,10);getServer().getScheduler().runTaskTimer(this,customPets::spawnWild,60,Math.max(20,getConfig().getLong("pet-spawn.interval-ticks",200)));}
+        if(Bukkit.getPluginManager().isPluginEnabled("ModelEngine")){customPets=new CustomPets(this);getServer().getPluginManager().registerEvents(customPets,this);getServer().getScheduler().runTaskTimer(this,customPets::tick,40,10);getServer().getScheduler().runTaskTimer(this,customPets::spawnWild,60,Math.max(20,getConfig().getLong("pet-spawn.interval-ticks",200)));mounts=new Mounts(this,customPets);getServer().getPluginManager().registerEvents(mounts,this);}
         tutorial = new Tutorial(this);
         getServer().getPluginManager().registerEvents(tutorial, this);
         getServer().getScheduler().runTaskTimer(this, tutorial::tick, 40, 20);
@@ -450,7 +455,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     private Pet eligible(LivingEntity entity) {
-        if (entity.getScoreboardTags().contains("pipi_pet_worker") || entity.isDead()) return null;
+        if (entity.getScoreboardTags().contains("pipi_pet_worker") || Mounts.isMount(entity) || entity.isDead()) return null;
         String species = entity.getPersistentDataContainer().get(NamespacedKey.fromString("pipilife:pet_species"), PersistentDataType.STRING);
         return petBySkin(species);
     }
@@ -586,6 +591,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length == 1) {
             out.addAll(List.of("capture", "pets", "petstorage", "skill", "workstation", "warp", "raid", "party", "auction"));
             out.add("tutorial");
+            out.add("mount");
+            out.add("accessory");
             if (sender.isOp()) out.addAll(List.of("petspawn", "spawninfo", "armory", "bossclear"));
             if (regions != null && (sender.isOp() || sender.hasPermission("pipilife.admin"))) out.add("region");
             if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("dummy");
@@ -600,6 +607,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
                     out.add(String.valueOf(args.length == 3 ? b.getX() : args.length == 4 ? b.getY() : b.getZ()));
                 }
             }
+        } else if (args[0].equalsIgnoreCase("accessory") && sender.isOp()) {
+            if (args.length == 2) out.add("give");
+            else if (args.length == 3 && args[1].equals("give")) out.addAll(List.of("necklace", "earring", "bracelet"));
+        } else if (args[0].equalsIgnoreCase("mount")) {
+            if (args.length == 2) out.addAll(sender.isOp() ? List.of("set", "list", "off", "test") : List.of("set", "list", "off"));
+            else if (args.length == 3 && (args[1].equals("set") || args[1].equals("test")))
+                for (Pet pet : Pet.values()) out.add(pet.name().toLowerCase(Locale.ROOT));
         } else if (raid != null && args[0].equalsIgnoreCase("raid")) {
             out.addAll(raid.complete(sender, args));
         } else if (args[0].equalsIgnoreCase("bossclear") && sender.isOp()) {
@@ -649,6 +663,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length > 0 && args[0].equalsIgnoreCase("brag")) return social.brag(player);
         if (args.length > 0 && args[0].equals("petstorage")) return storageCommand(player, args);
         if (args.length > 0 && args[0].equals("market")) return marketCommand(player, args);
+        if (args.length > 0 && args[0].equals("mount")) { if (mounts != null) return mounts.command(player, args); player.sendMessage("ModelEngine과 전용 펫 모델을 먼저 로드하세요."); return true; }
+        if (args.length > 0 && args[0].equals("accessory")) return accessories.command(player, args);
         if (args.length > 0 && args[0].equals("armory")) return armory.command(player, args);
         if (args.length > 1 && args[0].equals("trade") && tradeWindow != null && tradeWindow.command(player, args)) return true;
         if (args.length > 0 && args[0].equals("combat")) return armory.combatCommand(player, args);
@@ -1932,6 +1948,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if(captures!=null)captures.close();
         if(healthBars!=null)healthBars.close();
         if(resourceNodes!=null)resourceNodes.close();
+        if (mounts != null) mounts.close();
         if (armory != null) armory.close();
         if (tradeWindow != null) tradeWindow.close();
         if (skills != null) skills.shutdown();
@@ -3701,6 +3718,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     boolean townHome(Player player) { return town.command(player, new String[]{"home"}); }
     YamlConfiguration data() { return data; }
+    Accessories accessories() { return accessories; }
     String villageName() { return maps.village(); }
     World openWorld(String name) { return maps.open(name); }
 
@@ -3821,6 +3839,27 @@ public final class PipiLife extends JavaPlugin implements Listener {
      * 새 서버 자동 설정: workshops.yml(서버별 데이터, Git 제외)이 비어 있어도 village·pipi_tutorial 맵이 있으면
      * 맵 준비 완료와 기본 부지 10개를 채워 바로 튜토리얼·부지 선점이 동작하게 한다. 이미 설정된 서버는 건드리지 않는다.
      */
+    /**
+     * pipi_village2 can arrive without its plot data (the world folder is shared through git, workshops.yml is not).
+     * When the world exists but plots-v2 is missing, register the plots from the bundled layout instead of rebuilding.
+     */
+    private void adoptVillage2() {
+        if (data.isConfigurationSection("plots-v2")) return;
+        if (!new File(Bukkit.getWorldContainer(), Village2.WORLD + "/level.dat").isFile()) return;
+        List<Village2.Plot> list = village2.layoutPlots();
+        if (list == null || list.isEmpty()) return;
+        for (Village2.Plot plot : list)
+            data.createSection("plots-v2." + plot.name(), Map.of("x", plot.x(), "z", plot.z(), "y", plot.y(), "raised", plot.raised()));
+        data.set("maps-v2-ready", true);
+        if (persist()) {
+            getLogger().info("기존 " + Village2.WORLD + " 월드를 찾아 부지 " + list.size() + "개를 등록했습니다.");
+            return;
+        }
+        data.set("plots-v2", null);
+        data.set("maps-v2-ready", null);
+        getLogger().warning(Village2.WORLD + " 부지 등록을 저장하지 못했습니다.");
+    }
+
     private void autoSetupMaps() {
         if (data.getBoolean("maps-ready")) return;
         File container = Bukkit.getWorldContainer();

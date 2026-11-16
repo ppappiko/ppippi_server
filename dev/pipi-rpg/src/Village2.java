@@ -59,6 +59,9 @@ final class Village2 {
 
     Location spawn(World world) { return new Location(world, 0.5, 64, 3.5, 0, 0); }
 
+    /** Plots from the bundled layout (same positions buildv2 uses), or null if the layout can't be read. */
+    List<Plot> layoutPlots() { return load() ? List.copyOf(plots) : null; }
+
     private boolean load() {
         try (InputStream in = plugin.getResource("village2_layout.json")) {
             if (in == null) return false;

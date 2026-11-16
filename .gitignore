@@ -102,6 +102,7 @@ session.lock
 /plugins/Skript/variables.csv
 /plugins/Skript/backups/
 /plugins/PipiLife/workshops.yml
+/plugins/PipiLife/accessories.yml
 /plugins/PipiLife/trade-escrow.yml
 /plugins/PipiLife/armory.yml
 /plugins/PipiLife/loadouts.yml

@@ -80,6 +80,7 @@ final class ArmoryScreen extends Screen {
     static void dispatch(String text) {
         if (text.startsWith("PIPI_SME_")) { SmeltScreen.process(text); return; }
         if (text.startsWith("PIPI_TRADE_")) { TradeScreen.process(text); return; }
+        if (text.startsWith("PIPI_ACCI:")) { AccessorySlots.process(text); return; }
         try {
             if (text.startsWith(BEGIN)) {
                 pending = new ArrayList<>();

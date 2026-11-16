@@ -45,6 +45,10 @@ final class CharacterScreen extends ContainerScreen {
             g.drawString(font,"무기 1개 + 방어구 4개의 평균",205,106,MUTED,false);
             g.drawString(font,"미착용 부위는 0으로 계산",205,121,MUTED,false);
             for(int i=0;i<5;i++){int ix=208+i*28;g.fill(ix-2,146,ix+18,166,0xff385367);g.fill(ix-1,147,ix+17,165,0xff080f16);g.renderItem(menu.getSlot(1+i).getItem(),ix,148);}
+            // 악세서리 (목걸이·귀걸이·팔찌): 서버 상태창 6~8번 칸 (보기 전용, 장착은 가방 E 화면)
+            g.drawString(font,"악세서리",376,133,MUTED,false);
+            for(int i=0;i<3;i++){int ix=378+i*28;g.fill(ix-2,146,ix+18,166,0xff5a4a2a);g.fill(ix-1,147,ix+17,165,0xff080f16);
+                var acc=menu.getSlot(6+i).getItem();if(acc.isEmpty())g.blit(AccessorySlots.EMPTY[i],ix,148,0,0,16,16,16,16);else g.renderItem(acc,ix,148);}
             line(g,"◇ 전투력",val(values,1),24,198);
             g.fill(17,219,503,220,0xff385367);
             line(g,"체력",val(values,2),25,235);line(g,"방어력",val(values,3),275,235);
@@ -57,11 +61,15 @@ final class CharacterScreen extends ContainerScreen {
         } finally{g.pose().popPose();}
         if(minecraft!=null&&minecraft.player!=null){double x=(mx-left)/scale,y=(my-top)/scale;
             int gi=(int)Math.floor((x-206)/28);var weapon=gi>=0&&gi<5&&(x-206)-gi*28<20?menu.getSlot(1+gi).getItem():net.minecraft.world.item.ItemStack.EMPTY;
+            int ai=(int)Math.floor((x-376)/28);var acc=ai>=0&&ai<3&&(x-376)-ai*28<20&&y>=146&&y<166?menu.getSlot(6+ai).getItem():net.minecraft.world.item.ItemStack.EMPTY;
             if(y>=146&&y<166&&!weapon.isEmpty())g.renderTooltip(font,weapon,mx,my);
+            else if(!acc.isEmpty())g.renderTooltip(font,acc,mx,my);
             else if(y>=233&&y<245&&x>=275&&x<440)g.renderTooltip(font,Component.literal("받는 피해 "+val(data(),15)+"% 감소"),mx,my);
         }
     }
-    @Override public boolean mouseClicked(double x,double y,int button){if((x-left)/scale>W-35&&(y-top)/scale<33)onClose();return true;}
+    @Override public boolean mouseClicked(double x,double y,int button){double sx=(x-left)/scale,sy=(y-top)/scale;
+        if(sx>W-35&&sy<33){onClose();return true;}
+        return true;}
     @Override public boolean keyPressed(int key,int scan,int mods){if(key==GLFW.GLFW_KEY_ESCAPE)onClose();return true;}
     @Override public boolean mouseReleased(double x,double y,int button){return true;}
     @Override public boolean mouseDragged(double x,double y,int button,double dx,double dy){return true;}

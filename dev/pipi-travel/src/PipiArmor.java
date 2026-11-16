@@ -109,6 +109,19 @@ public final class PipiArmor {
         }
     }
 
+    /**
+     * Accessory parts (acc_<slot>_<model>.json, same cuboid format as armour parts) drawn on the posed player model.
+     * Element names pick the bone: *_head, *_rarm, *_larm, *_rleg, *_lleg, else body. Full-body mannequin coordinates (head 24..32).
+     */
+    public static void renderAccessory(PoseStack ps, MultiBufferSource buffer, HumanoidModel<?> model, String name, int light) {
+        parts(ps, buffer, model, HEAD, name, light);
+    }
+
+    /** True when assets/pipitravel/armor_parts/<name>.json exists and has parts (cached until the next resource reload). */
+    public static boolean hasAccessory(String name) {
+        return !BAKED.computeIfAbsent(name, PipiArmor::bake)[HEAD].isEmpty();
+    }
+
     private static ModelPart bone(HumanoidModel<?> m, int b) {
         return switch (b) { case B_HEAD -> m.head; case B_BODY -> m.body; case B_RARM -> m.rightArm; case B_LARM -> m.leftArm; case B_RLEG -> m.rightLeg; default -> m.leftLeg; };
     }
@@ -152,16 +165,16 @@ public final class PipiArmor {
             return out;
         }
         ResourceLocation tex = ResourceLocation.fromNamespaceAndPath("pipitravel", "textures/models/armor/parts/" + name + ".png");
-        boolean hat = name.startsWith("hat_"), cape = name.startsWith("cape_");
+        boolean hat = name.startsWith("hat_"), cape = name.startsWith("cape_"), accessory = name.startsWith("acc_");
         float yoff = hat ? 24f : 0f;
         Map<Integer, List<Float>> acc = new HashMap<>(); // slot*8+bone -> interleaved vertex data
         for (JsonElement je : elements) {
             JsonObject e = je.getAsJsonObject();
             String en = e.get("name").getAsString();
-            int bone = hat ? B_HEAD : en.endsWith("_rarm") ? B_RARM : en.endsWith("_larm") ? B_LARM : en.endsWith("_rleg") ? B_RLEG : en.endsWith("_lleg") ? B_LLEG : B_BODY;
+            int bone = hat || en.endsWith("_head") ? B_HEAD : en.endsWith("_rarm") ? B_RARM : en.endsWith("_larm") ? B_LARM : en.endsWith("_rleg") ? B_RLEG : en.endsWith("_lleg") ? B_LLEG : B_BODY;
             float[] f = vec(e.getAsJsonArray("from")), t = vec(e.getAsJsonArray("to"));
             float cy = (f[1] + t[1]) / 2f;
-            int slot = hat ? HEAD : cape ? CHEST
+            int slot = hat || accessory ? HEAD : cape ? CHEST
                 : bone == B_BODY ? (cy < 12f ? LEGS : CHEST)
                 : bone == B_RARM || bone == B_LARM ? CHEST
                 : (cy < 3f ? FEET : LEGS);

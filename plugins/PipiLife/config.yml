@@ -203,6 +203,25 @@ tutorial:
     z: 28.5
     yaw: 180
     pitch: 0
+# 펫 타고 다니기 (지상). Z 키 = /pipilife mount, 탈것 지정 = /pipilife mount set <펫>, 관리자 테스트 = /pipilife mount test <펫>
+mounts:
+  # 탈 수 있는 펫 (명령어 이름: imugi, moonbear ...). 비워 두면 모든 펫을 탈 수 있습니다.
+  allowed: []
+  # 기본 이동 속도 (말은 약 0.225). 펫별로 바꾸려면 아래 speed 에 적으세요.
+  default-speed: 0.3
+  # 기본 점프 높이 (0.5 = 약 1.5칸). 펫별로 바꾸려면 아래 jump 에 적으세요.
+  default-jump: 0.5
+  # 펫별 이동 속도 / 점프 / 앉는 높이 보정(칸). 예: speed: {imugi: 0.4}, seat: {sparrow: -0.2}
+  speed: {}
+  jump: {}
+  seat:
+    imugi: -0.9
+  # 펫을 탈 수 없는 월드
+  blocked-worlds:
+  - pipi_tutorial
+  - pipi_deepdark
+  # 피해를 받으면 펫에서 내립니다 (낙하 피해 제외)
+  dismount-on-damage: true
 # 자원 노드(호박석 돌무더기, 홍서나무, 양배추) 재생성 시간 (초)
 resource-nodes:
   # 호박석을 캔 뒤 다시 박히기까지 (초). 300 = 5분

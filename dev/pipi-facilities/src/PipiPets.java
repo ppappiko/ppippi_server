@@ -36,14 +36,23 @@ public final class PipiPets {
  public static void worker(Object entity,int state,double x,double y,double z,int task,String group){if(entity instanceof Pet pet){pet.getEntityData().set(Pet.TASK,task);pet.getEntityData().set(Pet.GROUP,group);pet.worker=true;pet.setNoGravity(true);pet.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);pet.desired=state;pet.tx=x;pet.ty=y;pet.tz=z;}}
  public static void face(Object entity,double x,double z){if(entity instanceof Pet pet){pet.focusX=x;pet.focusZ=z;}}
  public static boolean reached(Object entity,double x,double y,double z){return entity instanceof Pet pet&&pet.reached(x,y,z);}
- public static final class Pet extends PathfinderMob {
+ /**
+  * Plugin bridge (PipiLife, by reflection): turns this pet into a player mount. Ground only.
+  * speed = ridden movement speed (horse is ~0.225), seat = extra rider height in blocks, step = blocks it climbs without jumping.
+  */
+ public static void mount(Object entity,float speed,float seat,float jump){if(entity instanceof Pet pet){pet.worker=false;pet.goalSelector.removeAllGoals(g->true);pet.targetSelector.removeAllGoals(g->true);pet.getNavigation().stop();pet.setNoGravity(false);pet.getEntityData().set(Pet.MOUNT,true);pet.getEntityData().set(Pet.MOUNT_SPEED,speed);pet.getEntityData().set(Pet.MOUNT_SEAT,seat);pet.getEntityData().set(Pet.MOUNT_JUMP,jump);}}
+ public static final class Pet extends PathfinderMob implements PlayerRideableJumping {
   private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> ACTION=net.minecraft.network.syncher.SynchedEntityData.defineId(Pet.class,net.minecraft.network.syncher.EntityDataSerializers.INT);
   private static final net.minecraft.network.syncher.EntityDataAccessor<Integer> TASK=net.minecraft.network.syncher.SynchedEntityData.defineId(Pet.class,net.minecraft.network.syncher.EntityDataSerializers.INT);
   private static final net.minecraft.network.syncher.EntityDataAccessor<String> GROUP=net.minecraft.network.syncher.SynchedEntityData.defineId(Pet.class,net.minecraft.network.syncher.EntityDataSerializers.STRING);
+  private static final net.minecraft.network.syncher.EntityDataAccessor<Boolean> MOUNT=net.minecraft.network.syncher.SynchedEntityData.defineId(Pet.class,net.minecraft.network.syncher.EntityDataSerializers.BOOLEAN);
+  private static final net.minecraft.network.syncher.EntityDataAccessor<Float> MOUNT_SPEED=net.minecraft.network.syncher.SynchedEntityData.defineId(Pet.class,net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+  private static final net.minecraft.network.syncher.EntityDataAccessor<Float> MOUNT_SEAT=net.minecraft.network.syncher.SynchedEntityData.defineId(Pet.class,net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
+  private static final net.minecraft.network.syncher.EntityDataAccessor<Float> MOUNT_JUMP=net.minecraft.network.syncher.SynchedEntityData.defineId(Pet.class,net.minecraft.network.syncher.EntityDataSerializers.FLOAT);
   public int task(){return entityData.get(TASK);}
   public String soundGroup(){return entityData.get(GROUP);}
   private boolean worker;private int desired;private double tx,ty,tz;private double focusX=Double.NaN,focusZ;
-  @Override protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder){super.defineSynchedData(builder);builder.define(ACTION,0);builder.define(TASK,0);builder.define(GROUP,"");}
+  @Override protected void defineSynchedData(net.minecraft.network.syncher.SynchedEntityData.Builder builder){super.defineSynchedData(builder);builder.define(ACTION,0);builder.define(TASK,0);builder.define(GROUP,"");builder.define(MOUNT,false);builder.define(MOUNT_SPEED,.3f);builder.define(MOUNT_SEAT,0f);builder.define(MOUNT_JUMP,.5f);}
   public int action(){return entityData.get(ACTION);}
   private java.util.List<PetRoutes.Cell> route=java.util.List.of();private int waypoint,repath,stuck;private double planX=Double.NaN,planY,planZ,lastX,lastZ;private boolean arrived;
   public boolean reached(double x,double y,double z){return arrived&&Math.abs(tx-x)<.05&&Math.abs(ty-y)<.05&&Math.abs(tz-z)<.05;}
@@ -74,6 +83,25 @@ public final class PipiPets {
 
 
   public Pet(EntityType<? extends PathfinderMob> type,Level level){super(type,level);}
+
+  // ---- 탈것 (지상): 플레이어가 조종하고 클라이언트가 움직임을 계산한다 (말과 같은 방식)
+  public boolean isMount(){return entityData.get(MOUNT);}
+  private float pendingJump;
+  @Override public LivingEntity getControllingPassenger(){return isMount()&&getFirstPassenger() instanceof Player rider?rider:super.getControllingPassenger();}
+  @Override protected void tickRidden(Player rider,net.minecraft.world.phys.Vec3 input){
+   super.tickRidden(rider,input);
+   setRot(rider.getYRot(),rider.getXRot()*.5f);yRotO=yBodyRot=yHeadRot=getYRot();
+   if(pendingJump>0&&onGround()){var v=getDeltaMovement();setDeltaMovement(v.x,entityData.get(MOUNT_JUMP)*pendingJump,v.z);hasImpulse=true;pendingJump=0;}
+  }
+  @Override protected net.minecraft.world.phys.Vec3 getRiddenInput(Player rider,net.minecraft.world.phys.Vec3 input){float strafe=rider.xxa*.5f,forward=rider.zza;if(forward<=0)forward*=.25f;return new net.minecraft.world.phys.Vec3(strafe,0,forward);}
+  @Override protected float getRiddenSpeed(Player rider){return entityData.get(MOUNT_SPEED);}
+  @Override public float maxUpStep(){return isMount()?1.05f:super.maxUpStep();}
+  @Override protected net.minecraft.world.phys.Vec3 getPassengerAttachmentPoint(Entity passenger,EntityDimensions dimensions,float scale){return super.getPassengerAttachmentPoint(passenger,dimensions,scale).add(0,entityData.get(MOUNT_SEAT),0);}
+  @Override public boolean canJump(){return isMount()&&onGround();}
+  @Override public void onPlayerJump(int power){if(!isMount())return;pendingJump=power>=90?1f:.4f+.6f*Math.max(0,power)/90f;}
+  @Override public void handleStartJump(int power){}
+  @Override public void handleStopJump(){}
+  @Override public boolean causeFallDamage(float distance,float multiplier,net.minecraft.world.damagesource.DamageSource source){return !isMount()&&super.causeFallDamage(distance,multiplier,source);}
   @Override protected void registerGoals(){goalSelector.addGoal(0,new FloatGoal(this));goalSelector.addGoal(1,new PanicGoal(this,1.2));goalSelector.addGoal(3,new WaterAvoidingRandomStrollGoal(this,.8));goalSelector.addGoal(4,new LookAtPlayerGoal(this,Player.class,6));goalSelector.addGoal(5,new RandomLookAroundGoal(this));}
   @Override public boolean removeWhenFarAway(double distance){return false;}
  }
