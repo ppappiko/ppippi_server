@@ -124,7 +124,8 @@ spawn:
   # Sets whether Multiverse will override the location where the player spawns when they join the server
   # for the first time. For fixed spawn location on every login, see the `join-destination` option below.
   # If disabled, it will default to server.properties settings.
-  first-spawn-override: true
+  # PipiLife가 신규 플레이어를 튜토리얼 맵(pipi_tutorial)으로 보내므로 끕니다.
+  first-spawn-override: false
   
   # Sets the world that Multiverse will use as the location for players that join the server for the first time.
   # This only applies if first-spawn-override is set to true.
@@ -303,7 +304,7 @@ multiverse-configuration:
   prefixchatformat: '[%world%]%chat%'
   useasyncchat: 'true'
   teleportintercept: 'true'
-  firstspawnoverride: 'true'
+  firstspawnoverride: 'false'
   displaypermerrors: 'true'
   enablebuscript: 'true'
   globaldebug: '0'

@@ -246,12 +246,17 @@ final class CombatStats implements Listener {
         double[] base=new double[7];
         double hpFlat=0,hpPct=0,moveFlat=0,movePct=0,defFlat=0,defPct=0,critP=0,atkF=0,atkP=0,dmgP=0,bossP=0;
         double strF=0,dexF=0,intF=0,luckF=0,strP=0,dexP=0,intP=0,allF=0,allP=0;
-        ItemStack[] equipped={Armory.weaponFor(player),player.getInventory().getHelmet(),player.getInventory().getChestplate(),player.getInventory().getLeggings(),player.getInventory().getBoots()};
+        ItemStack[] acc=Accessories.equipped(player);
+        // 0 무기, 1~4 방어구, 5~ 악세서리 (악세서리는 옵션 줄만 더하고 아이템 레벨 평균에는 넣지 않음)
+        ItemStack[] equipped={Armory.weaponFor(player),player.getInventory().getHelmet(),player.getInventory().getChestplate(),player.getInventory().getLeggings(),player.getInventory().getBoots(),acc[0],acc[1],acc[2]};
         for(int index=0;index<equipped.length;index++) {
             ItemStack item=equipped[index];
+            if(index>=5){if(!Accessories.isAccessory(item))continue;}
+            else {
             if(!eligible(item) || (index==0?!weapon(item):!armor(item)))continue;
             total+=itemLevel(item);
             double[] b=baseStats(item);for(int i=0;i<7;i++)base[i]+=b[i];
+            }
             for(var line:Enchants.read(item)) {
                 var o=Enchants.byId(line.opt());if(o==null)continue;
                 double v=Enchants.value(o,line.grade());
@@ -384,6 +389,8 @@ final class CombatStats implements Listener {
     }
     static final class Profile implements InventoryHolder {
         Inventory inventory;
+        java.util.UUID owner;
+        boolean self;
         public Inventory getInventory(){return inventory;}
     }
     boolean open(Player player) { return open(player, player); }
@@ -397,6 +404,9 @@ final class CombatStats implements Listener {
         var gear=player.getInventory();
         ItemStack[] armor={gear.getHelmet(),gear.getChestplate(),gear.getLeggings(),gear.getBoots()};
         for(int i=0;i<4;i++)if(armor[i]!=null)inv.setItem(2+i,markOwner(armor[i].clone(),player.getName()));
+        ItemStack[] acc=Accessories.equipped(player);
+        for(int i=0;i<acc.length;i++)if(acc[i]!=null)inv.setItem(6+i,markOwner(acc[i],player.getName()));
+        holder.owner=player.getUniqueId();holder.self=viewer.equals(player);
         double max=player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
         double defense=s.defense();
         double attack=s.attackBonus();
@@ -408,6 +418,7 @@ final class CombatStats implements Listener {
     /** Stamps the owner name (pipilife:owner) so the client spec card can show 소유자. */
     static ItemStack markOwner(ItemStack item,String owner){if(item==null||item.getType().isAir()||!item.hasItemMeta())return item;var m=item.getItemMeta();m.getPersistentDataContainer().set(NamespacedKey.fromString("pipilife:owner"),PersistentDataType.STRING,owner);item.setItemMeta(m);return item;}
     private static String f(double v){return String.format(Locale.ROOT,"%.1f",v);}
-    @EventHandler public void click(InventoryClickEvent e){if(e.getView().getTopInventory().getHolder() instanceof Profile){e.setCancelled(true);if(e.getRawSlot()==49)e.getWhoClicked().closeInventory();}}
+    @EventHandler public void click(InventoryClickEvent e){if(e.getView().getTopInventory().getHolder() instanceof Profile){e.setCancelled(true);if(e.getRawSlot()==49)e.getWhoClicked().closeInventory();
+            else if(e.getRawSlot()>=6&&e.getRawSlot()<=8&&((Profile)e.getView().getTopInventory().getHolder()).self)e.getWhoClicked().sendMessage("§7악세서리는 가방(E) 화면의 악세서리 칸에서 바꿀 수 있어요.");}}
     @EventHandler public void drag(InventoryDragEvent e){if(e.getView().getTopInventory().getHolder() instanceof Profile)e.setCancelled(true);}
 }

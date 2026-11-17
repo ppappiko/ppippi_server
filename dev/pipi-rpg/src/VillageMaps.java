@@ -35,10 +35,25 @@ final class VillageMaps {
 
     World open(String name) {
         World loaded = Bukkit.getWorld(name);
-        if (loaded != null) return loaded;
+        if (loaded != null) return applyTutorialSpawn(loaded);
         if (name.equals(village()) && !name.equals(Village2.WORLD)) return null; // the old village world is retired: never created or loaded again
         if (!new File(Bukkit.getWorldContainer(), name + "/level.dat").isFile()) return null;
-        return Bukkit.createWorld(new WorldCreator(name));
+        return applyTutorialSpawn(Bukkit.createWorld(new WorldCreator(name)));
+    }
+
+    /**
+     * 튜토리얼 시작 위치를 config.yml 의 tutorial.spawn 으로 맞춘다 (맵을 새로 만들어도, 서버를 켤 때마다도).
+     * 기본값: 공동 마을 입장 문 앞 X 0.5, Y 64, Z 28.5, 북쪽(yaw 180)을 바라봄.
+     */
+    World applyTutorialSpawn(World world) {
+        if (world == null || !world.getName().equals(TUTORIAL)) return world;
+        var cfg = plugin.getConfig();
+        Location at = new Location(world, cfg.getDouble("tutorial.spawn.x", 0.5), cfg.getDouble("tutorial.spawn.y", 64),
+            cfg.getDouble("tutorial.spawn.z", 28.5), (float) cfg.getDouble("tutorial.spawn.yaw", 180), (float) cfg.getDouble("tutorial.spawn.pitch", 0));
+        Location now = world.getSpawnLocation();
+        if (now.getX() != at.getX() || now.getY() != at.getY() || now.getZ() != at.getZ() || now.getYaw() != at.getYaw())
+            world.setSpawnLocation(at);
+        return world;
     }
 
     void build(Player player, BooleanSupplier finish) {
@@ -48,7 +63,7 @@ final class VillageMaps {
             return;
         }
         building = true;
-        World tutorial = create(TUTORIAL);
+        World tutorial = applyTutorialSpawn(create(TUTORIAL));
         if (tutorial == null) {
             building = false;
             player.sendMessage("월드를 생성하지 못했습니다.");

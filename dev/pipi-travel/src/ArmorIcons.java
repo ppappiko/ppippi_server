@@ -32,8 +32,26 @@ public final class ArmorIcons {
         return standalone(ResourceLocation.fromNamespaceAndPath("pipitravel", "item/armor/" + CLASS[cls] + "_t" + tier + "_" + SLOT[slot]));
     }
 
+    /** Accessory icons in assets/pipitravel/models/item/accessory/<slot>_<model>.json (made by dev/art/make-accessories.py). */
+    private static final String[] ACCESSORIES = {"necklace_basic", "earring_basic", "bracelet_basic"};
+
+    private static ModelResourceLocation accessory(String name) {
+        return standalone(ResourceLocation.fromNamespaceAndPath("pipitravel", "item/accessory/" + name));
+    }
+
     public static void register(ModelEvent.RegisterAdditional event) {
         for (int c = 0; c < 3; c++) for (int t = 0; t <= 5; t++) for (int s = 0; s < 4; s++) event.register(mrl(c, t, s));
+        for (String name : ACCESSORIES) event.register(accessory(name));
+    }
+
+    /** pipilife:accessory = slot, pipilife:accessory_model = model; an unknown model falls back to the slot's basic icon. */
+    private static ModelResourceLocation accessoryFor(CompoundTag pub) {
+        String slot = pub.getString("pipilife:accessory");
+        if (!slot.matches("[a-z]+")) return null;
+        String name = slot + "_" + pub.getString("pipilife:accessory_model");
+        for (String known : ACCESSORIES) if (known.equals(name)) return accessory(name);
+        for (String known : ACCESSORIES) if (known.equals(slot + "_basic")) return accessory(known);
+        return null;
     }
 
     /** Standalone model for a PipiLife armour stack, or null for anything else. */
@@ -46,9 +64,12 @@ public final class ArmorIcons {
             found = NONE;
             CompoundTag tag = data.getUnsafe();
             if (tag.contains("PublicBukkitValues", 10)) {
-                String label = tag.getCompound("PublicBukkitValues").getString("pipilife:smith_catalog");
+                CompoundTag pub = tag.getCompound("PublicBukkitValues");
+                String label = pub.getString("pipilife:smith_catalog");
                 Matcher m = LABEL.matcher(label);
-                if (m.find()) {
+                ModelResourceLocation acc = pub.contains("pipilife:accessory") ? accessoryFor(pub) : null;
+                if (acc != null) found = acc;
+                else if (m.find()) {
                     int tier = Integer.parseInt(m.group(1));
                     int cls = 0, slot = 0;
                     for (int i = 0; i < 3; i++) if (FAMILY[i].equals(m.group(2))) cls = i;

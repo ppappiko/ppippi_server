@@ -8,11 +8,21 @@ SOR="C:/Users/user/Documents/Codex/2026-11-04/sor"
 SRC=dev/pipi-facilities/src
 OUT=dev/pipi-facilities/out
 
-CP="$SOR/work/hud-minecraft-named.jar"
-while IFS= read -r j; do
-  case "$j" in *sources*|*srgutils*|*-all.jar|*fatjar*|*userdev*) continue;; esac
-  CP="$CP;$j"
-done < <(find "$SOR/work/gradle-cache/caches/modules-2" -name '*.jar' | sort)
+CPARGS="$(mktemp)"; CPARGS="$(cygpath -m "$CPARGS" 2>/dev/null || echo "$CPARGS")"
+if [ -f "$SOR/work/hud-minecraft-named.jar" ]; then
+  CP="$SOR/work/hud-minecraft-named.jar"
+  while IFS= read -r j; do
+    case "$j" in *sources*|*srgutils*|*-all.jar|*fatjar*|*userdev*) continue;; esac
+    CP="$CP;$j"
+  done < <(find "$SOR/work/gradle-cache/caches/modules-2" -name '*.jar' | sort)
+  printf -- '-cp
+"%s"
+' "$CP" > "$CPARGS"
+else
+  # sor 작업 폴더가 없는 PC: 마인크래프트 런처에 설치된 NeoForge 1.21.1 로 컴파일
+  echo "sor workspace not found, using the local Minecraft launcher NeoForge install"
+  python dev/mc-classpath.py "$CPARGS"
+fi
 
 BASE=""
 for f in $(ls mods/PipiFacilities-*.jar 2>/dev/null | grep -v '\.bak' | sort -V); do BASE="$f"; done
@@ -26,7 +36,8 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 mkdir -p "$TMP/classes" "$TMP/jar" "$OUT"
 
-javac --release 21 -proc:none -encoding UTF-8 -nowarn -cp "$CP" -d "$TMP/classes" $SRC/*.java
+javac --release 21 -proc:none -encoding UTF-8 -nowarn @"$CPARGS" -d "$TMP/classes" $SRC/*.java
+rm -f "$CPARGS"
 
 BASE_ABS="$(cd "$(dirname "$BASE")" && pwd)/$(basename "$BASE")"
 ( cd "$TMP/jar" && jar xf "$BASE_ABS" )
