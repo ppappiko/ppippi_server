@@ -279,6 +279,13 @@ final class UpgradeScreen extends ContainerScreen {
         return true;
     }
     @Override public boolean keyPressed(int key,int scan,int mods) {
+        if(key==GLFW.GLFW_KEY_ENTER||key==GLFW.GLFW_KEY_KP_ENTER) { // Enter = 강화 하기 / 확인
+            if (UpgradeFx.popupShowing()) UpgradeFx.closePopup();
+            else if (UpgradeFx.frozen()) return true;
+            else if (confirmOpen()) click(46);
+            else click(45);
+            return true;
+        }
         if(key==GLFW.GLFW_KEY_ESCAPE) {
             if (UpgradeFx.popupShowing()) UpgradeFx.closePopup();
             else if (!UpgradeFx.frozen()) onClose();

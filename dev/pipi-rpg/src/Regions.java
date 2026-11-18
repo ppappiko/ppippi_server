@@ -45,7 +45,6 @@ final class Regions implements Listener {
         }
     }
 
-    private static final Set<String> RESOURCE_IDS = Set.of("AMBER_ROCK", "CABBAGE_CROP", "REDWOOD_TREE_LOG", "ROCK_PILE", "REDWOOD_TREE_LEAVES");
     private static final Set<Material> BLOCKED_ITEMS = new HashSet<>(List.of(Material.FLINT_AND_STEEL, Material.FIRE_CHARGE,
         Material.BONE_MEAL, Material.ARMOR_STAND, Material.ITEM_FRAME, Material.GLOW_ITEM_FRAME, Material.PAINTING, Material.END_CRYSTAL));
 
@@ -161,18 +160,12 @@ final class Regions implements Listener {
         return p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR;
     }
 
-    private static boolean isResource(Material type) {
-        String n = type.name();
-        if (!n.startsWith("PIPIFACILITIES_")) return false;
-        return RESOURCE_IDS.contains(n.substring("PIPIFACILITIES_".length()));
-    }
-
     // ---- block protection (players) ----
 
     @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent e) {
         if (!locked(e.getPlayer(), e.getBlock())) return;
-        if (isResource(e.getBlock().getType())) return; // ResourceNodes handles these (HIGH)
+        if (GatherBlocks.is(e.getBlock().getType())) return; // ResourceNodes handles these (HIGH)
         e.setCancelled(true);
     }
 

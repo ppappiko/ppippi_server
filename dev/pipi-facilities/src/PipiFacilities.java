@@ -44,7 +44,8 @@ public final class PipiFacilities {
         for (String fx : new String[]{"slash_arc","slash_red","whirl_ring","shockwave","giant_sword","arrow_big","wind_spiral","leaf","orb","ice_lance","meteor","heal_cross","crystal","tiger_claw","wind_bow","spirit_wolf","mana_hammer","mana_bow","dragon_head","lightning_bolt","rock_arrow","water_arrow","phoenix","dragon_breath","mana_beam","mana_circle","mana_shell","mana_blast"})
             ITEMS.registerSimpleItem("fx_" + fx, new Item.Properties().stacksTo(1));
         // Tier-4 region blocks: placeable by builders, no loot (the plugin handles drops/respawn).
-        regionBlock("amber_rock", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(3.0f).requiresCorrectToolForDrops().sound(SoundType.STONE).noLootTable()));
+        regionBlock("amber_rock", () -> new ShapedBlock(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(3.0f).requiresCorrectToolForDrops().sound(SoundType.STONE).noOcclusion().noLootTable(),
+            Block.box(1, 0, 2, 15, 11, 15)));
         regionBlock("rock_pile", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(3.0f).sound(SoundType.STONE).noLootTable()));
         regionBlock("redwood_tree_log", () -> new RotatedPillarBlock(BlockBehaviour.Properties.of().mapColor(MapColor.CRIMSON_STEM).strength(2.0f).sound(SoundType.WOOD).noLootTable()));
         regionBlock("redwood_tree_leaves", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.CRIMSON_HYPHAE).strength(0.2f).sound(SoundType.GRASS)
@@ -54,6 +55,9 @@ public final class PipiFacilities {
         regionBlock("warp_stone", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.COLOR_CYAN).strength(35.0f, 1200.0f).sound(SoundType.AMETHYST)
             .lightLevel(s -> 7).noOcclusion().isViewBlocking((s, l, p) -> false).noLootTable()));
         ITEMS.registerSimpleItem("cabbage_seed",new Item.Properties().stacksTo(64));
+        // Boss gate of 깊은 어둠: right-click opens the raid entry window (PipiLife RaidDeepDark). 2 blocks tall model.
+        regionBlock("sealed_stele", () -> new SteleBlock(BlockBehaviour.Properties.of().mapColor(MapColor.DEEPSLATE).strength(50.0f, 1200.0f).sound(SoundType.DEEPSLATE_TILES)
+            .lightLevel(s -> 6).noOcclusion().isViewBlocking((s, l, p) -> false).noLootTable()));
         BLOCKS.register(bus);
         ITEMS.register(bus);
     }
@@ -61,6 +65,21 @@ public final class PipiFacilities {
     private static void regionBlock(String id, java.util.function.Supplier<Block> sup) {
         var holder = BLOCKS.register(id, sup);
         ITEMS.registerSimpleBlockItem(id, holder, new Item.Properties().stacksTo(64));
+    }
+
+    /** Plain block with a smaller-than-full shape (outline + collision) matching its model. */
+    private static final class ShapedBlock extends Block {
+        private final net.minecraft.world.phys.shapes.VoxelShape shape;
+        ShapedBlock(BlockBehaviour.Properties properties, net.minecraft.world.phys.shapes.VoxelShape shape) { super(properties); this.shape = shape; }
+        @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level,
+                net.minecraft.core.BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) { return shape; }
+    }
+
+    private static final class SteleBlock extends Block {
+        private static final net.minecraft.world.phys.shapes.VoxelShape SHAPE = Block.box(1, 0, 1, 15, 32, 15);
+        SteleBlock(BlockBehaviour.Properties properties) { super(properties); }
+        @Override protected net.minecraft.world.phys.shapes.VoxelShape getShape(BlockState state, net.minecraft.world.level.BlockGetter level,
+                net.minecraft.core.BlockPos pos, net.minecraft.world.phys.shapes.CollisionContext context) { return SHAPE; }
     }
 
     private static final class FacilityBlock extends Block {

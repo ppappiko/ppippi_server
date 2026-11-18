@@ -88,6 +88,34 @@ final class Warps implements Listener {
 
     private boolean has(String id) { return cfg.isConfigurationSection("warps." + id); }
 
+    /** True when warps.yml already has a waypoint with this id. */
+    boolean hasStone(String id) { return has(id); }
+
+    boolean moveStone(String id, Block target, float yaw) { return moveStone(id, target, yaw, null); }
+
+    /**
+     * Moves an existing waypoint's stone to {@code target}, renaming it to {@code name} too when given: the old block is
+     * cleared when it still is the warp-stone block, then the coords/yaw/name are stored and the block placed. False when the
+     * id is unknown or the mod block is missing.
+     */
+    boolean moveStone(String id, Block target, float yaw, String name) {
+        Material m = stone();
+        if (m == null || !has(id)) return false;
+        Location old = stoneLocation(id);
+        if (old != null && old.getBlock().getType() == m) old.getBlock().setType(Material.AIR, false);
+        String path = "warps." + id;
+        cfg.set(path + ".world", target.getWorld().getName());
+        cfg.set(path + ".x", target.getX());
+        cfg.set(path + ".y", target.getY());
+        cfg.set(path + ".z", target.getZ());
+        cfg.set(path + ".yaw", (double) yaw);
+        if (name != null) cfg.set(path + ".name", name);
+        if (!save()) return false;
+        target.setType(m, false);
+        applyFacing(target, yaw);
+        return true;
+    }
+
     private Set<String> ids() {
         var s = cfg.getConfigurationSection("warps");
         return s == null ? Set.of() : s.getKeys(false);
@@ -373,7 +401,7 @@ final class Warps implements Listener {
         String sub = args[1].toLowerCase(Locale.ROOT);
         switch (sub) {
             case "home": return home(p);
-            case "menu": return open(p, null);
+            case "menu": return open(p, null, !admin(p) && plugin.isWildWorld(p.getWorld().getName())); // wild: teleporting only at a stone
             case "view": return open(p, null, true);
             case "go":
                 if (args.length < 3) return tell(p, "/pipilife warp go <id>");
@@ -615,10 +643,10 @@ final class Warps implements Listener {
         hm.setDisplayName("내 거주지");
         hm.setLore(List.of("home"));
         home.setItemMeta(hm);
-        if (plugin.isWildWorld(p.getWorld().getName())) {
+        if (view && plugin.isWildWorld(p.getWorld().getName())) { // wild: only at a warp stone
             home = new ItemStack(Material.GRAY_DYE);
             hm = home.getItemMeta();
-            hm.setDisplayName("내 거주지 (야생에서는 불가)");
+            hm.setDisplayName("야생에서는 워프석에서만 거주지로 이동할 수 있습니다");
             hm.setLore(List.of("homeoff"));
             home.setItemMeta(hm);
         }
@@ -703,7 +731,7 @@ final class Warps implements Listener {
         if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
         int slot = e.getRawSlot();
         if (slot == 53) { p.closeInventory(); return; }
-        if (slot == 49) { p.closeInventory(); home(p); return; } // home works in view-only too (refused in the wild)
+        if (slot == 49) { p.closeInventory(); if (menu.view) home(p); else plugin.townHomeFromStone(p); return; } // at a stone: works in the wild too; view-only: refused in the wild
         if (menu.view) return; // view-only session: no waypoint teleporting
         if (slot >= 0 && slot < 45 && menu.ids[slot] != null) go(p, menu.ids[slot]);
     }

@@ -53,5 +53,6 @@
   "item.pipifacilities.hearty_carrot_soup": "든든한 당근 수프",
   "item.pipifacilities.hearty_veggie_salad": "든든한 채소 샐러드",
   "item.pipifacilities.failed_dish": "정체불명의 요리",
-  "item.pipifacilities.warp_stone_blueprint": "거주지 워프석 청사진"
+  "item.pipifacilities.warp_stone_blueprint": "거주지 워프석 청사진",
+  "block.pipifacilities.sealed_stele": "봉인된 비석"
 }

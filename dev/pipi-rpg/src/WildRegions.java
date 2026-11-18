@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.zip.GZIPInputStream;
 import org.bukkit.Bukkit;
@@ -18,7 +19,10 @@ import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Directional;
+import org.bukkit.GameMode;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
@@ -27,8 +31,20 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.Event;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.block.BlockBurnEvent;
+import org.bukkit.event.block.BlockExplodeEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.BlockReceiveGameEvent;
+import org.bukkit.event.block.BlockSpreadEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
+import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerBucketEmptyEvent;
+import org.bukkit.event.player.PlayerBucketFillEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -53,13 +69,14 @@ import net.md_5.bungee.api.chat.TextComponent;
 final class WildRegions implements Listener {
     record Def(String id, String name, int cx, int cz) {}
     static final List<Def> DEFS = List.of(
-        new Def("nw", "북서 대륙 · 중세 판타지 채집지", -3000, -5000),
-        new Def("ne", "북동 대륙 · 기계화 채집지", 3000, -5000),
+        new Def("nw", "북서 대륙 · 중세 판타지 채집지", -1700, -4400),
+        new Def("ne", "북동 대륙 · 기계화 채집지", 5300, -7300),
         new Def("se", "남동 대륙 · 천상계 채집지", 3000, 5000));
     static final String CATEGORY = "야생";
     static final String K_PLACED = "wild-stones.placed", K_SPOTS = "wild-stones.spots", K_BUILDING = "regions.building";
-    private static final String[][] STONE_INFO = {{"wild_nw", "야생 북서쪽"}, {"wild_ne", "야생 북동쪽"}, {"wild_s", "야생 남쪽"}};
-    private static final int[][] STONE_AT = {{-110, -110}, {110, -110}, {0, 150}};
+    private static final String[][] STONE_INFO = {{"wild_nw", "평원 선착장"}, {"wild_ne", "숲 선착장"}, {"wild_s", "사막 선착장"}};
+    private static final int[][] STONE_AT = {{310, 375}, {-837, 523}, {-1482, 2346}};
+    private static final boolean[] EXIT_EAST = {true, false, false}; // boarding side: +x (east) or -x (west)
     private static final int SPOT_R = 8;            // block radius searched for natural standable ground
     private static final long BUDGET_NS = 12_000_000L; // block writing per tick
     private static final int PREFETCH = 4;           // chunks requested ahead
@@ -178,6 +195,354 @@ final class WildRegions implements Listener {
         return !m.isSolid() && !Tag.LEAVES.isTagged(m) && m != Material.WATER && m != Material.LAVA
             && (Tag.FLOWERS.isTagged(m) || Tag.REPLACEABLE.isTagged(m) || Tag.SAPLINGS.isTagged(m));
     }
+
+    // ================================================================== docked ships at the wild stones (redesigned big moored ship)
+
+    static final String K_CAMP_BUILT = "wild-camp.built";
+    static final String K_CAMP_SURFACE = "wild-camp.surface."; // plugin data: measured sea surface per ship id (K_CAMP_SURFACE + id)
+    private static final int SHIP_HALF_LEN = 20;   // hull length 41 (dz -20..20, bow at -z, stern at +z)
+    private static final int SHIP_HALF_W = 6;      // hull width 13 (dx -6..6) at the middle
+
+    /** Everything the ship is built from (cleared before a rebuild): planks, logs, fences, stairs, slabs, doors, sails, ... */
+    private static final java.util.Set<Material> SHIP_MATERIALS = java.util.EnumSet.of(
+        Material.DARK_OAK_PLANKS, Material.SPRUCE_PLANKS, Material.OAK_PLANKS,
+        Material.STRIPPED_DARK_OAK_LOG, Material.STRIPPED_SPRUCE_LOG, Material.DARK_OAK_LOG, Material.SPRUCE_LOG,
+        Material.SPRUCE_FENCE, Material.DARK_OAK_FENCE,
+        Material.SPRUCE_STAIRS, Material.DARK_OAK_STAIRS,
+        Material.SPRUCE_SLAB, Material.DARK_OAK_SLAB,
+        Material.SPRUCE_TRAPDOOR, Material.DARK_OAK_TRAPDOOR,
+        Material.SPRUCE_DOOR, Material.DARK_OAK_DOOR,
+        Material.WHITE_WOOL, Material.WHITE_BANNER, Material.LANTERN, Material.BARREL,
+        Material.CRAFTING_TABLE, Material.GLASS_PANE, Material.POLISHED_ANDESITE);
+
+    /** Half width of the hull at dz: 6 in the middle, tapering to a point at the bow and rounded at the stern. */
+    private static int halfWidth(int dz) {
+        int a = Math.abs(dz);
+        if (a <= 12) return 6;
+        if (dz < 0) {                       // bow (at -z): taper to a point
+            if (a <= 15) return 5;
+            if (a <= 17) return 4;
+            if (a == 18) return 3;
+            if (a == 19) return 2;
+            return 1;
+        }
+        if (a <= 17) return 5;              // stern (at +z): rounded
+        if (a <= 19) return 4;
+        return 3;
+    }
+
+    /**
+     * Builds (or rebuilds, idempotently) one big moored ship at each of the three fixed wild stone spots ({@link #STONE_AT},
+     * the old {@value #K_SPOTS} is ignored for positions and rewritten with the new deck spots): a wide plank deck with railings
+     * and tall lantern posts, raised forecastle and quarterdeck, two masts, a cargo hold, a public wild warp stone on the main
+     * deck and a 5-wide boarding opening on the exit side (the player builds the bridge to shore). Runs on the main thread.
+     * Returns a report for the sender, or null when the warp-stone block (mod) is not registered yet.
+     */
+    String baseCamp(Player player) {
+        Warps warps = plugin.warpSystem();
+        if (warps == null) return "워프석 시스템이 꺼져 있습니다.";
+        if (!warps.stoneAvailable()) return null;
+        World w = world();
+        if (w == null) return "야생 월드(" + plugin.wildWorldName() + ")를 찾지 못했습니다.";
+
+        List<String> newSpots = new ArrayList<>();
+        List<TownMap.Stone> missing = new ArrayList<>();
+        List<String> report = new ArrayList<>();
+        for (int i = 0; i < STONE_AT.length; i++) {
+            int cx = STONE_AT[i][0], cz = STONE_AT[i][1];
+            boolean east = EXIT_EAST[i];
+            for (int ax = (cx - 30) >> 4; ax <= (cx + 30) >> 4; ax++)
+                for (int az = (cz - 30) >> 4; az <= (cz + 30) >> 4; az++) w.getChunkAt(ax, az).load(true);
+
+            String id = STONE_INFO[i][0];
+            int sea = seaSurface(w, cx, cz, east, id);    // real sea surface (cached), measured outside the hull
+            int surface = sea + 1;                        // deck one block above the sea surface (4 higher than the old wrong build)
+            buildShip(w, cx, cz, surface, east);
+
+            int y = surface + 3;                          // warp stone on the main deck (deck at W+2, stone at W+3)
+            float yaw = east ? -90f : 90f;                // face the exit side (EAST = -90, WEST = 90)
+            newSpots.add(cx + "," + y + "," + cz);
+            if (warps.hasStone(id)) warps.moveStone(id, w.getBlockAt(cx, y, cz), yaw, STONE_INFO[i][1]);
+            else missing.add(new TownMap.Stone(id, STONE_INFO[i][1], cx, y, cz, yaw));
+            report.add(STONE_INFO[i][1] + " W=" + surface + " sea=" + sea);
+        }
+        if (!missing.isEmpty()) warps.ensureWildStones(w, missing, CATEGORY, true);
+        plugin.store(K_SPOTS, newSpots);
+        plugin.store(K_PLACED, true);
+        plugin.store(K_CAMP_BUILT, true);
+        return "야생 선착장 3곳에 배를 지었습니다 · " + String.join(" · ", report);
+    }
+
+    /** Water surface y of the centre column, or the highest solid block when there is no water there (sits on land). */
+    private static int waterSurface(World w, int cx, int cz) {
+        int top = w.getHighestBlockYAt(cx, cz, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        for (int y = top; y > w.getMinHeight(); y--)
+            if (w.getBlockAt(cx, y, cz).getType() == Material.WATER) return y;
+        int solid = highestSolid(w, cx, cz);
+        return solid == Integer.MIN_VALUE ? top : solid;
+    }
+
+    /** Highest solid, non-leaf, non-liquid block of a column (MIN_VALUE when there is none). */
+    private static int highestSolid(World w, int x, int z) {
+        int top = w.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+        for (int y = top; y > w.getMinHeight(); y--) {
+            Material m = w.getBlockAt(x, y, z).getType();
+            if (m == Material.WATER || m == Material.LAVA || m == Material.ICE || Tag.LEAVES.isTagged(m)) continue;
+            if (m.isSolid()) return y;
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    /**
+     * Real sea surface of the ship {@code id}: the most common highest WATER block over columns ~4 blocks outside the hull (beyond
+     * the non-exit side and the bow / stern), so the water under a previous keel or the centre column cannot bias it. Cached in
+     * the plugin data as {@link #K_CAMP_SURFACE}+id and reused on later runs; measured only when missing. Falls back to the centre
+     * column ({@link #waterSurface}) when none of the sampled columns has water (the ship sits on land).
+     */
+    private int seaSurface(World w, int cx, int cz, boolean east, String id) {
+        String key = K_CAMP_SURFACE + id;
+        int cached = plugin.data().getInt(key, Integer.MIN_VALUE);
+        if (cached != Integer.MIN_VALUE) return cached;
+        int sx = east ? 1 : -1;
+        int[][] pts = {{-sx * 10, 0}, {-sx * 10, 12}, {-sx * 10, -12}, {0, -26}, {0, 24}};
+        Map<Integer, Integer> counts = new HashMap<>();
+        for (int[] p : pts) {
+            int x = cx + p[0], z = cz + p[1];
+            int top = w.getHighestBlockYAt(x, z, HeightMap.MOTION_BLOCKING_NO_LEAVES);
+            for (int y = top; y > w.getMinHeight(); y--)
+                if (w.getBlockAt(x, y, z).getType() == Material.WATER) { counts.merge(y, 1, Integer::sum); break; }
+        }
+        int best = Integer.MIN_VALUE, bestN = 0;
+        for (Map.Entry<Integer, Integer> e : counts.entrySet())
+            if (e.getValue() > bestN || (e.getValue() == bestN && e.getKey() > best)) { best = e.getKey(); bestN = e.getValue(); }
+        int surface = best == Integer.MIN_VALUE ? waterSurface(w, cx, cz) : best;
+        plugin.store(key, surface);
+        return surface;
+    }
+
+    /**
+     * Removes the previous ship from the same footprint (hull footprint expanded by 2, plus the bowsprit area) between
+     * {@code sea-8} and {@code sea+35}: every ship building material ({@link #SHIP_MATERIALS}) or air becomes WATER at or below
+     * the sea surface and AIR above it; natural blocks (sand, gravel, dirt, stone, clay, ...) and the warp stone are left alone
+     * (the warp stone itself is moved afterwards). Then the new ship is built.
+     */
+    private static void clearOldShip(World w, int cx, int cz, int sea, int sx) {
+        for (int dx = -SHIP_HALF_W - 2; dx <= SHIP_HALF_W + 2; dx++)
+            for (int dz = -SHIP_HALF_LEN - 2; dz <= SHIP_HALF_LEN + 2; dz++)
+                clearColumn(w, cx + sx * dx, cz + dz, sea);
+        for (int dz = -SHIP_HALF_LEN - 5; dz < -SHIP_HALF_LEN - 2; dz++) // bowsprit beyond the bow
+            clearColumn(w, cx, cz + dz, sea);
+    }
+
+    /** One column of {@link #clearOldShip}. */
+    private static void clearColumn(World w, int x, int z, int sea) {
+        for (int y = sea - 8; y <= sea + 35; y++) {
+            Material m = w.getBlockAt(x, y, z).getType();
+            if (!m.isAir() && !SHIP_MATERIALS.contains(m)) continue;
+            set(w, x, y, z, y <= sea ? Material.WATER : Material.AIR);
+        }
+    }
+
+    /**
+     * Builds the big moored ship centred on (cx, cz) with water surface {@code W}; the boarding side (+dx) faces the exit when
+     * {@code east}. A wide plank deck with railings and tall lantern posts, raised forecastle and quarterdeck, two masts and a
+     * cargo hold; a warp stone goes on the main deck at {@code W+3}.
+     */
+    private static void buildShip(World w, int cx, int cz, int W, boolean east) {
+        int sx = east ? 1 : -1; // mirror the layout so the boarding opening (+dx) faces the exit side
+
+        clearOldShip(w, cx, cz, W - 1, sx); // remove the previous ship in the same footprint before rebuilding
+
+        // clear room above the ship (footprint + 2, including the bowsprit) so nothing grows through it
+        for (int dx = -SHIP_HALF_W - 2; dx <= SHIP_HALF_W + 2; dx++)
+            for (int dz = -SHIP_HALF_LEN - 7; dz <= SHIP_HALF_LEN + 2; dz++)
+                for (int y = W + 3; y <= W + 30; y++) set(w, cx + sx * dx, y, cz + dz, Material.AIR);
+
+        buildHull(w, cx, cz, W, sx);
+        buildDeck(w, cx, cz, W, sx);
+        buildHold(w, cx, cz, W);
+        buildRailings(w, cx, cz, W, sx, east);
+        buildForecastle(w, cx, cz, W, sx);
+        buildQuarterdeck(w, cx, cz, W, sx);
+        buildMasts(w, cx, cz, W, sx);
+
+        // warp stone base: polished andesite at the main deck centre (the stone itself goes on top, at W+3)
+        set(w, cx, W + 2, cz, Material.POLISHED_ANDESITE);
+    }
+
+    /** Hull: dark-oak plank sides W-4..W-1, a spruce stripe at W and stripped dark-oak log trim at W+1; keel at W-4; air inside. */
+    private static void buildHull(World w, int cx, int cz, int W, int sx) {
+        for (int dz = -SHIP_HALF_LEN; dz <= SHIP_HALF_LEN; dz++) {
+            int hw = halfWidth(dz);
+            for (int dx = -hw; dx <= hw; dx++) {
+                int x = cx + sx * dx, z = cz + dz;
+                set(w, x, W - 4, z, Material.DARK_OAK_PLANKS); // keel / floor
+                if (dx == -hw || dx == hw) {
+                    for (int y = W - 4; y <= W - 1; y++) set(w, x, y, z, Material.DARK_OAK_PLANKS);
+                    set(w, x, W, z, Material.SPRUCE_PLANKS);              // spruce stripe
+                    set(w, x, W + 1, z, Material.STRIPPED_DARK_OAK_LOG);  // trim
+                } else {
+                    for (int y = W - 3; y <= W + 1; y++) set(w, x, y, z, Material.AIR); // cargo hold
+                }
+            }
+        }
+    }
+
+    /** Main deck at W+2 over the whole hull: spruce planks with an oak-plank stripe every 3 rows along dz. */
+    private static void buildDeck(World w, int cx, int cz, int W, int sx) {
+        for (int dz = -SHIP_HALF_LEN; dz <= SHIP_HALF_LEN; dz++) {
+            int hw = halfWidth(dz);
+            for (int dx = -hw; dx <= hw; dx++)
+                set(w, cx + sx * dx, W + 2, cz + dz, Math.floorMod(dz, 3) == 0 ? Material.OAK_PLANKS : Material.SPRUCE_PLANKS);
+        }
+    }
+
+    /** Cargo hold under the main deck: a few barrels on the keel and four hanging lanterns along the centre line. */
+    private static void buildHold(World w, int cx, int cz, int W) {
+        for (int dz : new int[] {-9, -3, 3, 9}) lantern(w, cx, W + 1, cz + dz, true);
+        for (int[] b : new int[][] {{-3, -6}, {3, -6}, {-3, 6}, {3, 6}, {0, 0}}) set(w, cx + b[0], W - 3, cz + b[1], Material.BARREL);
+    }
+
+    /** Spruce-fence railing at W+3 around the main deck edge with tall lamp posts, and the boarding opening on the exit side. */
+    private static void buildRailings(World w, int cx, int cz, int W, int sx, boolean east) {
+        BlockFace out = east ? BlockFace.EAST : BlockFace.WEST;
+        int ry = W + 3;
+        for (int dz = -12; dz <= 12; dz++) {
+            int hw = halfWidth(dz);
+            boolean post = Math.floorMod(dz, 4) == 0;
+            if (!(dz >= -2 && dz <= 2)) railCell(w, cx + sx * hw, ry, cz + dz, post); // exit side (gap here)
+            railCell(w, cx - sx * hw, ry, cz + dz, post);                             // other side
+        }
+        for (int dz : new int[] {-3, 3}) lampPost(w, cx + sx * halfWidth(dz), ry, cz + dz, 4); // taller posts beside the gap
+        for (int dz = -2; dz <= 2; dz++) stairs(w, cx + sx * halfWidth(dz), W + 2, cz + dz, out); // outward stairs at the gap
+    }
+
+    /** One railing cell at the deck edge: a tall lamp post or a plain spruce fence. */
+    private static void railCell(World w, int x, int ry, int z, boolean post) {
+        if (post) lampPost(w, x, ry, z, 3);
+        else set(w, x, ry, z, Material.SPRUCE_FENCE);
+    }
+
+    /** A tall lamp post: {@code h} stripped-spruce logs from {@code y} up, topped with a lantern. */
+    private static void lampPost(World w, int x, int y, int z, int h) {
+        for (int k = 0; k < h; k++) set(w, x, y + k, z, Material.STRIPPED_SPRUCE_LOG);
+        set(w, x, y + h, z, Material.LANTERN);
+    }
+
+    /** Raised forecastle at W+5 over dz -20..-13, clipped to the hull: dark-oak walls, a stair up, a fence railing and a bowsprit. */
+    private static void buildForecastle(World w, int cx, int cz, int W, int sx) {
+        for (int dz = -SHIP_HALF_LEN; dz <= -13; dz++) {
+            int hw = halfWidth(dz);
+            for (int dx = -hw; dx <= hw; dx++) {
+                int x = cx + sx * dx, z = cz + dz;
+                boolean wall = dx == -hw || dx == hw || dz == -13;
+                for (int y = W + 3; y <= W + 4; y++) set(w, x, y, z, wall ? Material.DARK_OAK_PLANKS : Material.AIR);
+                set(w, x, W + 5, z, Material.SPRUCE_PLANKS);
+                boolean edge = dx == -hw || dx == hw || dz == -SHIP_HALF_LEN || dz == -13;
+                if (edge && !(dz == -13 && Math.abs(dx) <= 1)) set(w, x, W + 6, z, Material.SPRUCE_FENCE);
+            }
+        }
+        // staircase from the main deck up, centre, climbing toward the bow
+        stairs(w, cx, W + 2, cz - 10, BlockFace.NORTH);
+        stairs(w, cx, W + 3, cz - 11, BlockFace.NORTH);
+        stairs(w, cx, W + 4, cz - 12, BlockFace.NORTH);
+        // bowsprit of spruce fence sticking out 5 blocks beyond the bow
+        for (int k = 1; k <= 5; k++) {
+            set(w, cx, W + 5, cz - SHIP_HALF_LEN - k, Material.SPRUCE_FENCE);
+            set(w, cx, W + 6, cz - SHIP_HALF_LEN - k, Material.SPRUCE_FENCE);
+        }
+    }
+
+    /** Raised quarterdeck at W+6 with a captain's cabin under it, stairs up, a fence railing and a ship's wheel hint. */
+    private static void buildQuarterdeck(World w, int cx, int cz, int W, int sx) {
+        for (int dz = 13; dz <= SHIP_HALF_LEN; dz++) {
+            int hw = halfWidth(dz);
+            for (int dx = -hw; dx <= hw; dx++) {
+                int x = cx + sx * dx, z = cz + dz;
+                boolean wall = dx == -hw || dx == hw || dz == 13 || dz == SHIP_HALF_LEN;
+                for (int y = W + 3; y <= W + 5; y++) {
+                    if (dz == 13 && dx == 0 && y <= W + 4) continue; // door opening
+                    Material m = wall ? Material.DARK_OAK_PLANKS : Material.AIR;
+                    if ((dx == -hw || dx == hw) && y == W + 4) m = Material.GLASS_PANE; // cabin windows
+                    set(w, x, y, z, m);
+                }
+                set(w, x, W + 6, z, Material.SPRUCE_PLANKS);
+                boolean edge = dx == -hw || dx == hw || dz == SHIP_HALF_LEN || dz == 13;
+                if (edge && !(dz == 13 && Math.abs(dx) == 3)) set(w, x, W + 7, z, Material.SPRUCE_FENCE);
+            }
+        }
+        // dark oak door in the middle of the dz=13 wall, facing the bow
+        for (int y = W + 3; y <= W + 4; y++) {
+            BlockData door = Material.DARK_OAK_DOOR.createBlockData();
+            if (door instanceof Directional d && d.getFaces().contains(BlockFace.NORTH)) d.setFacing(BlockFace.NORTH);
+            if (door instanceof org.bukkit.block.data.Bisected b) b.setHalf(y == W + 3 ? org.bukkit.block.data.Bisected.Half.BOTTOM : org.bukkit.block.data.Bisected.Half.TOP);
+            w.getBlockAt(cx, y, cz + 13).setBlockData(door, false);
+        }
+        // stairs up on both sides of the door
+        for (int s : new int[] {-3, 3}) {
+            stairs(w, cx + sx * s, W + 2, cz + 9, BlockFace.SOUTH);
+            stairs(w, cx + sx * s, W + 3, cz + 10, BlockFace.SOUTH);
+            stairs(w, cx + sx * s, W + 4, cz + 11, BlockFace.SOUTH);
+            stairs(w, cx + sx * s, W + 5, cz + 12, BlockFace.SOUTH);
+        }
+        // inside: two lanterns, a barrel and a crafting table
+        lantern(w, cx, W + 5, cz + 15, true);
+        lantern(w, cx, W + 5, cz + 18, true);
+        set(w, cx + sx * 2, W + 3, cz + 16, Material.BARREL);
+        set(w, cx - sx * 2, W + 3, cz + 16, Material.CRAFTING_TABLE);
+        // ship's wheel hint on the quarterdeck
+        set(w, cx, W + 7, cz + 17, Material.SPRUCE_FENCE);
+        BlockData wheel = Material.DARK_OAK_TRAPDOOR.createBlockData();
+        if (wheel instanceof org.bukkit.block.data.type.TrapDoor t) {
+            t.setOpen(true);
+            if (t.getFaces().contains(BlockFace.NORTH)) t.setFacing(BlockFace.NORTH);
+        }
+        w.getBlockAt(cx, W + 8, cz + 17).setBlockData(wheel, false);
+    }
+
+    /** Two stripped-spruce masts (dz -6 and 6) with yards, white-wool sails, a crow's nest on the front mast and banners. */
+    private static void buildMasts(World w, int cx, int cz, int W, int sx) {
+        for (int dz : new int[] {-6, 6}) {
+            for (int y = W + 3; y <= W + 24; y++) set(w, cx, y, cz + dz, Material.STRIPPED_SPRUCE_LOG);
+            for (int dx = -5; dx <= 5; dx++) {
+                set(w, cx + sx * dx, W + 11, cz + dz, Material.SPRUCE_FENCE); // lower yard
+                set(w, cx + sx * dx, W + 19, cz + dz, Material.SPRUCE_FENCE); // upper yard
+            }
+            for (int dx = -4; dx <= 4; dx++) {
+                for (int y = W + 5; y <= W + 10; y++) set(w, cx + sx * dx, y, cz + dz, Material.WHITE_WOOL);  // lower sail
+                for (int y = W + 14; y <= W + 18; y++) set(w, cx + sx * dx, y, cz + dz, Material.WHITE_WOOL); // upper sail
+            }
+            banner(w, cx, W + 25, cz + dz);
+        }
+        // crow's nest on the front mast (dz -6): 3x3 spruce slab platform with a fence ring
+        for (int dx = -1; dx <= 1; dx++) for (int ddz = -1; ddz <= 1; ddz++) {
+            if (dx == 0 && ddz == 0) continue;
+            set(w, cx + sx * dx, W + 21, cz - 6 + ddz, Material.SPRUCE_SLAB);
+            set(w, cx + sx * dx, W + 22, cz - 6 + ddz, Material.SPRUCE_FENCE);
+        }
+    }
+
+    /** A white banner on top of a mast, rotated to face north. */
+    private static void banner(World w, int x, int y, int z) {
+        BlockData data = Material.WHITE_BANNER.createBlockData();
+        if (data instanceof org.bukkit.block.data.Rotatable r) r.setRotation(BlockFace.NORTH);
+        w.getBlockAt(x, y, z).setBlockData(data, false);
+    }
+
+    /** A lantern, optionally hanging from the block above. */
+    private static void lantern(World w, int x, int y, int z, boolean hanging) {
+        BlockData data = Material.LANTERN.createBlockData();
+        if (data instanceof org.bukkit.block.data.type.Lantern l) l.setHanging(hanging);
+        w.getBlockAt(x, y, z).setBlockData(data, false);
+    }
+
+    private static void stairs(World w, int x, int y, int z, BlockFace face) {
+        BlockData data = Material.SPRUCE_STAIRS.createBlockData();
+        if (data instanceof Directional d && d.getFaces().contains(face)) d.setFacing(face);
+        w.getBlockAt(x, y, z).setBlockData(data, false);
+    }
+
+    private static void set(World w, int x, int y, int z, Material m) { w.getBlockAt(x, y, z).setType(m, false); }
 
     // ================================================================== regions
 
@@ -589,6 +954,208 @@ final class WildRegions implements Listener {
         Location l = e.getLocation();
         if (inRegion(l.getWorld(), l.getBlockX(), l.getBlockZ())) e.setCancelled(true);
     }
+
+    // ================================================================== tree thinning (/pipilife maps thintrees)
+
+    private static final java.util.Set<Material> TREE_GROUND = java.util.EnumSet.of(Material.GRASS_BLOCK, Material.DIRT,
+        Material.PODZOL, Material.COARSE_DIRT, Material.MOSS_BLOCK, Material.MUD, Material.ROOTED_DIRT, Material.MYCELIUM);
+    private BukkitRunnable thinJob;
+
+    /** Natural (non-stripped, non-mod) log. */
+    private static boolean naturalLog(Material m) {
+        return Tag.LOGS.isTagged(m) && !m.name().startsWith("STRIPPED_") && !m.name().startsWith("PIPIFACILITIES_");
+    }
+
+    /** Blocks a natural tree may touch without being treated as part of a build. */
+    private static boolean natural(Material m) {
+        if (m.isAir() || naturalLog(m) || Tag.LEAVES.isTagged(m) || TREE_GROUND.contains(m)) return true;
+        String n = m.name();
+        return m == Material.VINE || m == Material.WATER || m == Material.SNOW || m == Material.STONE || m == Material.SHORT_GRASS
+            || m == Material.TALL_GRASS || m == Material.FERN || m == Material.LARGE_FERN || m == Material.BEE_NEST
+            || m == Material.COCOA || m == Material.MOSS_CARPET || m == Material.MANGROVE_ROOTS || m == Material.MUDDY_MANGROVE_ROOTS
+            || Tag.FLOWERS.isTagged(m) || Tag.SAPLINGS.isTagged(m) || n.endsWith("_MUSHROOM") || n.contains("PROPAGULE");
+    }
+
+    /**
+     * Removes natural trees inside the region squares so the rest are sparse: a tree survives when a roll is below
+     * {@code keepPct} and no already kept trunk is within 7 blocks. Mod blocks, warp stones and trees touching a build
+     * are never touched. Runs a few chunks per tick with chat progress.
+     */
+    void thinTrees(Player player, String which, int keepPct) {
+        if (thinJob != null) { player.sendMessage("나무 정리가 이미 진행 중입니다."); return; }
+        World w = world();
+        if (w == null) { player.sendMessage("야생 월드를 찾지 못했습니다."); return; }
+        List<Def> defs = new ArrayList<>();
+        for (Def d : DEFS) if (which.equalsIgnoreCase("all") || d.id().equalsIgnoreCase(which)) defs.add(d);
+        if (defs.isEmpty()) { player.sendMessage("/pipilife maps thintrees <nw|ne|se|all> [남길%]"); return; }
+        List<int[]> chunks = new ArrayList<>();
+        for (Def d : defs)
+            for (int cx = (d.cx() - 165) >> 4; cx <= (d.cx() + 165) >> 4; cx++)
+                for (int cz = (d.cz() - 165) >> 4; cz <= (d.cz() + 165) >> 4; cz++) chunks.add(new int[] {cx, cz});
+        java.util.Collections.shuffle(chunks); // spread the kept trees evenly instead of favouring the first chunks
+        List<int[]> kept = new ArrayList<>();
+        int[] stats = new int[2]; // found, removed
+        java.util.Random random = new java.util.Random();
+        player.sendMessage("나무 정리를 시작합니다: " + which + " · 남길 비율 " + keepPct + "% · 청크 " + chunks.size() + "개");
+        thinJob = new BukkitRunnable() {
+            int i, lastPct;
+            @Override public void run() {
+                long until = System.nanoTime() + 15_000_000L;
+                while (i < chunks.size() && System.nanoTime() < until) {
+                    int[] c = chunks.get(i++);
+                    org.bukkit.Chunk chunk = w.getChunkAt(c[0], c[1]);
+                    chunk.load(true);
+                    for (int x = 0; x < 16; x++) for (int z = 0; z < 16; z++) {
+                        int bx = (c[0] << 4) + x, bz = (c[1] << 4) + z;
+                        if (!inRegion(w, bx, bz)) continue;
+                        int top = w.getHighestBlockYAt(bx, bz, HeightMap.MOTION_BLOCKING);
+                        for (int y = top; y > w.getMinHeight() + 1 && y > top - 40; y--) {
+                            Block b = w.getBlockAt(bx, y, bz);
+                            if (!naturalLog(b.getType()) || !TREE_GROUND.contains(b.getRelative(0, -1, 0).getType())) continue;
+                            stats[0]++;
+                            boolean spaced = true;
+                            for (int[] k : kept) if (Math.abs(k[0] - bx) < 7 && Math.abs(k[1] - bz) < 7 && (k[0] - bx) * (k[0] - bx) + (k[1] - bz) * (k[1] - bz) < 49) { spaced = false; break; }
+                            if (spaced && random.nextInt(100) < keepPct) kept.add(new int[] {bx, bz});
+                            else if (removeTree(b)) stats[1]++;
+                            break;
+                        }
+                    }
+                }
+                int pct = chunks.isEmpty() ? 100 : i * 100 / chunks.size();
+                if (pct / 10 > lastPct / 10 && pct < 100) { lastPct = pct; if (player.isOnline()) player.sendMessage("나무 정리 " + pct + "%"); }
+                if (i >= chunks.size()) {
+                    cancel();
+                    thinJob = null;
+                    String msg = "나무 정리 완료: 나무 " + stats[0] + "그루 중 " + stats[1] + "그루 제거";
+                    plugin.getLogger().info(msg);
+                    if (player.isOnline()) player.sendMessage(msg);
+                }
+            }
+        };
+        thinJob.runTaskTimer(plugin, 1, 1);
+    }
+
+    /** Removes one natural tree from its trunk block; false (nothing changed) when it touches a non-natural block. */
+    private static boolean removeTree(Block trunk) {
+        java.util.Set<Block> logs = new java.util.LinkedHashSet<>();
+        java.util.Deque<Block> queue = new java.util.ArrayDeque<>(List.of(trunk));
+        while (!queue.isEmpty() && logs.size() < 200) {
+            Block b = queue.poll();
+            if (!logs.add(b)) continue;
+            for (int dx = -1; dx <= 1; dx++) for (int dy = 0; dy <= 1; dy++) for (int dz = -1; dz <= 1; dz++) {
+                if (dx == 0 && dy == 0 && dz == 0) continue;
+                Block n = b.getRelative(dx, dy, dz);
+                Material m = n.getType();
+                if (!natural(m)) return false; // part of a build: leave the whole tree
+                if (naturalLog(m) && !logs.contains(n) && Math.abs(n.getX() - trunk.getX()) <= 30 && Math.abs(n.getZ() - trunk.getZ()) <= 30
+                    && n.getY() - trunk.getY() <= 30) queue.add(n);
+            }
+        }
+        for (Block b : logs) b.setType(Material.AIR, false);
+        for (Block b : logs)
+            for (int dx = -5; dx <= 5; dx++) for (int dy = -3; dy <= 5; dy++) for (int dz = -5; dz <= 5; dz++) {
+                Block n = b.getRelative(dx, dy, dz);
+                if (!Tag.LEAVES.isTagged(n.getType()) || nearLog(n)) continue; // keep leaves of a neighbouring tree
+                n.setType(Material.AIR, false); // region layouts place persistent leaves, so persistence is not checked
+            }
+        return groundToGrass(trunk);
+    }
+
+    /** True when a natural log (of a tree that stays) is within 3 blocks. */
+    private static boolean nearLog(Block leaf) {
+        for (int dx = -3; dx <= 3; dx++) for (int dy = -3; dy <= 3; dy++) for (int dz = -3; dz <= 3; dz++)
+            if (naturalLog(leaf.getRelative(dx, dy, dz).getType())) return true;
+        return false;
+    }
+
+    private static boolean groundToGrass(Block trunk) {
+        Block ground = trunk.getRelative(0, -1, 0);
+        if (ground.getType() == Material.DIRT || ground.getType() == Material.PODZOL) ground.setType(Material.GRASS_BLOCK, false);
+        return true;
+    }
+
+    // ================================================================== block protection inside the region squares
+    // Survival / adventure players (op or not) cannot change blocks in the regions; GatherBlocks are the exception and are
+    // left to ResourceNodes (break -> drop -> regrow) for everyone, no permission needed. Creative / spectator build freely.
+
+    private final Map<UUID, Long> protectMsg = new HashMap<>();
+
+    private boolean protectionOn() { return plugin.getConfig().getBoolean("wild-region-protection", true); }
+
+    private boolean guarded(Player p, Block b) {
+        if (b == null || !protectionOn()) return false;
+        if (p != null && (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR)) return false;
+        return inRegion(b.getWorld(), b.getX(), b.getZ());
+    }
+
+    private void denied(Player p) {
+        long now = System.currentTimeMillis();
+        Long last = protectMsg.get(p.getUniqueId());
+        if (last != null && now - last < 1000) return;
+        protectMsg.put(p.getUniqueId(), now);
+        p.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText("§c이 지역의 블록은 부술 수 없습니다."));
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectBreak(BlockBreakEvent e) {
+        if (!guarded(e.getPlayer(), e.getBlock()) || GatherBlocks.is(e.getBlock().getType())) return;
+        e.setCancelled(true);
+        denied(e.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectPlace(BlockPlaceEvent e) {
+        if (!guarded(e.getPlayer(), e.getBlock())) return;
+        e.setCancelled(true);
+        denied(e.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectBucketEmpty(PlayerBucketEmptyEvent e) {
+        if (guarded(e.getPlayer(), e.getBlock()) || guarded(e.getPlayer(), e.getBlockClicked())) { e.setCancelled(true); denied(e.getPlayer()); }
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectBucketFill(PlayerBucketFillEvent e) {
+        if (guarded(e.getPlayer(), e.getBlock()) || guarded(e.getPlayer(), e.getBlockClicked())) { e.setCancelled(true); denied(e.getPlayer()); }
+    }
+
+    /** Igniting (flint and steel / fire charge) and trampling farmland count as block changes; doors, chests, buttons stay usable. */
+    @EventHandler(priority = EventPriority.LOW)
+    public void protectInteract(PlayerInteractEvent e) {
+        Block b = e.getClickedBlock();
+        if (!guarded(e.getPlayer(), b)) return;
+        if (e.getAction() == Action.PHYSICAL) {
+            if (b.getType() == Material.FARMLAND || b.getType() == Material.TURTLE_EGG) e.setUseInteractedBlock(Event.Result.DENY);
+            return;
+        }
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK || e.getItem() == null) return;
+        Material held = e.getItem().getType();
+        if (held == Material.FLINT_AND_STEEL || held == Material.FIRE_CHARGE) { e.setUseItemInHand(Event.Result.DENY); denied(e.getPlayer()); }
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectEntityExplode(EntityExplodeEvent e) {
+        if (protectionOn()) e.blockList().removeIf(b -> inRegion(b.getWorld(), b.getX(), b.getZ()) && !GatherBlocks.is(b.getType()));
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectBlockExplode(BlockExplodeEvent e) {
+        if (protectionOn()) e.blockList().removeIf(b -> inRegion(b.getWorld(), b.getX(), b.getZ()) && !GatherBlocks.is(b.getType()));
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectBurn(BlockBurnEvent e) {
+        if (protectionOn() && inRegion(e.getBlock().getWorld(), e.getBlock().getX(), e.getBlock().getZ())) e.setCancelled(true);
+    }
+
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = true)
+    public void protectFireSpread(BlockSpreadEvent e) {
+        if (protectionOn() && e.getSource().getType() == Material.FIRE
+            && inRegion(e.getBlock().getWorld(), e.getBlock().getX(), e.getBlock().getZ())) e.setCancelled(true);
+    }
+
+    @EventHandler public void protectQuit(PlayerQuitEvent e) { protectMsg.remove(e.getPlayer().getUniqueId()); }
 
     // ================================================================== MythicMobs example mobs guard
 

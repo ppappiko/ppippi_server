@@ -46,6 +46,12 @@ final class WarpScreen extends ContainerScreen {
     /** Area dropdown sits in the title bar so it never covers map markers. */
     private static final int DD_X = 6, DD_Y = 3;
     private static final int AX0 = 44, AX1 = 408, AY0 = 100, AY1 = 290;
+    private static final String ZOOM_HINT = "휠: 확대 · 드래그: 이동";
+    /** The first dropdown area: both residence worlds share one map, switched by the selected list entry. */
+    private static final String RESIDENCE = "거주 구역";
+    private static final String CAT_TOWN = "마을", CAT_HOME = "거주지", CAT_WILD = "야생";
+    private static final String WILD = "world", TOWN_WORLD = "pipi_town", VILLAGE2 = "pipi_village2";
+    private static final Set<String> RESIDENCE_WORLDS = Set.of(VILLAGE2, TOWN_WORLD);
 
     // ---- painted maps: texture pixel (c, r) = world block (c / ppb + orgX, r / ppb + orgZ) ----
     /** world -> map texture: pipi_village2 (shown as 거주지) and pipi_town (shown as 마을). ppb = texture pixels per block. */
@@ -87,10 +93,14 @@ final class WarpScreen extends ContainerScreen {
     private long hintUntil;
     private float scale, left, top;
     private long sentAt;
-    private String world, selected;
+    private String area, selected;
+    private int tab;
     private boolean dropdown;
     private final Set<String> collapsed = new HashSet<>();
     private int scroll;
+    private double zoom = 1, panX, panY;
+    private boolean pendingDrag, dragging;
+    private double dragStartX, dragStartY, dragLastX, dragLastY;
 
     WarpScreen(ChestMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -117,6 +127,26 @@ final class WarpScreen extends ContainerScreen {
         scale = Math.max(.01f, Math.min((width - 16f) / W, (height - 16f) / H));
         left = (width - W * scale) / 2;
         top = (height - H * scale) / 2;
+        resetView();
+    }
+
+    private void resetView() { zoom = 1; panX = 0; panY = 0; }
+
+    private void clampPan() {
+        double limX = MAP_W / 2.0 * (zoom - 1), limY = MAP_H / 2.0 * (zoom - 1);
+        panX = Math.max(-limX, Math.min(limX, panX));
+        panY = Math.max(-limY, Math.min(limY, panY));
+    }
+
+    /** Maps an un-zoomed map point to centre + (p - centre) * zoom + pan. */
+    private double[] tp(double px, double py) {
+        double cx = MAP_X + MAP_W / 2.0, cy = MAP_Y + MAP_H / 2.0;
+        return new double[]{cx + (px - cx) * zoom + panX, cy + (py - cy) * zoom + panY};
+    }
+
+    private int[] tpi(double px, double py) {
+        double[] q = tp(px, py);
+        return new int[]{(int) Math.round(q[0]), (int) Math.round(q[1])};
     }
 
     private static List<Component> lore(ItemStack stack) {
@@ -142,39 +172,94 @@ final class WarpScreen extends ContainerScreen {
         return out;
     }
 
-    private static String friendly(String w) {
-        return switch (w) { case "pipi_town" -> "마을"; case "pipi_village2" -> "거주지"; case "world" -> "야생"; default -> w; };
-    }
+    private static boolean isResidenceWorld(String w) { return RESIDENCE_WORLDS.contains(w); }
 
-    private List<String> worlds(List<Wp> all) {
+    /** Wild-world categories the player has at least one OPEN stone in, other than 야생: one dropdown area each. */
+    private List<String> regionAreas(List<Wp> all) {
         List<String> out = new ArrayList<>();
-        for (Wp w : all) if (!out.contains(w.world)) out.add(w.world);
-        out.sort((a, b) -> Integer.compare(worldRank(a), worldRank(b)));
+        for (Wp w : all)
+            if (WILD.equals(w.world) && !CAT_WILD.equals(w.cat) && w.open && !out.contains(w.cat)) out.add(w.cat);
         return out;
     }
 
-    private static int worldRank(String w) { return switch (w) { case "pipi_town" -> 0; case "pipi_village2" -> 1; case "world" -> 2; default -> 3; }; }
+    /** Dropdown entries: 거주 구역 always, then every open region area. */
+    private List<String> areas(List<Wp> all) {
+        List<String> out = new ArrayList<>();
+        out.add(RESIDENCE);
+        out.addAll(regionAreas(all));
+        return out;
+    }
+
+    /** Stones the current area lists on the right. */
+    private List<Wp> listStones(List<Wp> all) {
+        List<Wp> out = new ArrayList<>();
+        if (RESIDENCE.equals(area)) {
+            for (Wp w : all) if (isResidenceWorld(w.world) || (WILD.equals(w.world) && CAT_WILD.equals(w.cat))) out.add(w);
+        } else {
+            for (Wp w : all) if (WILD.equals(w.world) && w.cat.equals(area)) out.add(w);
+        }
+        return out;
+    }
+
+    /** Stones the map draws for the current area/tab. */
+    private List<Wp> mapStones(List<Wp> all) {
+        List<Wp> out = new ArrayList<>();
+        if (RESIDENCE.equals(area)) {
+            if (tab == 1) {
+                for (Wp w : all) if (TOWN_WORLD.equals(w.world)) out.add(w);
+            } else {
+                for (Wp w : all) if (VILLAGE2.equals(w.world) && CAT_TOWN.equals(w.cat)) out.add(w);
+            }
+        } else {
+            for (Wp w : all) if (WILD.equals(w.world) && w.cat.equals(area)) out.add(w);
+        }
+        return out;
+    }
+
+    /** Right-list groups: residence order 마을 · 야생 · 거주지 · others; a region area shows its one category. */
+    private Map<String, List<Wp>> groups(List<Wp> all) {
+        Map<String, List<Wp>> g = new LinkedHashMap<>();
+        List<Wp> list = listStones(all);
+        if (!RESIDENCE.equals(area)) {
+            for (Wp w : list) g.computeIfAbsent(w.cat, k -> new ArrayList<>()).add(w);
+            return g;
+        }
+        for (Wp w : list) if (CAT_TOWN.equals(w.cat) && isResidenceWorld(w.world)) g.computeIfAbsent(CAT_TOWN, k -> new ArrayList<>()).add(w);
+        for (Wp w : list) if (WILD.equals(w.world) && CAT_WILD.equals(w.cat)) g.computeIfAbsent(CAT_WILD, k -> new ArrayList<>()).add(w);
+        for (Wp w : list) if (VILLAGE2.equals(w.world) && CAT_HOME.equals(w.cat)) g.computeIfAbsent(CAT_HOME, k -> new ArrayList<>()).add(w);
+        for (Wp w : list) {
+            if (CAT_TOWN.equals(w.cat) && isResidenceWorld(w.world)) continue;
+            if (WILD.equals(w.world) && CAT_WILD.equals(w.cat)) continue;
+            if (VILLAGE2.equals(w.world) && CAT_HOME.equals(w.cat)) continue;
+            g.computeIfAbsent(w.cat, k -> new ArrayList<>()).add(w);
+        }
+        return g;
+    }
 
     private void ensureState(List<Wp> all) {
-        List<String> ws = worlds(all);
-        if (world == null || !ws.contains(world)) {
-            Wp here = all.stream().filter(Wp::here).findFirst().orElse(null);
-            world = here != null ? here.world : ws.isEmpty() ? null : ws.get(0);
-            if (here != null) selected = here.id;
+        List<String> as = areas(all);
+        if (area == null) {
+            area = RESIDENCE;
             Me me = me();
-            if (me != null && ws.contains(me.world)) world = me.world;
+            String w = me != null ? me.world : all.stream().filter(Wp::here).map(Wp::world).findFirst().orElse("");
+            tab = TOWN_WORLD.equals(w) ? 1 : 0;
         }
-        if (selected != null && all.stream().noneMatch(w -> w.id.equals(selected) && w.world.equals(world))) selected = null;
-        if (selected == null) {
-            for (Wp w : all) if (w.world.equals(world)) { selected = w.id; break; }
-        }
+        if (!as.contains(area)) area = RESIDENCE;
+        List<Wp> visible = listStones(all);
+        if (selected != null && visible.stream().noneMatch(w -> w.id.equals(selected))) selected = null;
+        if (selected == null && !visible.isEmpty()) selected = visible.get(0).id;
     }
 
     // ---- geometry ----
+    /** pipi_village2 / pipi_town map definition of the current residence tab; null (auto-fit parchment) elsewhere. */
     private MapDef mapDef() {
-        for (MapDef m : MAPS) if (m.world.equals(world)) return m;
+        String mw = RESIDENCE.equals(area) ? (tab == 1 ? TOWN_WORLD : VILLAGE2) : null;
+        for (MapDef m : MAPS) if (m.world.equals(mw)) return m;
         return null;
     }
+
+    /** The world the current map draws (residence tab world, or the wild world on the parchment). */
+    private String mapWorld() { return RESIDENCE.equals(area) ? (tab == 1 ? TOWN_WORLD : VILLAGE2) : WILD; }
 
     private boolean mapMode() { return mapDef() != null; }
 
@@ -189,7 +274,7 @@ final class WarpScreen extends ContainerScreen {
     private int[] worldToMap(double wx, double wz) {
         MapDef m = mapDef();
         double[] f = fit();
-        return new int[]{(int) Math.round(f[0] + (wx - m.orgX) * f[4]), (int) Math.round(f[1] + (wz - m.orgZ) * f[4])};
+        return tpi(f[0] + (wx - m.orgX) * f[4], f[1] + (wz - m.orgZ) * f[4]);
     }
 
     private int[] pos(List<Wp> inWorld, Wp w) {
@@ -204,7 +289,7 @@ final class WarpScreen extends ContainerScreen {
         double s = dx == 0 && dz == 0 ? 0 : Math.min(dx == 0 ? Double.MAX_VALUE : aw / dx, dz == 0 ? Double.MAX_VALUE : ah / dz);
         double cx = (AX0 + AX1) / 2.0, cy = (AY0 + AY1) / 2.0;
         double px = cx + (w.x - (minX + maxX) / 2.0) * s, py = cy + (w.z - (minZ + maxZ) / 2.0) * s;
-        return new int[]{(int) Math.round(px), (int) Math.round(py)};
+        return tpi(px, py);
     }
 
     // ---- drawing helpers ----
@@ -297,8 +382,7 @@ final class WarpScreen extends ContainerScreen {
         double x = (mx - left) / scale, y = (my - top) / scale;
         List<Wp> all = all();
         ensureState(all);
-        List<Wp> here = new ArrayList<>();
-        for (Wp w : all) if (w.world.equals(world)) here.add(w);
+        List<Wp> here = mapStones(all);
         g.fill(0, 0, width, height, 0xb7081019);
         g.pose().pushPose();
         try {
@@ -309,12 +393,22 @@ final class WarpScreen extends ContainerScreen {
             g.drawString(font, "✕", W - 16, 9, hit(x, y, W - 22, 3, 18, 18) ? TEXT : MUTED, false);
 
             // map
+            Wp sel = null;
+            g.enableScissor((int) Math.ceil(left + MAP_X * scale), (int) Math.ceil(top + MAP_Y * scale),
+                (int) Math.floor(left + (MAP_X + MAP_W) * scale), (int) Math.floor(top + (MAP_Y + MAP_H) * scale));
+            try {
             g.fill(MAP_X, MAP_Y, MAP_X + MAP_W, MAP_Y + MAP_H, 0xff5a4426);
             g.fillGradient(MAP_X + 3, MAP_Y + 3, MAP_X + MAP_W - 3, MAP_Y + MAP_H - 3, 0xffe9d9b0, 0xffd6c08a);
             if (mapMode()) {
                 double[] f = fit();
                 MapDef md = mapDef();
+                double mc = MAP_X + MAP_W / 2.0, mr = MAP_Y + MAP_H / 2.0;
+                g.pose().pushPose();
+                g.pose().translate(mc + panX, mr + panY, 0);
+                g.pose().scale((float) zoom, (float) zoom, 1f);
+                g.pose().translate(-mc, -mr, 0);
                 g.blit(md.tex, (int) Math.round(f[0]), (int) Math.round(f[1]), (int) Math.round(f[2]), (int) Math.round(f[3]), 0f, 0f, md.pw, md.ph, md.pw, md.ph);
+                g.pose().popPose();
             } else {
                 for (int gx = MAP_X + 3 + 40; gx < MAP_X + MAP_W - 3; gx += 40) g.fill(gx, MAP_Y + 3, gx + 1, MAP_Y + MAP_H - 3, 0x30705030);
                 for (int gy = MAP_Y + 3 + 40; gy < MAP_Y + MAP_H - 3; gy += 40) g.fill(MAP_X + 3, gy, MAP_X + MAP_W - 3, gy + 1, 0x30705030);
@@ -326,13 +420,12 @@ final class WarpScreen extends ContainerScreen {
             }
 
             Wp hover = null;
-            Wp sel = null;
             for (Wp w : here) {
                 int[] p = pos(here, w);
                 if (w.id.equals(selected)) sel = w;
                 if (!dropdown && hit(x, y, p[0] - 9, p[1] - 19, 18, 28)) hover = w;
             }
-            List<House> houses = HOUSE_WORLD.equals(world) ? HOUSES.getOrDefault(world, List.of()) : List.of();
+            List<House> houses = HOUSE_WORLD.equals(mapWorld()) ? HOUSES.getOrDefault(HOUSE_WORLD, List.of()) : List.of();
             String me = minecraft != null && minecraft.player != null ? minecraft.player.getName().getString() : "";
             House houseHover = null;
             int[][] hc = new int[houses.size()][];
@@ -360,7 +453,7 @@ final class WarpScreen extends ContainerScreen {
                 crystal(g, p[0], p[1], w.open, w.here, w == hover, w.id.equals(selected));
             }
             Me mp0 = me();
-            if (mp0 != null && mp0.world.equals(world) && mapMode()) {
+            if (mp0 != null && mp0.world.equals(mapWorld()) && mapMode()) {
                 int[] mp = worldToMap(mp0.x + .5, mp0.z + .5);
                 ellipse(g, mp[0], mp[1], 6, 6, 0xffffffff);
                 ellipse(g, mp[0], mp[1], 4, 4, 0xffe03030);
@@ -394,6 +487,26 @@ final class WarpScreen extends ContainerScreen {
             }
             if (here.isEmpty()) g.drawCenteredString(font, "등록된 웨이포인트가 없습니다.", MAP_X + MAP_W / 2, MAP_Y + MAP_H / 2, 0xff5a4426);
 
+            // zoom hint + 1:1 reset
+            if (System.currentTimeMillis() < hintUntil) {
+                String msg = "워프석에서만 이동할 수 있습니다";
+                int tw = font.width(msg) + 16;
+                int lx = MAP_X + (MAP_W - tw) / 2;
+                g.fill(lx, MAP_Y + MAP_H - 30, lx + tw, MAP_Y + MAP_H - 12, 0xee101820);
+                g.drawCenteredString(font, msg, lx + tw / 2, MAP_Y + MAP_H - 24, GOLD);
+            }
+            {
+                String tip = ZOOM_HINT;
+                int tw = font.width(tip) + 8;
+                int ty = MAP_Y + MAP_H - 14;
+                g.fill(MAP_X + 5, ty - 2, MAP_X + 5 + tw, ty + 10, 0x99101820);
+                g.drawString(font, tip, MAP_X + 9, ty, MUTED, false);
+                int bx = MAP_X + 16 + font.width(ZOOM_HINT);
+                panel(g, bx, ty - 2, 20, 12, hit(x, y, bx, ty - 2, 20, 12));
+                g.drawCenteredString(font, "1:1", bx + 10, ty, TEXT);
+            }
+            } finally { g.disableScissor(); }
+
             // home button
             {
             boolean homeOff = homeDisabled();
@@ -404,7 +517,7 @@ final class WarpScreen extends ContainerScreen {
             g.fill(421, 50, 432, 58, homeCol);
             g.fill(425, 53, 428, 58, 0xff17222e);
             if (homeOff && homeHover) {
-                String tip = "야생에서는 거주지로 이동할 수 없습니다 · 사망하면 거주지로 돌아갑니다";
+                String tip = menu.getSlot(49).getItem().isEmpty() ? "거주지로 이동할 수 없습니다" : menu.getSlot(49).getItem().getHoverName().getString();
                 int tw = font.width(tip) + 12;
                 int lx = Math.max(4, 440 - tw);
                 g.fill(lx, 64, lx + tw, 78, 0xee101820);
@@ -414,15 +527,14 @@ final class WarpScreen extends ContainerScreen {
 
             // list
             panel(g, LIST_X, LIST_Y, LIST_W, LIST_H, false);
-            Map<String, List<Wp>> groups = new LinkedHashMap<>();
-            for (Wp w : here) groups.computeIfAbsent(w.cat, k -> new ArrayList<>()).add(w);
+            Map<String, List<Wp>> groups = groups(all);
             int row = LIST_Y + 6 - scroll;
             int bottom = LIST_Y + LIST_H - 40;
             for (var e : groups.entrySet()) {
                 boolean closed = collapsed.contains(e.getKey());
                 if (row >= LIST_Y && row + 20 <= bottom) {
                     g.fillGradient(LIST_X + 5, row, LIST_X + LIST_W - 5, row + 20, 0xff26394c, 0xff192737);
-                    g.drawString(font, e.getKey() + (closed ? " ∧" : " ∨"), LIST_X + 12, row + 6, TEXT, false);
+                    g.drawString(font, e.getKey() + " ∨", LIST_X + 12, row + 6, TEXT, false);
                 }
                 row += 22;
                 if (closed) continue;
@@ -438,25 +550,19 @@ final class WarpScreen extends ContainerScreen {
                     row += 20;
                 }
             }
-            boolean canGo = !view && sel != null && sel.open && !sel.here;
-            button(g, view ? "워프석에서만 이동 가능" : sel != null && !sel.open ? "잠김" : "이동", LIST_X + 8, LIST_Y + LIST_H - 34, LIST_W - 16, 26, x, y, canGo);
+            Wp selStone = all.stream().filter(w -> w.id.equals(selected)).findFirst().orElse(null);
+            boolean canGo = !view && selStone != null && selStone.open && !selStone.here;
+            button(g, view ? "워프석에서만 이동 가능" : selStone != null && !selStone.open ? "잠김" : "이동", LIST_X + 8, LIST_Y + LIST_H - 34, LIST_W - 16, 26, x, y, canGo);
 
             // area dropdown (drawn last so it overlays)
-            List<String> ws = worlds(all);
-            button(g, (world == null ? "-" : friendly(world)) + "  ∨", DD_X, DD_Y, 120, 20, x, y, true);
+            List<String> as = areas(all);
+            button(g, (area == null ? "-" : area) + "  ∨", DD_X, DD_Y, 120, 20, x, y, true);
             if (dropdown) {
-                for (int i = 0; i < ws.size(); i++) {
+                for (int i = 0; i < as.size(); i++) {
                     int ry = DD_Y + 21 + i * 20;
-                    panel(g, DD_X, ry, 120, 20, hit(x, y, DD_X, ry, 120, 20) || ws.get(i).equals(world));
-                    g.drawCenteredString(font, friendly(ws.get(i)), DD_X + 60, ry + 6, TEXT);
+                    panel(g, DD_X, ry, 120, 20, hit(x, y, DD_X, ry, 120, 20) || as.get(i).equals(area));
+                    g.drawCenteredString(font, as.get(i), DD_X + 60, ry + 6, TEXT);
                 }
-            }
-            if (System.currentTimeMillis() < hintUntil) {
-                String msg = "워프석에서만 이동할 수 있습니다";
-                int tw = font.width(msg) + 16;
-                int lx = MAP_X + (MAP_W - tw) / 2;
-                g.fill(lx, MAP_Y + MAP_H - 30, lx + tw, MAP_Y + MAP_H - 12, 0xee101820);
-                g.drawCenteredString(font, msg, lx + tw / 2, MAP_Y + MAP_H - 24, GOLD);
             }
         } finally {
             g.pose().popPose();
@@ -479,6 +585,10 @@ final class WarpScreen extends ContainerScreen {
     }
 
     private void choose(Wp w) {
+        if (RESIDENCE.equals(area) && isResidenceWorld(w.world)) {
+            int t = TOWN_WORLD.equals(w.world) ? 1 : 0;
+            if (t != tab) { tab = t; resetView(); }
+        }
         if (view) { if (w.id.equals(selected)) hint(); else selected = w.id; return; }
         if (w.id.equals(selected)) { if (w.open && !w.here) click(w.slot); else if (!w.open) click(w.slot); }
         else selected = w.id;
@@ -489,29 +599,39 @@ final class WarpScreen extends ContainerScreen {
         double x = (mx - left) / scale, y = (my - top) / scale;
         List<Wp> all = all();
         ensureState(all);
-        List<String> ws = worlds(all);
+        List<String> ws = areas(all);
         if (hit(x, y, W - 22, 3, 18, 18)) { onClose(); return true; }
         if (dropdown) {
             for (int i = 0; i < ws.size(); i++)
-                if (hit(x, y, DD_X, DD_Y + 21 + i * 20, 120, 20)) { world = ws.get(i); selected = null; scroll = 0; }
+                if (hit(x, y, DD_X, DD_Y + 21 + i * 20, 120, 20)) { area = ws.get(i); selected = null; scroll = 0; resetView(); }
             dropdown = false;
             return true;
         }
         if (hit(x, y, DD_X, DD_Y, 120, 20)) { dropdown = true; return true; }
+        if (hit(x, y, MAP_X + 16 + font.width(ZOOM_HINT), MAP_Y + MAP_H - 16, 20, 12)) { resetView(); return true; }
         if (hit(x, y, 412, 38, 28, 24)) { click(49); return true; }
-        List<Wp> here = new ArrayList<>();
-        for (Wp w : all) if (w.world.equals(world)) here.add(w);
+        List<Wp> here = mapStones(all);
         for (Wp w : here) {
             int[] p = pos(here, w);
             if (hit(x, y, p[0] - 9, p[1] - 19, 18, 28)) { choose(w); return true; }
         }
-        Wp sel = here.stream().filter(w -> w.id.equals(selected)).findFirst().orElse(null);
+        List<House> houses = HOUSE_WORLD.equals(mapWorld()) ? HOUSES.getOrDefault(HOUSE_WORLD, List.of()) : List.of();
+        boolean onHouse = false;
+        for (House h : houses) {
+            int[] c = worldToMap(h.x + h.size / 2.0, h.z + h.size / 2.0);
+            if (hit(x, y, c[0] - 9, c[1] - 8, 18, 16)) { onHouse = true; break; }
+        }
+        if (!onHouse && hit(x, y, MAP_X, MAP_Y, MAP_W, MAP_H)) {
+            pendingDrag = true; dragging = false;
+            dragStartX = dragLastX = mx; dragStartY = dragLastY = my;
+            return true;
+        }
+        Wp sel = all.stream().filter(w -> w.id.equals(selected)).findFirst().orElse(null);
         if (hit(x, y, LIST_X + 8, LIST_Y + LIST_H - 34, LIST_W - 16, 26)) {
             if (sel != null) click(sel.slot);
             return true;
         }
-        Map<String, List<Wp>> groups = new LinkedHashMap<>();
-        for (Wp w : here) groups.computeIfAbsent(w.cat, k -> new ArrayList<>()).add(w);
+        Map<String, List<Wp>> groups = groups(all);
         int row = LIST_Y + 6 - scroll;
         int bottom = LIST_Y + LIST_H - 40;
         for (var e : groups.entrySet()) {
@@ -529,12 +649,40 @@ final class WarpScreen extends ContainerScreen {
         return true;
     }
 
-    @Override public boolean mouseScrolled(double x, double y, double dx, double dy) {
+    @Override public boolean mouseScrolled(double mx, double my, double dx, double dy) {
+        double x = (mx - left) / scale, y = (my - top) / scale;
+        if (hit(x, y, MAP_X, MAP_Y, MAP_W, MAP_H)) {
+            double z = dy > 0 ? zoom * 1.25 : zoom / 1.25;
+            z = Math.max(1.0, Math.min(16.0, z));
+            if (z != zoom) {
+                double cx = MAP_X + MAP_W / 2.0, cy = MAP_Y + MAP_H / 2.0;
+                panX = x - cx - (x - panX - cx) * (z / zoom);
+                panY = y - cy - (y - panY - cy) * (z / zoom);
+                zoom = z;
+                clampPan();
+            }
+            return true;
+        }
         scroll = Math.max(0, scroll - (int) Math.signum(dy) * 20);
         return true;
     }
-    @Override public boolean mouseReleased(double x, double y, int button) { return true; }
-    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) { return true; }
+    @Override public boolean mouseReleased(double x, double y, int button) {
+        if (button == 0) { pendingDrag = false; dragging = false; }
+        return true;
+    }
+    @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
+        if (button == 0 && pendingDrag) {
+            if (!dragging && Math.hypot(x - dragStartX, y - dragStartY) > 3) dragging = true;
+            if (dragging) {
+                panX += (x - dragLastX) / scale;
+                panY += (y - dragLastY) / scale;
+                clampPan();
+            }
+            dragLastX = x; dragLastY = y;
+            return true;
+        }
+        return true;
+    }
     @Override public boolean keyPressed(int key, int scan, int modifiers) {
         if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE || (view && VIEW_KEY.matches(key, scan))) onClose();
         return true;

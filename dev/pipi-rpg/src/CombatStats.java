@@ -229,7 +229,7 @@ final class CombatStats implements Listener {
         lore.addAll(1,baseLines(item,"§7"));
     }
     /** strength/dexterity/intelligence/luck are final totals (base + flat options, then percent options).
-     *  치명타 확률 = 행운 x 0.1% + 치명타 확률 옵션(crit%), max 100%. */
+     *  치명타 확률 = 행운 x 0.01% + 치명타 확률 옵션(crit%), max 100%. */
     record Stats(double ilvl,double strength,double dexterity,double intelligence,double luck,double attackBase,double defenseBase,double armorHp,double crit,double buff,double cdr,
                  double hpFlat,double hpPct,double moveFlat,double movePct,double defFlat,double defPct,double atkFlat,double atkPct,double dmgPct,double bossPct) {
         /** 공격력: gear 공격력 + 힘x0.5 + 민첩x0.5 + 지능x1.5, with 공격력 options. */
@@ -274,7 +274,7 @@ final class CombatStats implements Listener {
             }
         }
         double str=(base[3]+strF+allF)*(1+(strP+allP)/100),dex=(base[4]+dexF+allF)*(1+(dexP+allP)/100),intel=(base[5]+intF+allF)*(1+(intP+allP)/100),luck=(base[6]+luckF+allF)*(1+allP/100);
-        return new Stats(total/5,str,dex,intel,luck,base[0],base[1],base[2],Math.min(100,luck*.1+critP),buff,Math.min(60,cdr),hpFlat,hpPct,moveFlat,movePct,defFlat,defPct,atkF,atkP,dmgP,bossP);
+        return new Stats(total/5,str,dex,intel,luck,base[0],base[1],base[2],Math.min(100,luck*.01+critP),buff,Math.min(60,cdr),hpFlat,hpPct,moveFlat,movePct,defFlat,defPct,atkF,atkP,dmgP,bossP);
     }
     /** damage reduction percent = defense x percent-per-point, capped (config combat.defense-percent-per-point / defense-max-reduction). */
     private static double defensePercentPerPoint=.02,defenseMaxReduction=80;

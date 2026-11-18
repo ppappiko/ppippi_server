@@ -60,6 +60,18 @@ final class TownSystems implements Listener {
         if (m.hasEnchants()) return true;
         return m instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta s && s.hasStoredEnchants();
     }
+    /** Diamond pickaxes come only from the forge (대장간): the vanilla crafting recipe gives nothing. */
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void noDiamondPickaxeCraft(org.bukkit.event.inventory.PrepareItemCraftEvent event) {
+        var result = event.getInventory().getResult();
+        if (result != null && result.getType() == Material.DIAMOND_PICKAXE) event.getInventory().setResult(null);
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void noDiamondPickaxeCraft(org.bukkit.event.inventory.CraftItemEvent event) {
+        if (event.getRecipe().getResult().getType() == Material.DIAMOND_PICKAXE) event.setCancelled(true);
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void noEnchantTable(PlayerInteractEvent event) {
         if (event.getAction() != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
@@ -175,8 +187,14 @@ final class TownSystems implements Listener {
         };
     }
 
-    private boolean home(Player player) {
-        if (plugin.isWildWorld(player.getWorld().getName())) return tell(player, "야생에서는 거주지로 이동할 수 없습니다 · 사망하면 거주지로 돌아갑니다");
+    private boolean home(Player player) { return home(player, false); }
+
+    /** Home from a warp stone menu (not view-only): allowed in the wild too. */
+    boolean homeFromStone(Player player) { return home(player, true); }
+
+    private boolean home(Player player, boolean fromStone) {
+        if (!plugin.canTravel(player)) return tell(player, "튜토리얼을 먼저 완료하세요.");
+        if (!fromStone && plugin.isWildWorld(player.getWorld().getName())) return tell(player, "야생에서는 워프석에서만 거주지로 이동할 수 있습니다 · 사망하면 거주지로 돌아갑니다");
         String plot = plugin.ownedPlot(player);
         World world = plot == null ? null : plugin.plotWorld(plot);
         if (plot == null || world == null) { // no plot yet: bring them to the pipi_village2 gateway plaza
@@ -614,8 +632,11 @@ final class TownSystems implements Listener {
         Ingredient(Material material, String tag, String label, int count) { this(material, tag, label, count, null, 0); }
         boolean matches(ItemStack stack, TownSystems town) {
             if (modId != null) return stack != null && stack.getType() == mat() && (level == 0 || PipiLife.facilityLevel(stack) == level);
-            return stack != null && stack.getType() == mat()
-                && (tag == null ? !stack.hasItemMeta() : town.isProcessed(stack, tag));
+            Material m = mat();
+            if (stack == null || stack.getType() != m) return false;
+            if (tag == null) return !stack.hasItemMeta();
+            // a PipiFacilities mod item is unique to its tag: accept it even without the processed PDC (e.g. /give, older drops)
+            return town.isProcessed(stack, tag) || m.name().startsWith("PIPIFACILITIES_");
         }
         /** Actual item material: the PipiFacilities mod item for tagged ingredients, the vanilla material otherwise. */
         Material mat() {
@@ -1139,7 +1160,7 @@ final class TownSystems implements Listener {
         if (!learned(player, recipe)) return tell(player, "마을 연구소에서 먼저 레시피를 해금하세요.");
         List<Ingredient> inputs = new ArrayList<>();
         for (Ingredient unit : RECIPES.get(recipe).inputs())
-            inputs.add(new Ingredient(unit.material(), unit.tag(), unit.label(), unit.count() * count));
+            inputs.add(new Ingredient(unit.material(), unit.tag(), unit.label(), unit.count() * count, unit.modId(), unit.level())); // keep modId: mod items (호박석 ...) match by it
         if (lacks(player, 0, inputs, true)) return true;
         long each = craftMillis(recipe, level);
         long duration = each * count;
@@ -1550,7 +1571,7 @@ final class TownSystems implements Listener {
         List<ForgeRecipe> all = new ArrayList<>();
         all.add(new ForgeRecipe(Material.IRON_PICKAXE, "철 곡괭이", 5, 0, 20, 0, "tool"));
         all.add(new ForgeRecipe(Material.FISHING_ROD, "낚시대", 5, 0, 5000, 0, "tool"));
-        if (learned(player, "smith_tier_2")) all.add(new ForgeRecipe(Material.DIAMOND_PICKAXE, "다이아몬드 곡괭이", 0, 5, 100, 0, "tool"));
+        all.add(new ForgeRecipe(Material.DIAMOND_PICKAXE, "다이아몬드 곡괭이", 0, 5, 100, 0, "tool"));
         String[] families = {"근거리", "원거리", "마법"}, groups = {"melee", "ranged", "magic"};
         String[] suffix = {"HELMET", "CHESTPLATE", "LEGGINGS", "BOOTS"};
         String[] pieces = {"투구", "갑옷", "각반", "신발"};
@@ -2545,7 +2566,8 @@ final class TownSystems implements Listener {
                 if (filled) view.setItem(36 + i, plugin.statusIcon(locked ? Material.GOLD_NUGGET : Material.TRIPWIRE_HOOK,
                     locked ? "잠금 해제" : "옵션 잠금"));
             }
-            view.setItem(44, plugin.statusIcon(Material.GOLD_INGOT, fmt(alchemyGold(chosen, locks)) + " 골드", "보유 " + fmt(gold(player).getScore())));
+            view.setItem(44, plugin.statusIcon(Material.GOLD_INGOT, fmt(alchemyGold(chosen, locks)) + " 골드", "보유 " + fmt(gold(player).getScore()),
+                "레벨 " + alchemyLevels(chosen) + " 소모", "보유 레벨 " + player.getLevel()));
             view.setItem(43, plugin.statusIcon(Material.NETHER_STAR, Enchants.COLORS[grade] + "[" + Enchants.GRADES[grade] + "]",
                 grade >= 3 ? "최고 등급" : "등급 상승 확률 " + Enchants.fmt(Enchants.GRADE_UP[grade]) + "% → " + Enchants.GRADES[grade + 1],
                 "잠금 " + Integer.bitCount(locks) + "개"));
@@ -2593,6 +2615,9 @@ final class TownSystems implements Listener {
         });
     }
 
+    /** Player levels one enchant roll costs, by the gear's current grade: 레어 1, 에픽 2, 유니크 3, 레전더리 4. */
+    private static int alchemyLevels(ItemStack item) { return Math.max(0, Enchants.grade(item)) + 1; }
+
     private ItemStack applyAlchemy(Player player, AlchemyDesk menu) {
         ItemStack item = player.getInventory().getItem(menu.selected());
         ItemStack snapshot = menu.snapshot();
@@ -2605,6 +2630,11 @@ final class TownSystems implements Listener {
         long cost = alchemyGold(item, menu.locks());
         if (score.getScore() < cost) {
             goldShort(player, "§c골드 부족", "골드 " + fmt(cost - score.getScore()) + " 부족");
+            return snapshot;
+        }
+        int levels = alchemyLevels(item);
+        if (player.getLevel() < levels) {
+            tell(player, "레벨이 부족합니다. (필요 Lv " + levels + " · 보유 Lv " + player.getLevel() + ")");
             return snapshot;
         }
         var rolls = Enchants.read(item);
@@ -2620,7 +2650,7 @@ final class TownSystems implements Listener {
         List<Enchants.Line> next = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             if ((locks & (1 << i)) != 0) { next.add(rolls.get(i)); continue; }
-            int lineGrade = i == 0 || grade == 0 || random.nextInt(100) < 1 ? grade : grade - 1;
+            int lineGrade = i == 0 || grade == 0 || random.nextInt(100) < PRIME_LINE_CHANCE ? grade : grade - 1;
             var pool = Enchants.pool(item, lineGrade);
             next.add(new Enchants.Line(pool.get(random.nextInt(pool.size())).id(), lineGrade));
         }
@@ -2631,6 +2661,7 @@ final class TownSystems implements Listener {
         updateGear(updated, gearFor(updated));
         player.getInventory().setItem(menu.selected(), updated);
         score.setScore(score.getScore() - (int) cost);
+        player.setLevel(player.getLevel() - levels);
         tell(player, gradeUp ? "인챈트를 부여했습니다. 등급 상승! " + Enchants.COLORS[grade] + "[" + Enchants.GRADES[grade] + "]"
             : "인챈트를 부여했습니다.");
         return updated;

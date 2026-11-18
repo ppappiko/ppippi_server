@@ -123,6 +123,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private HitEffects hitEffects;
     private Tutorial tutorial;
     private RaidDeepDark raid;
+    private DeepDarkFinder deepDarkFinder;
 
     @Override public void onEnable() {
         saveDefaultConfig();
@@ -250,10 +251,51 @@ public final class PipiLife extends JavaPlugin implements Listener {
         damageNumbers = new DamageNumbers(this, dummies);
         getServer().getPluginManager().registerEvents(damageNumbers, this);
         try { raid = new RaidDeepDark(this, town, damageNumbers); getServer().getPluginManager().registerEvents(raid, this); } catch (Throwable t) { raid = null; getLogger().warning("레이드(딥 다크 시티)를 시작하지 못했습니다: " + t); }
-        try { getServer().getPluginManager().registerEvents(new ReturnStone(this), this); } catch (Throwable t) { getLogger().warning("귀환석을 시작하지 못했습니다: " + t); }
+        try { returnStone = new ReturnStone(this); getServer().getPluginManager().registerEvents(returnStone, this); } catch (Throwable t) { returnStone = null; getLogger().warning("귀환석을 시작하지 못했습니다: " + t); }
+        try { deepDarkFinder = new DeepDarkFinder(this); getServer().getPluginManager().registerEvents(deepDarkFinder, this); } catch (Throwable t) { deepDarkFinder = null; getLogger().warning("심층 나침반을 시작하지 못했습니다: " + t); }
         getServer().getScheduler().runTaskTimer(this, this::previewStations, 5, 5);
         getServer().getScheduler().runTaskTimer(this, this::hungerTick, 40, 40);
         getServer().getScheduler().runTaskTimer(this, this::refreshLumber, 20, 20);
+        getServer().getScheduler().runTaskTimer(this, this::keepPlotsLoaded, 100, 1200);
+    }
+
+    /** "world:cx:cz" chunks this plugin holds a load ticket on (owned residence plots). */
+    private final Set<String> plotTickets = new HashSet<>();
+
+    /**
+     * Owned residence plots stay loaded while the server runs (plugin chunk tickets, refreshed every minute), so stations,
+     * feeders and worker pets keep going with nobody nearby. Tickets of plots that lost their owner are released.
+     */
+    private void keepPlotsLoaded() {
+        if (!getConfig().getBoolean("keep-plots-loaded", true)) { releasePlotTickets(); return; }
+        Set<String> want = new HashSet<>();
+        for (String plot : allPlotIds()) {
+            if (data.getString(plotPath(plot) + ".owner") == null) continue;
+            World w;
+            try { w = plotWorld(plot); } catch (RuntimeException ex) { continue; }
+            if (w == null) continue;
+            int x = plotX(plot), z = plotZ(plot);
+            for (int cx = x >> 4; cx <= (x + 43) >> 4; cx++)
+                for (int cz = z >> 4; cz <= (z + 43) >> 4; cz++) {
+                    String key = w.getName() + ":" + cx + ":" + cz;
+                    want.add(key);
+                    if (plotTickets.add(key)) w.addPluginChunkTicket(cx, cz, this);
+                }
+        }
+        for (Iterator<String> it = plotTickets.iterator(); it.hasNext(); ) {
+            String key = it.next();
+            if (want.contains(key)) continue;
+            it.remove();
+            releaseTicket(key);
+        }
+    }
+
+    private void releasePlotTickets() { for (String key : plotTickets) releaseTicket(key); plotTickets.clear(); }
+
+    private void releaseTicket(String key) {
+        String[] p = key.split(":");
+        World w = Bukkit.getWorld(p[0]);
+        if (w != null) w.removePluginChunkTicket(Integer.parseInt(p[1]), Integer.parseInt(p[2]), this);
     }
 
     private void unassignPlacement(String key) {
@@ -358,7 +400,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         Bukkit.addRecipe(recipe);
     }
 
-    private String path(Player player, Pet pet) {
+    private String path(OfflinePlayer player, Pet pet) {
         return "players." + player.getUniqueId() + "." + pet.name().toLowerCase(Locale.ROOT);
     }
 
@@ -596,6 +638,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
             if (sender.isOp()) out.addAll(List.of("petspawn", "spawninfo", "armory", "bossclear"));
             if (regions != null && (sender.isOp() || sender.hasPermission("pipilife.admin"))) out.add("region");
             if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("dummy");
+            if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("item");
+        } else if (args[0].equalsIgnoreCase("item") && (sender.isOp() || sender.hasPermission("pipilife.admin"))) {
+            if (args.length == 2) out.add("deepdarkfinder");
+            else if (args.length == 3) for (Player online : Bukkit.getOnlinePlayers()) out.add(online.getName());
         } else if (dummies != null && args[0].equalsIgnoreCase("dummy") && (sender.isOp() || sender.hasPermission("pipilife.admin"))) {
             out.addAll(dummies.complete(args));
         } else if (args[0].equalsIgnoreCase("station") && (sender.isOp() || sender.hasPermission("pipilife.admin"))) {
@@ -688,6 +734,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             return true;
         }
         if (args.length > 0 && args[0].equalsIgnoreCase("bossclear")) return town.bossClearCommand(player, args);
+        if (args.length > 0 && args[0].equalsIgnoreCase("item")) return itemCommand(player, args);
         if (args.length > 0 && args[0].equals("testgive")) return town.testGive(player, args);
         if (args.length > 0 && args[0].equals("workstation")) return workstation(player, args);
         if (args.length > 0 && args[0].equals("cook")) return cooking.command(player, args);
@@ -695,7 +742,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length > 0 && Set.of("deed","home","warp","shop","research","process","forge","heal","party","trade","smelt","alchemy","inherit").contains(args[0].toLowerCase(Locale.ROOT)))
             return town.command(player, args);
         if (args.length == 1 && Set.of("profile", "pets").contains(args[0])) return args[0].equals("pets") ? openPetStorage(player) : openStatus(player, false);
-        if (args.length == 1 && args[0].equalsIgnoreCase("travel")) return openTravel(player);
+        if (args.length == 1 && args[0].equalsIgnoreCase("travel")) {
+            player.sendMessage("이동 메뉴는 없어졌습니다. 워프석을 이용하세요.");
+            return true;
+        }
         if (args.length == 1 && args[0].equalsIgnoreCase("compass")) {
             giveCompass(player);
             return true;
@@ -844,7 +894,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return true;
     }
 
-    boolean owns(Player player, String plot) {
+    boolean owns(OfflinePlayer player, String plot) {
         return plot != null && player.getUniqueId().toString().equals(data.getString(plotPath(plot) + ".owner"));
     }
 
@@ -865,7 +915,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return !label.isEmpty() && label.equals(aptitudeLabel(facility));
     }
 
-    private int aptitude(Player player, Pet pet, Facility facility) {
+    private int aptitude(OfflinePlayer player, Pet pet, Facility facility) {
         if (facility == null || pet == null || !sameAptitudeKind(facility, pet.aptitude)) return 0;
         return pet.level;
     }
@@ -1615,7 +1665,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private static final long MAX_CATCH_UP = 12L * 3_600_000L;
     private enum Meal { WORK, GO, EAT, BACK, WAIT }
     private static final class Eater { Meal phase = Meal.WORK; long until; org.bukkit.block.Block feeder; }
-    private record WCtx(Player player, String entry, String path, Facility facility, org.bukkit.block.Block block, String anchor, String plot, int slot) {
+    private record WCtx(OfflinePlayer player, String entry, String path, Facility facility, org.bukkit.block.Block block, String anchor, String plot, int slot) {
         String key() { return player.getUniqueId() + ":" + entry; }
     }
     private final Map<String, Eater> eaters = new HashMap<>();
@@ -1680,10 +1730,18 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private void hungerTick() {
         long now = System.currentTimeMillis();
         Set<String> seen = new HashSet<>();
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            String plot = ownedPlot(player);
-            if (plot == null) continue;
+        Set<UUID> owners = new LinkedHashSet<>();
+        for (String id : allPlotIds()) {
+            String owner = data.getString(plotPath(id) + ".owner");
+            if (owner == null) continue;
+            try { owners.add(UUID.fromString(owner)); }
+            catch (IllegalArgumentException ex) { /* invalid owner id: skip */ }
+        }
+        for (UUID ownerId : owners) {
+            OfflinePlayer player = Bukkit.getOfflinePlayer(ownerId);
             try {
+                String plot = ownedPlot(player);
+                if (plot == null) continue;
                 for (var station : facilityBlocks(plot, Facility.CRAFT)) {
                     String entry = craftWorkerEntry(player, station);
                     if (entry == null) continue;
@@ -1702,7 +1760,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 }
                 for (List<WCtx> group : groups.values()) stepGroup(group, now, seen);
             } catch (RuntimeException ex) {
-                getLogger().warning("펫 포만감 처리 오류 (" + player.getName() + "): " + ex);
+                String name = player.getName();
+                getLogger().warning("펫 포만감 처리 오류 (" + (name == null ? ownerId.toString() : name) + "): " + ex);
             }
         }
         eaters.keySet().retainAll(seen);
@@ -2045,7 +2104,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             .orElse(null);
     }
 
-    private String craftBase(Player player) { return "town." + player.getUniqueId(); }
+    private String craftBase(OfflinePlayer player) { return "town." + player.getUniqueId(); }
 
     private boolean pinCraftAnchor(Player player, String plot) {
         String key = craftBase(player) + ".craft-anchor";
@@ -2054,7 +2113,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return positions.isEmpty() || store(key, positions.getFirst());
     }
 
-    private String craftKey(Player player, org.bukkit.block.Block station, String suffix) {
+    private String craftKey(OfflinePlayer player, org.bukkit.block.Block station, String suffix) {
         String base = craftBase(player);
         if (station == null) return base + "." + suffix;
         var position = List.of(station.getX(), station.getY(), station.getZ());
@@ -2077,7 +2136,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     /** Saved craft-worker entry for a station, or null when absent/invalid (removed species, wrong aptitude). */
-    private String craftWorkerEntry(Player player, org.bukkit.block.Block station) {
+    private String craftWorkerEntry(OfflinePlayer player, org.bukkit.block.Block station) {
         String entry = data.getString(craftKey(player, station, "craft-worker"));
         if (entry == null || entry.isEmpty()) return null;
         Pet pet = entryPet(entry);
@@ -2422,12 +2481,12 @@ public final class PipiLife extends JavaPlugin implements Listener {
         @Override public Inventory getInventory() { return inventory; }
     }
 
-    private String storageKey(Player player) { return "pet-storage." + player.getUniqueId() + ".slots"; }
-    private String storageLevelKey(Player player) { return "pet-storage." + player.getUniqueId() + ".level"; }
-    private int storageLevel(Player player) { return Math.clamp(data.getInt(storageLevelKey(player), 1), 1, LEGACY_STORAGE_LEVEL); }
-    private int storagePages(Player player) { return 1 + 2 * (storageLevel(player) - 1); }
+    private String storageKey(OfflinePlayer player) { return "pet-storage." + player.getUniqueId() + ".slots"; }
+    private String storageLevelKey(OfflinePlayer player) { return "pet-storage." + player.getUniqueId() + ".level"; }
+    private int storageLevel(OfflinePlayer player) { return Math.clamp(data.getInt(storageLevelKey(player), 1), 1, LEGACY_STORAGE_LEVEL); }
+    private int storagePages(OfflinePlayer player) { return 1 + 2 * (storageLevel(player) - 1); }
 
-    private List<String> storageEntries(Player player) {
+    private List<String> storageEntries(OfflinePlayer player) {
         int capacity = storagePages(player) * STORAGE_PAGE_SIZE;
         List<String> entries = new ArrayList<>();
         for (String saved : data.getStringList(storageKey(player))) {
@@ -2628,7 +2687,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return producerKey(plot, facility, station == null ? legacyProducerAnchor(plot, facility) : coordinates(station));
     }
 
-    private String assignedProducer(Player player, String entry, Facility facility) {
+    private String assignedProducer(OfflinePlayer player, String entry, Facility facility) {
         return data.getString(craftEntryPath(player, entry) + ".production-anchor", legacyProducerAnchor(ownedPlot(player), facility));
     }
 
@@ -2706,17 +2765,17 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     private static Pet entryPet(String entry) { return entry == null ? null : petBySkin(entry.split(":", 2)[0]); }
 
-    private String craftEntryPath(Player player, String entry) {
+    private String craftEntryPath(OfflinePlayer player, String entry) {
         return entry.contains(":") ? "pet-storage." + player.getUniqueId() + ".workers." + entry.split(":")[1]
             : entry == null || entryPet(entry) == null ? "invalid-pets." + player.getUniqueId() + "." + entry : path(player, entryPet(entry));
     }
 
-    private int craftAptitude(Player player, String entry) {
+    private int craftAptitude(OfflinePlayer player, String entry) {
         if (entryPet(entry) == null) return 0;
         return aptitude(player, entryPet(entry), Facility.CRAFT);
     }
 
-    private List<String> craftEntries(Player player) {
+    private List<String> craftEntries(OfflinePlayer player) {
         return storageEntries(player).stream().filter(entry -> !entry.isEmpty()).toList();
     }
 
@@ -2812,7 +2871,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return true;
     }
 
-    private Facility productionFacility(Player player, String entry) {
+    private Facility productionFacility(OfflinePlayer player, String entry) {
         String saved = data.getString(craftEntryPath(player, entry) + ".production-facility");
         if (saved != null) {
             try { return Facility.valueOf(saved); } catch (IllegalArgumentException ex) { return null; }
@@ -2823,13 +2882,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return primary.isProducer() ? primary : null;
     }
 
-    private int productionAptitude(Player player, String entry, Facility facility) {
+    private int productionAptitude(OfflinePlayer player, String entry, Facility facility) {
         if (facility == null) return 0;
         Pet pet = entryPet(entry);
         return pet != null && pet.aptitude.isProducer() ? aptitude(player, pet, facility) : 0;
     }
 
-    private int productionSlot(Player player, String entry) {
+    private int productionSlot(OfflinePlayer player, String entry) {
         String key = craftEntryPath(player, entry);
         if (!data.getBoolean(key + ".active") || !data.getBoolean(key + ".facility-bound")) return 0;
         return data.getInt(key + ".lumber-slot", entry.contains(":") ? 0 : 1);
@@ -2852,7 +2911,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     /** Facility stock capacity: 64 + sum over the placed pets of (aptitude level x 64). */
-    private int facilityCapacity(Player player, Facility facility, String anchor) {
+    private int facilityCapacity(OfflinePlayer player, Facility facility, String anchor) {
         if (facility == null) return CAPACITY;
         int cap = CAPACITY;
         for (String entry : facilityGroup(player, facility, anchor))
@@ -2885,7 +2944,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     private static final int MAX_FACILITY_LEVEL = 3;
 
     /** Pets placed at one producer station (valid species, slot > 0), ordered by slot. */
-    private List<String> facilityGroup(Player player, Facility facility, String anchor) {
+    private List<String> facilityGroup(OfflinePlayer player, Facility facility, String anchor) {
         List<String> group = new ArrayList<>();
         for (String entry : craftEntries(player)) {
             if (productionFacility(player, entry) != facility || !assignedProducer(player, entry, facility).equals(anchor)) continue;
@@ -2909,7 +2968,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         settleFacilityRaw(player, facility, anchor, end);
     }
 
-    private void settleFacilityRaw(Player player, Facility facility, String anchor, long end) {
+    private void settleFacilityRaw(OfflinePlayer player, Facility facility, String anchor, long end) {
         List<String> group = facilityGroup(player, facility, anchor);
         int size = group.size();
         if (size == 0) return;
@@ -3339,6 +3398,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
             } else if (args.length == 2 && args[1].equalsIgnoreCase("wildstones")) {
                 String result = wildRegions.ensureStones();
                 player.sendMessage(result == null ? "워프석 블록(모드 pipifacilities)이 아직 로드되지 않았습니다." : result);
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("basecamp")) {
+                String result = wildRegions.baseCamp(player);
+                player.sendMessage(result == null ? "워프석 블록(모드 pipifacilities)이 아직 로드되지 않았습니다." : result);
+            } else if ((args.length == 3 || args.length == 4) && args[1].equalsIgnoreCase("thintrees")) {
+                int keep = 35;
+                if (args.length == 4) try { keep = Math.max(0, Math.min(100, Integer.parseInt(args[3].replace("%", "")))); } catch (NumberFormatException ignored) {}
+                wildRegions.thinTrees(player, args[2], keep);
             } else if ((args.length == 3 || args.length == 4) && args[1].equalsIgnoreCase("buildregion")) {
                 wildRegions.build(player, args[2], args.length == 4 && args[3].equalsIgnoreCase("force"));
             } else if (args.length == 4 && args[1].equalsIgnoreCase("visit") && args[2].equalsIgnoreCase("region")) {
@@ -3410,7 +3476,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 player.sendMessage(maps.refreshTutorial()
                     ? "튜토리얼 맵을 새 구성(펫 안내소)으로 갱신했습니다."
                     : "튜토리얼 맵을 찾지 못했거나 맵을 만드는 중입니다.");
-            } else player.sendMessage("/pipilife maps build · buildv2 · buildtown · repairtown · npcsv2 · npcstown · warpv2 · warptown · wildstones · buildregion <nw|ne|se|status> [force] · builddeepdark · repairdeepdark · refresh-tutorial · visit <tutorial|village2|town|deepdark> · visit region <nw|ne|se>");
+            } else player.sendMessage("/pipilife maps build · buildv2 · buildtown · repairtown · npcsv2 · npcstown · warpv2 · warptown · wildstones · basecamp · buildregion <nw|ne|se|status> [force] · thintrees <nw|ne|se|all> [남길%] · builddeepdark · repairdeepdark · refresh-tutorial · visit <tutorial|village2|town|deepdark> · visit region <nw|ne|se>");
             return true;
         }
         if (!player.getWorld().getName().equals(VillageMaps.TUTORIAL) || !data.getBoolean("maps-ready")) {
@@ -3551,6 +3617,42 @@ public final class PipiLife extends JavaPlugin implements Listener {
         compass.setItemMeta(meta);
         player.getInventory().setItem(slot, compass);
         player.sendMessage("이동 나침반을 받았습니다. 손에 들고 우클릭하세요.");
+    }
+
+    /** 관리자 지급: /pipilife item deepdarkfinder [player] */
+    private boolean itemCommand(Player player, String[] args) {
+        if (!player.isOp() && !player.hasPermission("pipilife.admin")) {
+            player.sendMessage("§c관리자 전용 명령어입니다.");
+            return true;
+        }
+        if (args.length < 2 || !args[1].equalsIgnoreCase("deepdarkfinder")) {
+            player.sendMessage("/pipilife item deepdarkfinder [player]");
+            return true;
+        }
+        if (deepDarkFinder == null) {
+            player.sendMessage("심층 나침반 기능을 불러오지 못했습니다.");
+            return true;
+        }
+        Player receiver = player;
+        if (args.length >= 3) {
+            receiver = Bukkit.getPlayerExact(args[2]);
+            if (receiver == null) {
+                player.sendMessage("플레이어를 찾을 수 없습니다: " + args[2]);
+                return true;
+            }
+        }
+        int slot = receiver.getInventory().firstEmpty();
+        if (slot < 0) {
+            player.sendMessage("빈 인벤토리 칸이 없습니다.");
+            return true;
+        }
+        receiver.getInventory().setItem(slot, deepDarkFinder.create());
+        if (receiver == player) player.sendMessage("§3심층 나침반을 받았습니다.");
+        else {
+            player.sendMessage("§3심층 나침반을 " + receiver.getName() + "님에게 지급했습니다.");
+            receiver.sendMessage("§3심층 나침반을 받았습니다.");
+        }
+        return true;
     }
 
     @EventHandler
@@ -3716,7 +3818,14 @@ public final class PipiLife extends JavaPlugin implements Listener {
         }, attempt == 0 ? 60L : 100L);
     }
 
+    ReturnStone returnStone;
+
+    /** Wild only: the residence is reachable just through a 귀환석 (starts its channel). False when not started. */
+    boolean returnHomeWithStone(Player player) { return returnStone != null && returnStone.start(player); }
+
     boolean townHome(Player player) { return town.command(player, new String[]{"home"}); }
+
+    boolean townHomeFromStone(Player player) { return town.homeFromStone(player); }
     YamlConfiguration data() { return data; }
     Accessories accessories() { return accessories; }
     String villageName() { return maps.village(); }
@@ -3825,7 +3934,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return "거주지(v2) 광장 NPC 새로 설치 " + count + "명 (이미 있는 NPC는 그대로 둡니다).";
     }
 
-    String ownedPlot(Player player) {
+    String ownedPlot(OfflinePlayer player) {
         var plots = retiredVillage() ? null : data.getConfigurationSection("plots");
         if (plots != null) for (String plot : plots.getKeys(false)) if (owns(player, plot)) return plot;
         var v2 = data.getConfigurationSection("plots-v2");

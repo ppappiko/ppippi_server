@@ -207,7 +207,7 @@ final class ForgeScreen extends ContainerScreen {
         if(classFilter<0){for(int r=0;r<3;r++)for(int c=0;c<3;c++)g.fill(LIST_X+6+c*4,57+r*4,LIST_X+9+c*4,60+r*4,TEXT);}
         else ClassIcons.draw(g,classFilter,LIST_X+4,55,15);
         g.drawString(font,FILTERS[classFilter+1],LIST_X+23,59,TEXT,false);
-        chevron(g,LIST_X+183,62,filterOpen);
+        chevron(g,LIST_X+183,62,false);
 
         java.util.List<Row> rows=rows(entries);
         scroll=Math.clamp(scroll,0,maxScroll(rows));
@@ -225,7 +225,7 @@ final class ForgeScreen extends ContainerScreen {
                     g.fill(LIST_X,ry,LIST_X+LIST_W,ry+row.h(),hover?0xff6b8299:0xff3d5267);
                     g.fillGradient(LIST_X+1,ry+1,LIST_X+LIST_W-1,ry+row.h()-1,hover?0xff3a4f66:0xff26384b,0xff1a2838);
                     g.drawString(font,row.label(),LIST_X+8,ry+6,TEXT,false);
-                    chevron(g,LIST_X+LIST_W-12,ry+10,!open);
+                    chevron(g,LIST_X+LIST_W-12,ry+10,false);
                 }else{
                     Entry e=row.entry();
                     boolean selected=row.label().equals(selectedName);

@@ -46,6 +46,8 @@ mkdir -p "$TMP/jar/dev/pipi/facilities"
 cp -r "$TMP/classes/." "$TMP/jar/"
 mkdir -p "$TMP/jar/assets"
 cp -r dev/pipi-facilities/assets/. "$TMP/jar/assets/"
+mkdir -p "$TMP/jar/data"
+cp -r dev/pipi-facilities/data/. "$TMP/jar/data/"
 
 TOML="$TMP/jar/META-INF/neoforge.mods.toml"
 OLD="$(grep -m1 -oE '^version="[0-9]+\.[0-9]+\.[0-9]+"' "$TOML" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"

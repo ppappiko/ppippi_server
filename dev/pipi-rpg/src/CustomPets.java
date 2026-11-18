@@ -58,18 +58,22 @@ final class CustomPets implements Listener {
  /** Chunk-generation animals (and ones from before the rule) never fire a spawn event we can cancel: remove them when their chunk loads. */
  @EventHandler public void clearWildAnimals(org.bukkit.event.world.EntitiesLoadEvent event){if(!plugin.isWildWorld(event.getWorld().getName()))return;for(Entity e:event.getEntities())if(wildAnimal(e))e.remove();}
  void spawnWild(){
-  int cap=Math.max(1,plugin.getConfig().getInt("pet-spawn.cap",6));
+  int cap=Math.max(1,plugin.getConfig().getInt("pet-spawn.cap",8));
   boolean transportUnlocked=plugin.getConfig().getBoolean("transport-unlocked",false);
   double transportChance=plugin.getConfig().getDouble("pet-spawn.transport-chance",.005);
   ThreadLocalRandom rnd=ThreadLocalRandom.current();
   for(World world:Bukkit.getWorlds()){
    if(!plugin.isWildWorld(world.getName()))continue;
    boolean nether=world.getEnvironment()==World.Environment.NETHER;
-   for(Player player:world.getPlayers())for(int attempt=0;attempt<3;attempt++)trySpawn(world,player,nether,cap,transportUnlocked,transportChance,rnd);
+   for(Player player:world.getPlayers()){cull(player,cap);for(int attempt=0;attempt<3;attempt++)trySpawn(world,player,nether,cap,transportUnlocked,transportChance,rnd);}
   }
  }
+ /** Wild pet entities near the player. Counted by entity type too: the species tag of a mod entity may be missing after a chunk reload. */
+ private List<LivingEntity> wildPetsNear(Player player){List<LivingEntity> out=new ArrayList<>();for(Entity e:player.getNearbyEntities(64,64,64)){if(!(e instanceof LivingEntity l)||l.getScoreboardTags().contains("pipi_pet_worker")||l.isLeashed()||l.getCustomName()!=null)continue;if(skin(l)!=null||l.getType().name().startsWith("PIPIFACILITIES_PET_"))out.add(l);}return out;}
+ /** Over the cap near a player (older spawns that piled up): remove the farthest wild pets that are not hurt (not being hunted). */
+ private void cull(Player player,int cap){List<LivingEntity> pets=wildPetsNear(player);if(pets.size()<=cap)return;Location at=player.getLocation();pets.sort(Comparator.comparingDouble((LivingEntity l)->l.getLocation().distanceSquared(at)).reversed());int extra=pets.size()-cap;for(LivingEntity l:pets){if(extra<=0)break;var max=l.getAttribute(Attribute.GENERIC_MAX_HEALTH);if(max!=null&&l.getHealth()<max.getValue())continue;l.remove();extra--;}}
  private void trySpawn(World world,Player player,boolean nether,int cap,boolean transportUnlocked,double transportChance,ThreadLocalRandom rnd){
-  int nearby=0;for(Entity e:player.getNearbyEntities(64,64,64))if(e instanceof LivingEntity l&&skin(l)!=null&&!l.getScoreboardTags().contains("pipi_pet_worker"))nearby++;
+  int nearby=wildPetsNear(player).size();
   if(nearby>=cap)return;
   double angle=rnd.nextDouble()*Math.PI*2,radius=24+rnd.nextDouble()*32;
   int x=player.getLocation().getBlockX()+(int)Math.round(Math.cos(angle)*radius);
@@ -126,7 +130,7 @@ final class CustomPets implements Listener {
    p.sendMessage("§f"+pet.label+" §7("+pet.name().toLowerCase(Locale.ROOT)+") §eLv"+pet.level+" §7| §a시도당 "+chance);shown++;
   }
   if(shown==0)p.sendMessage("§7이 바이옴에서는 스폰되는 펫이 없습니다.");
-  int interval=Math.max(1,plugin.getConfig().getInt("pet-spawn.interval-ticks",200)),cap=Math.max(1,plugin.getConfig().getInt("pet-spawn.cap",6));
+  int interval=Math.max(1,plugin.getConfig().getInt("pet-spawn.interval-ticks",200)),cap=Math.max(1,plugin.getConfig().getInt("pet-spawn.cap",8));
   int nearby=0;for(Entity e:p.getNearbyEntities(64,64,64))if(e instanceof LivingEntity l&&skin(l)!=null&&!l.getScoreboardTags().contains("pipi_pet_worker"))nearby++;
   p.sendMessage("§7스폰 주기 "+(interval/20)+"초 | 플레이어당 3회 시도 | 주변 상한 "+cap+"마리 | 64블록 내 야생 펫 "+nearby+"마리");
   return true;

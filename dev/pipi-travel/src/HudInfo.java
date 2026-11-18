@@ -95,7 +95,7 @@ public final class HudInfo {
             int h = questOpen ? 16 + questLines.size() * 11 + 2 : 16;
             g.fill(8, top, 8 + w, top + h, 0xDE171D2C);
             g.fill(8, top, 11, top + h, 0xFFE8C579);
-            g.drawString(font, (questOpen ? "▼ " : "▲ ") + questTitle, 17, top + 4, 0xFFF1F3FF);
+            g.drawString(font, "▼ " + questTitle, 17, top + 4, 0xFFF1F3FF);
             g.drawString(font, OBJECTIVE_KEY.getTranslatedKeyMessage().getString(), 8 + w - 12, top + 4, 0xFFE8C579);
             if (questOpen) {
                 int y = top + 16;
