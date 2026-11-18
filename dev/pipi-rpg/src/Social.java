@@ -12,24 +12,19 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.api.chat.hover.content.Item;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 
-/** Social features: /자랑 (item brag with hover tooltip) and the sneak + right-click player menu (거래 / 파티 초대 / 상태창). */
+/** Social features: /자랑 (item brag with hover tooltip) and the right-click radial player menu (거래 / 파티 / 상태창 / 귓속말). */
 final class Social implements Listener {
     private final PipiLife plugin;
     private final TownSystems town;
@@ -37,14 +32,8 @@ final class Social implements Listener {
     private final Map<UUID, UUID> pendingPrice = new HashMap<>();
     private final Map<UUID, Long> pendingExpires = new HashMap<>();
     private final Map<UUID, Long> lastBrag = new HashMap<>();
+    private final Map<UUID, Long> lastMenu = new HashMap<>();
     TradeWindow trades;
-
-    private static final class PlayerMenu implements InventoryHolder {
-        final UUID target;
-        Inventory inventory;
-        PlayerMenu(UUID target) { this.target = target; }
-        @Override public Inventory getInventory() { return inventory; }
-    }
 
     Social(PipiLife plugin, TownSystems town, CombatStats combat) {
         this.plugin = plugin;
@@ -120,48 +109,39 @@ final class Social implements Listener {
         return true;
     }
 
-    // ---- sneak + right-click a player ----
+    // ---- right-click a player: radial player menu (PipiTravel) ----
+    /**
+     * Right-click (outside combat mode) or Shift+right-click (always) another player opens the client radial menu:
+     *   PIPI_PMENU:&lt;name&gt;|&lt;party&gt;[|reason]   party: I invite · K kick/promote (viewer leads) · M same party · X cannot invite
+     * The client answers with /pipilife social trade|info &lt;name&gt; or /pipilife party invite|kick|promote &lt;name&gt;.
+     */
     @EventHandler(ignoreCancelled = true)
     public void interact(PlayerInteractEntityEvent event) {
         if (event.getHand() != EquipmentSlot.HAND || !(event.getRightClicked() instanceof Player target)
             || target.hasMetadata("NPC")) return;
         Player player = event.getPlayer();
-        if (!player.isSneaking() || target.equals(player)) return;
+        if (target.equals(player) || (!player.isSneaking() && Armory.inCombatMode(player))) return;
         event.setCancelled(true);
-        PlayerMenu menu = new PlayerMenu(target.getUniqueId());
-        menu.inventory = Bukkit.createInventory(menu, 27, "삐삐서버 · " + target.getName());
-        menu.inventory.setItem(11, plugin.statusIcon(Material.EMERALD, "거래", "거래창에서 아이템과 골드를 안전하게 교환합니다"));
-        menu.inventory.setItem(13, plugin.statusIcon(Material.CAKE, "파티 초대", "이 플레이어를 내 파티에 초대합니다 (최대 4명)"));
-        menu.inventory.setItem(15, plugin.statusIcon(Material.BOOK, "상태창", "장비와 전투 스탯을 읽기 전용으로 봅니다"));
-        player.openInventory(menu.inventory);
+        long now = System.currentTimeMillis();
+        if (now - lastMenu.getOrDefault(player.getUniqueId(), 0L) < 300) return;
+        lastMenu.put(player.getUniqueId(), now);
+        player.sendMessage("PIPI_PMENU:" + target.getName() + "|" + town.partySystem.menuState(player, target));
     }
 
-    @EventHandler public void drag(InventoryDragEvent event) {
-        if (event.getView().getTopInventory().getHolder() instanceof PlayerMenu) event.setCancelled(true);
-    }
-
-    @EventHandler public void click(InventoryClickEvent event) {
-        if (!(event.getView().getTopInventory().getHolder() instanceof PlayerMenu menu)) return;
-        event.setCancelled(true);
-        if (!(event.getWhoClicked() instanceof Player player) || !event.isLeftClick()) return;
-        int slot = event.getRawSlot();
-        Player target = Bukkit.getPlayer(menu.target);
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            if (player.getOpenInventory().getTopInventory().getHolder() != menu) return;
-            if (target == null || !target.isOnline()) {
-                player.closeInventory();
-                player.sendMessage("§c상대가 접속 중이 아닙니다.");
-            } else if (slot == 11) {
-                player.closeInventory();
+    /** /pipilife social trade|info &lt;name&gt; (sent by the radial menu). */
+    boolean command(Player player, String[] args) {
+        if (args.length < 3) { player.sendMessage("/pipilife social trade|info <이름>"); return true; }
+        Player target = Bukkit.getPlayerExact(args[2]);
+        if (target == null || target.equals(player)) { player.sendMessage("§c상대가 접속 중이 아닙니다."); return true; }
+        switch (args[1]) {
+            case "trade" -> {
                 if (trades != null) trades.request(player, target);
                 else player.sendMessage("§c거래창을 사용할 수 없습니다.");
-            } else if (slot == 13) {
-                player.closeInventory();
-                town.partySystem.invite(player, target);
-            } else if (slot == 15) {
-                combat.open(player, target);
             }
-        });
+            case "info" -> combat.open(player, target);
+            default -> player.sendMessage("/pipilife social trade|info <이름>");
+        }
+        return true;
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
@@ -184,7 +164,7 @@ final class Social implements Listener {
                 int price = Integer.parseInt(text.replace(",", ""));
                 town.command(player, new String[]{"trade", "offer", target.getName(), Integer.toString(price)});
             } catch (NumberFormatException ex) {
-                player.sendMessage("§c골드를 정수로 입력하세요. 다시 시도하려면 상대를 Shift+우클릭하세요.");
+                player.sendMessage("§c골드를 정수로 입력하세요. 다시 시도하려면 상대를 우클릭하세요.");
             }
         });
     }
@@ -193,5 +173,6 @@ final class Social implements Listener {
         pendingPrice.remove(event.getPlayer().getUniqueId());
         pendingExpires.remove(event.getPlayer().getUniqueId());
         lastBrag.remove(event.getPlayer().getUniqueId());
+        lastMenu.remove(event.getPlayer().getUniqueId());
     }
 }

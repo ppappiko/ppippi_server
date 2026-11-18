@@ -49,6 +49,9 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(CaptureInput::tick);
         NeoForge.EVENT_BUS.addListener(CaptureInput::receive);
         NeoForge.EVENT_BUS.addListener(BragChat::receive);
+        NeoForge.EVENT_BUS.addListener(PlayerMenuScreen::receive);
+        NeoForge.EVENT_BUS.addListener(ChatModeTag::receive);
+        NeoForge.EVENT_BUS.addListener(ChatModeTag::render);
         NeoForge.EVENT_BUS.addListener(ArmoryScreen::receive);
         NeoForge.EVENT_BUS.addListener(SmeltScreen::receive);
         NeoForge.EVENT_BUS.addListener(TradeScreen::receive);
