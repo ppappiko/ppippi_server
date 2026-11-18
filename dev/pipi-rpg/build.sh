@@ -14,7 +14,8 @@ if ls plugins/PipiLife-*.jar >/dev/null 2>&1; then PLUGINS="$REPO/plugins"; else
 
 CP="$SOR/work/pipi-rpg/compile-api"
 # compile-api 폴더가 없는 PC: 서버가 받아 둔 libraries/의 Paper API(paper-remap.jar)와 라이브러리로 대신 컴파일
-if [ ! -d "$CP" ]; then
+# 서버 libraries/의 Paper API가 있으면 항상 그걸로 컴파일 (친구 코드가 Paper 전용 API를 씀)
+if [ ! -d "$CP" ] || [ -f "$REPO/libraries/com/mohistmc/installation/data/paper-remap.jar" ]; then
   API="$REPO/libraries/com/mohistmc/installation/data/paper-remap.jar"
   [ -f "$API" ] || { echo "compile-api not found and $API missing: run the server once so it downloads libraries/" >&2; exit 1; }
   echo "compile-api not found, using server libraries/"
