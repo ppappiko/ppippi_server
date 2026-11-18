@@ -661,6 +661,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if(args.length>0 && args[0].equals("spawninfo")){if(!player.isOp()){player.sendMessage("§c관리자 전용 명령어입니다.");return true;}if(customPets!=null)return customPets.spawnInfo(player,args);player.sendMessage("ModelEngine과 전용 펫 모델을 먼저 로드하세요.");return true;}
         if(args.length>0 && args[0].equals("capture")) return captures.command(player,args);
         if (args.length > 0 && args[0].equalsIgnoreCase("brag")) return social.brag(player);
+        if (args.length > 0 && args[0].equals("social")) return social.command(player, args);
         if (args.length > 0 && args[0].equals("petstorage")) return storageCommand(player, args);
         if (args.length > 0 && args[0].equals("market")) return marketCommand(player, args);
         if (args.length > 0 && args[0].equals("mount")) { if (mounts != null) return mounts.command(player, args); player.sendMessage("ModelEngine과 전용 펫 모델을 먼저 로드하세요."); return true; }

@@ -53,7 +53,7 @@ final class PartyHud {
         var client = client();
         if (client.player == null || client.screen != null) { while (TOGGLE_KEY.consumeClick()) { } return; }
         while (TOGGLE_KEY.consumeClick()) {
-            if (members.isEmpty()) client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7파티에 속해 있지 않습니다. (플레이어 Shift+우클릭 → 파티 초대)"), true);
+            if (members.isEmpty()) client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7파티에 속해 있지 않습니다. (플레이어 우클릭 → 파티 초대)"), true);
             else shown = !shown;
         }
     }
