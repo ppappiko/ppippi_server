@@ -54,12 +54,6 @@ final class ResourceNodes implements Listener {
 
     private static Material mat(String id) { return Material.matchMaterial("PIPIFACILITIES_" + id.toUpperCase(Locale.ROOT)); }
     private static boolean is(Block block, String id) { Material m = mat(id); return m != null && block.getType() == m; }
-    private static boolean is(Material type, String id) { Material m = mat(id); return m != null && type == m; }
-
-    private boolean isNode(Material type) {
-        return is(type, "amber_rock") || is(type, "rock_pile") || is(type, "redwood_tree_log")
-            || is(type, "redwood_tree_leaves") || is(type, "cabbage_crop");
-    }
 
     private ItemStack item(String id, int amount) {
         Material m = ModItems.byIdOrNull(id);
@@ -90,12 +84,20 @@ final class ResourceNodes implements Listener {
         }
     }
 
+    /** Vanilla-ore style XP per harvest (diamond ore: 3~7 by default). */
+    private void xp(Location at) {
+        int min = Math.max(0, plugin.getConfig().getInt("resource-nodes.xp-min", 3));
+        int max = Math.max(min, plugin.getConfig().getInt("resource-nodes.xp-max", 7));
+        int amount = ThreadLocalRandom.current().nextInt(min, max + 1);
+        if (amount > 0) at.getWorld().spawn(at, org.bukkit.entity.ExperienceOrb.class, orb -> orb.setExperience(amount));
+    }
+
     // ---- events ----
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
-        if (!isNode(block.getType())) return;
+        if (!GatherBlocks.is(block.getType())) return;
         Player player = event.getPlayer();
         if (player.getGameMode() == GameMode.CREATIVE) return;
         event.setCancelled(true);
@@ -108,8 +110,10 @@ final class ResourceNodes implements Listener {
         } else if (is(block, "redwood_tree_log")) {
             if (!tool.getType().name().endsWith("_AXE")) { player.sendMessage("도끼로 베어야 합니다."); return; }
             fellTree(block, now);
+            xp(center);
         } else if (is(block, "cabbage_crop")) {
             drop(center, item("cabbage_seed", 1));
+            xp(center);
             addPending(block, now + seconds("cabbage-respawn-seconds", 600) * 1000L);
             block.setType(Material.AIR, false);
         }
@@ -124,6 +128,7 @@ final class ResourceNodes implements Listener {
         drop(center, item("amber", amount));
         double chance = TownSystems.CORE_CHANCE + (Enchants.pickaxe(tool) ? Enchants.sum(tool, "core") : 0);
         if (random.nextDouble(100) < chance) drop(center, amberCore());
+        xp(center);
         Material pile = mat("rock_pile");
         if (pile == null) return; // cannot show the empty state: leave the rock as it is
         addPending(block, now + seconds("amber-respawn-seconds", 300) * 1000L);
@@ -160,10 +165,10 @@ final class ResourceNodes implements Listener {
     }
 
     @EventHandler(ignoreCancelled = true)
-    public void onExplode(EntityExplodeEvent event) { event.blockList().removeIf(b -> isNode(b.getType())); }
+    public void onExplode(EntityExplodeEvent event) { event.blockList().removeIf(b -> GatherBlocks.is(b.getType())); }
 
     @EventHandler(ignoreCancelled = true)
-    public void onExplode(BlockExplodeEvent event) { event.blockList().removeIf(b -> isNode(b.getType())); }
+    public void onExplode(BlockExplodeEvent event) { event.blockList().removeIf(b -> GatherBlocks.is(b.getType())); }
 
     // ---- pending restores ----
 

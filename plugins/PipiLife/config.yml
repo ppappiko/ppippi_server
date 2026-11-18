@@ -1,6 +1,7 @@
 village-world: village
 raid:
   deepdark:
+    recommended-item-level: 160
     vote-seconds: 15
     vanilla-bossbar: false
     enabled: true
@@ -170,8 +171,8 @@ wild-nether-world: ''
 pet-spawn:
   # 스폰 시도 주기 (틱). 200 = 10초
   interval-ticks: 200
-  # 플레이어 64블록 안에 이 수 이상 야생 펫이 있으면 스폰하지 않습니다.
-  cap: 6
+  # 플레이어 64블록 안 야생 펫 최대 수. 이 수 이상이면 스폰하지 않고, 넘치면 먼 펫부터 정리합니다.
+  cap: 8
   # 레벨별 스폰 확률 (시도 1번당)
   level-chance:
     # 레벨 1 펫 스폰 확률
@@ -224,11 +225,11 @@ mounts:
   dismount-on-damage: true
 # 자원 노드(호박석 돌무더기, 홍서나무, 양배추) 재생성 시간 (초)
 resource-nodes:
-  # 호박석을 캔 뒤 다시 박히기까지 (초). 300 = 5분
-  amber-respawn-seconds: 300
-  # 홍서나무를 벤 뒤 다시 자라기까지 (초). 600 = 10분
-  tree-respawn-seconds: 600
-  # 양배추를 캔 뒤 다시 자라기까지 (초). 600 = 10분
-  cabbage-respawn-seconds: 600
+  # 호박석을 캔 뒤 다시 박히기까지 (초). 180 = 3분
+  amber-respawn-seconds: 180
+  # 홍서나무를 벤 뒤 다시 자라기까지 (초). 180 = 3분
+  tree-respawn-seconds: 180
+  # 양배추를 캔 뒤 다시 자라기까지 (초). 20 = 20초
+  cabbage-respawn-seconds: 20
 # MythicMobs 예제 몹(Skeleton King / Skeletal Knight / Skeletal Minion)이 나오면 1틱 뒤 제거합니다.
 block-example-mythic-mobs: true

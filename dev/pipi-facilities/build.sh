@@ -9,7 +9,8 @@ SRC=dev/pipi-facilities/src
 OUT=dev/pipi-facilities/out
 
 CPARGS="$(mktemp)"; CPARGS="$(cygpath -m "$CPARGS" 2>/dev/null || echo "$CPARGS")"
-if [ -f "$SOR/work/hud-minecraft-named.jar" ]; then
+# 친구 PC와 같은 클래스패스(런처 NeoForge, AT 적용)를 우선 사용, 없을 때만 sor 작업 폴더
+if [ -f "$SOR/work/hud-minecraft-named.jar" ] && ! ls -d "$APPDATA/.minecraft/versions"/neoforge-21.1.* >/dev/null 2>&1; then
   CP="$SOR/work/hud-minecraft-named.jar"
   while IFS= read -r j; do
     case "$j" in *sources*|*srgutils*|*-all.jar|*fatjar*|*userdev*) continue;; esac
@@ -21,7 +22,7 @@ if [ -f "$SOR/work/hud-minecraft-named.jar" ]; then
 else
   # sor 작업 폴더가 없는 PC: 마인크래프트 런처에 설치된 NeoForge 1.21.1 로 컴파일
   echo "sor workspace not found, using the local Minecraft launcher NeoForge install"
-  python dev/mc-classpath.py "$CPARGS"
+  python dev/mc-classpath.py "$CPARGS" 2>/dev/null || node dev/mc-classpath.cjs "$CPARGS"
 fi
 
 BASE=""
@@ -46,6 +47,8 @@ mkdir -p "$TMP/jar/dev/pipi/facilities"
 cp -r "$TMP/classes/." "$TMP/jar/"
 mkdir -p "$TMP/jar/assets"
 cp -r dev/pipi-facilities/assets/. "$TMP/jar/assets/"
+mkdir -p "$TMP/jar/data"
+cp -r dev/pipi-facilities/data/. "$TMP/jar/data/"
 
 TOML="$TMP/jar/META-INF/neoforge.mods.toml"
 OLD="$(grep -m1 -oE '^version="[0-9]+\.[0-9]+\.[0-9]+"' "$TOML" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"

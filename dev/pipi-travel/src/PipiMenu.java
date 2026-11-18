@@ -10,11 +10,9 @@ public final class PipiMenu extends Screen {
     public PipiMenu() { super(Component.literal("삐삐서버 메뉴")); }
 
     @Override protected void init() {
-        button(151, "이동", "travel");
-        button(203, "캐릭터", "profile");
-        button(255, "펫", "pets");
+        button(151, "캐릭터", "profile");
         addRenderableWidget(Button.builder(Component.literal("×"), button -> onClose())
-            .bounds(307, 12, 18, 20).build());
+            .bounds(255, 12, 18, 20).build());
     }
 
     private void button(int x, String label, String command) {

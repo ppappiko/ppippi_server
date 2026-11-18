@@ -64,7 +64,7 @@ public final class PipiTravel {
 
     private void openResearch(ScreenEvent.Opening event) {
         if (!(event.getNewScreen() instanceof ContainerScreen incoming)
-            || incoming instanceof PetMarketScreen || incoming instanceof CharacterScreen || incoming instanceof UpgradeScreen || incoming instanceof UpgradeConfirmScreen || incoming instanceof ShopScreen            || incoming instanceof FoodStorageScreen || incoming instanceof AlchemyScreen || incoming instanceof CookingScreen || incoming instanceof InheritScreen || incoming instanceof ForgeScreen || incoming instanceof ResearchScreen || incoming instanceof CraftScreen || incoming instanceof PetStorageScreen || incoming instanceof WarpScreen ) return;
+            || incoming instanceof PetMarketScreen || incoming instanceof CharacterScreen || incoming instanceof UpgradeScreen || incoming instanceof UpgradeConfirmScreen || incoming instanceof ShopScreen            || incoming instanceof FoodStorageScreen || incoming instanceof AlchemyScreen || incoming instanceof CookingScreen || incoming instanceof InheritScreen || incoming instanceof ForgeScreen || incoming instanceof ResearchScreen || incoming instanceof CraftScreen || incoming instanceof PetStorageScreen || incoming instanceof WarpScreen || incoming instanceof RaidGateScreen ) return;
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
         if (incoming.getMenu().getRowCount() == 3 && java.util.Set.of("펫 먹이통", "식량 저장소").contains(incoming.getTitle().getString())) {
@@ -79,6 +79,8 @@ public final class PipiTravel {
             event.setNewScreen(new CharacterScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (UpgradeScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new UpgradeScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
+        else if (RaidGateScreen.TITLE.equals(incoming.getTitle().getString()))
+            event.setNewScreen(new RaidGateScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (UpgradeConfirmScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new UpgradeConfirmScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (ShopScreen.TITLE.equals(incoming.getTitle().getString()))
@@ -115,7 +117,7 @@ public final class PipiTravel {
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "menu_bar"), (graphics, delta) -> {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null && client.level != null && !client.options.hideGui
-                && !(client.screen instanceof PipiMenu) && !(client.screen instanceof ResearchScreen) && !(client.screen instanceof CraftScreen) && !(client.screen instanceof PetStorageScreen) && !(client.screen instanceof ForgeScreen) && !(client.screen instanceof AlchemyScreen) && !(client.screen instanceof CookingScreen) && !(client.screen instanceof InheritScreen) && !(client.screen instanceof ShopScreen) && !(client.screen instanceof UpgradeScreen) && !(client.screen instanceof UpgradeConfirmScreen) &&!(client.screen instanceof CharacterScreen) && !(client.screen instanceof PetMarketScreen) && !(client.screen instanceof ArmoryScreen) && !(client.screen instanceof SmeltScreen) && !(client.screen instanceof TradeScreen)) drawBar(graphics, false);
+                && !(client.screen instanceof PipiMenu) && !(client.screen instanceof ResearchScreen) && !(client.screen instanceof CraftScreen) && !(client.screen instanceof PetStorageScreen) && !(client.screen instanceof ForgeScreen) && !(client.screen instanceof AlchemyScreen) && !(client.screen instanceof CookingScreen) && !(client.screen instanceof InheritScreen) && !(client.screen instanceof ShopScreen) && !(client.screen instanceof UpgradeScreen) && !(client.screen instanceof UpgradeConfirmScreen) && !(client.screen instanceof RaidGateScreen) &&!(client.screen instanceof CharacterScreen) && !(client.screen instanceof PetMarketScreen) && !(client.screen instanceof ArmoryScreen) && !(client.screen instanceof SmeltScreen) && !(client.screen instanceof TradeScreen)) drawBar(graphics, false);
         });
     }
 
@@ -124,7 +126,7 @@ public final class PipiTravel {
         return screen instanceof PipiMenu || screen instanceof ResearchScreen || screen instanceof CraftScreen || screen instanceof PetStorageScreen
             || screen instanceof ForgeScreen || screen instanceof AlchemyScreen || screen instanceof CookingScreen || screen instanceof InheritScreen
             || screen instanceof ShopScreen || screen instanceof UpgradeScreen || screen instanceof CharacterScreen || screen instanceof PetMarketScreen
-            || screen instanceof FoodStorageScreen || screen instanceof WarpScreen || screen instanceof UpgradeConfirmScreen || screen instanceof ArmoryScreen || screen instanceof SmeltScreen || screen instanceof TradeScreen || screen instanceof AuctionScreen;
+            || screen instanceof FoodStorageScreen || screen instanceof WarpScreen || screen instanceof UpgradeConfirmScreen || screen instanceof ArmoryScreen || screen instanceof SmeltScreen || screen instanceof TradeScreen || screen instanceof AuctionScreen || screen instanceof RaidGateScreen;
     }
 
     static void drawBar(GuiGraphics graphics, boolean expanded) {
