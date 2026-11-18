@@ -89,7 +89,7 @@ final class AlchemyScreen extends ContainerScreen {
                 else g.drawString(font, "◇ " + name(27 + i), 224, row + 4, MUTED, false);
                 if (filled && !item(36 + i).isEmpty()) {
                     panel(g, 440, row, 38, 16, locked || hit(x, y, 440, row, 38, 16));
-                    g.drawCenteredString(font, locked ? "잠금" : "해제", 459, row + 4, locked ? GOLD : MUTED);
+                    g.drawCenteredString(font, locked ? "해제" : "잠금", 459, row + 4, locked ? GOLD : MUTED);
                 } else {
                     panel(g, 440, row, 38, 16, false);
                     g.drawCenteredString(font, "-", 459, row + 4, 0xff55606c);
@@ -103,8 +103,9 @@ final class AlchemyScreen extends ContainerScreen {
             g.drawString(font, "잠긴 줄", 224, 257, MUTED, false);
             String locks = gl.size() > 1 ? ChatFormatting.stripFormatting(gl.get(1).getString()) : "";
             g.drawString(font, locks, 476 - font.width(locks), 257, TEXT, false);
-            g.drawString(font, "소모 골드", 224, 270, MUTED, false);
-            g.drawString(font, name(44), 476 - font.width(name(44)), 270, GOLD, false);
+            g.drawString(font, "소모 골드 · 레벨", 224, 270, MUTED, false);
+            String cost = name(44) + levelCost();
+            g.drawString(font, cost, 476 - font.width(cost), 270, GOLD, false);
             g.drawString(font, "보유 골드", 224, 283, MUTED, false);
             String bal = bl.isEmpty() ? "" : ChatFormatting.stripFormatting(bl.get(0).getString());
             g.drawString(font, bal, 476 - font.width(bal), 283, TEXT, false);
@@ -124,7 +125,7 @@ final class AlchemyScreen extends ContainerScreen {
                 panel(g, 224, 113, 242, 122, true);
                 g.drawCenteredString(font, name(22), 345, 126, GOLD);
                 g.drawCenteredString(font, "잠그지 않은 옵션을 새로 부여할까요?", 345, 148, TEXT);
-                g.drawCenteredString(font, name(44), 345, 168, GOLD);
+                g.drawCenteredString(font, name(44) + levelCost(), 345, 168, GOLD);
                 button(g, "확인", 244, 192, 93, 25, x, y);
                 button(g, "취소", 353, 192, 93, 25, x, y);
             }
@@ -173,6 +174,15 @@ final class AlchemyScreen extends ContainerScreen {
             slot, 0, ClickType.PICKUP, menu.getCarried().copy(), Int2ObjectMaps.emptyMap()));
     }
 
+    /** " · Lv N" from the gold slot lore line "레벨 N 소모" (server PipiLife TownSystems.openAlchemy), or "". */
+    private String levelCost() {
+        for (Component line : lore(item(44))) {
+            String s = ChatFormatting.stripFormatting(line.getString());
+            if (s.startsWith("레벨 ") && s.endsWith(" 소모")) return " · Lv " + s.substring(3, s.length() - 3).trim();
+        }
+        return "";
+    }
+
     @Override public boolean mouseClicked(double mx, double my, int button) {
         if (button != 0) return true;
         double x = (mx - left) / scale, y = (my - top) / scale;
@@ -197,6 +207,7 @@ final class AlchemyScreen extends ContainerScreen {
     @Override public boolean mouseReleased(double x, double y, int button) { return true; }
     @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) { return true; }
     @Override public boolean keyPressed(int key, int scan, int modifiers) {
+        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER || key == org.lwjgl.glfw.GLFW.GLFW_KEY_KP_ENTER) { click(45); return true; } // Enter = 인챈트 하기 / 확인
         if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
             if (item(46).isEmpty()) onClose();
             else click(46);

@@ -84,6 +84,8 @@ final class RaidDeepDark implements Listener {
         long lastActivity = System.currentTimeMillis();
         Fight fight;
         Vote vote;
+        /** The running ENTER vote was started at a 봉인된 비석: voters may be anywhere; passing teleports them straight into the arena. */
+        boolean gate;
     }
 
     /** 입장/퇴장 투표: every voter must agree (the proposer agrees automatically). */
@@ -160,6 +162,7 @@ final class RaidDeepDark implements Listener {
         }
         c.addDefault(P + "sonic-charge-seconds", 20);
         c.addDefault(P + "regen-per-second", 10);            // max passive HP regen per second in the raid world (skill heals excluded)
+        c.addDefault(P + "recommended-item-level", 160);    // 봉인된 비석 입장 창에 표시되는 권장 장비 레벨 (표시만, 입장 제한 없음)
         c.addDefault(P + "reward.gold", 260000);
         c.addDefault(P + "reward.steel", 60);
         c.addDefault(P + "reward.soul-stone", 1);
@@ -319,7 +322,7 @@ final class RaidDeepDark implements Listener {
             }
             default -> {
                 say(player, "/pipilife raid deepdark · ready · vote yes|no · leave · status" + (player.isOp() ? " · stop" : ""));
-                say(player, "딥 다크 시티: 준비방의 렉턴을 우클릭하면 파티 입장 투표가 시작됩니다 (Y 찬성 / N 반대).");
+                say(player, "딥 다크 시티: 보스 입구의 봉인된 비석을 파티장이 우클릭해 입장을 신청합니다 (파티원 Y 찬성 / N 반대).");
             }
         }
         return true;
@@ -336,6 +339,7 @@ final class RaidDeepDark implements Listener {
     }
 
     private void enter(Player player) {
+        if (!player.isOp() && sessionOf(player) == null) { say(player, "§7보스 입구의 §b봉인된 비석§7을 우클릭해 입장하세요."); return; }
         if (!cb("enabled")) { say(player, "레이드가 비활성화되어 있습니다."); return; }
         if (!plugin.canTravel(player)) { say(player, "튜토리얼을 완료한 뒤 입장할 수 있습니다."); return; }
         if (player.isDead()) return;
@@ -375,6 +379,148 @@ final class RaidDeepDark implements Listener {
             say(m, "§7파티 전원이 찬성(Y)하면 " + Math.max(1, ci("countdown-seconds")) + "초 뒤 보스전이 시작됩니다. 반대는 N.");
         }
     }
+
+    // ---- 봉인된 비석 (boss gate): entry window -> party vote (from anywhere) -> straight into the arena ----
+    /** Chest-menu title; PipiTravel replaces this menu with its RaidGateScreen. */
+    static final String GATE_TITLE = "깊은 어둠 · 봉인된 비석";
+    private static final String STELE = "PIPIFACILITIES_SEALED_STELE";
+    private static final int GATE_INFO = 4, GATE_MEMBERS = 9, GATE_REWARDS = 36, GATE_ENTER = 49, GATE_CLOSE = 53;
+    private static final double GATE_REACH = 8;
+
+    private static final class GateMenu implements org.bukkit.inventory.InventoryHolder {
+        org.bukkit.inventory.Inventory inv;
+        Location at;
+        @Override public org.bukkit.inventory.Inventory getInventory() { return inv; }
+    }
+
+    private static boolean stele(Block b) { return b != null && b.getType().name().equals(STELE); }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void steleClick(PlayerInteractEvent e) {
+        if (e.getAction() != Action.RIGHT_CLICK_BLOCK || !stele(e.getClickedBlock())) return;
+        Player p = e.getPlayer();
+        if (p.isSneaking() && e.getItem() != null && p.getGameMode() == GameMode.CREATIVE) return; // builders can place against it
+        e.setCancelled(true);
+        if (e.getHand() != EquipmentSlot.HAND || ghost(p)) return;
+        openGate(p, e.getClickedBlock().getLocation().add(.5, 0, .5));
+    }
+
+    /** Why the player cannot start the entry vote right now, or null. */
+    private String gateBlocked(Player p) {
+        if (!cb("enabled")) return "레이드가 비활성화되어 있습니다";
+        if (!plugin.canTravel(p)) return "튜토리얼을 완료한 뒤 입장할 수 있습니다";
+        UUID leader = town.partyLeader(p);
+        if (leader != null && !leader.equals(p.getUniqueId())) return "파티장만 입장을 신청할 수 있습니다";
+        if (sessionOf(p) != null) return "이미 레이드에 참여 중입니다";
+        if (session != null) return "다른 파티가 도전 중입니다";
+        return null;
+    }
+
+    private static String ilvl(Player p) {
+        try { return String.valueOf((int) Math.round(CombatStats.stats(p).ilvl())); } catch (RuntimeException ex) { return "-"; }
+    }
+
+    private void openGate(Player p, Location at) {
+        GateMenu menu = new GateMenu();
+        menu.at = at;
+        menu.inv = Bukkit.createInventory(menu, 54, GATE_TITLE);
+        List<Player> party = town.partyOnline(p);
+        int cap = Math.max(1, ci("max-players"));
+        menu.inv.setItem(GATE_INFO, plugin.statusIcon(Material.ECHO_SHARD, "§b" + RAID_NAME,
+            "§7권장 장비 레벨 " + Math.max(0, ci("recommended-item-level")),
+            "§7파티원 " + Math.min(party.size(), cap) + " / " + cap,
+            "§7보스 심연의 감시자 워든"));
+        UUID leader = town.partyLeader(p);
+        for (int i = 0; i < party.size() && i < cap; i++) {
+            Player m = party.get(i);
+            ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+            var meta = (org.bukkit.inventory.meta.SkullMeta) head.getItemMeta();
+            meta.setOwningPlayer(m);
+            meta.setDisplayName("§f" + m.getName());
+            boolean lead = leader == null ? m.equals(p) : leader.equals(m.getUniqueId());
+            meta.setLore(List.of("§7장비 레벨 " + ilvl(m), lead ? "§6파티장" : "§7파티원"));
+            head.setItemMeta(meta);
+            menu.inv.setItem(GATE_MEMBERS + i, head);
+        }
+        List<ItemStack> rewards = new ArrayList<>();
+        long gold = Math.max(0, plugin.getConfig().getLong(P + "reward.gold"));
+        rewards.add(plugin.statusIcon(Material.GOLD_INGOT, "§6골드 " + fmt(gold), "§7클리어 보상 (전원)"));
+        try { rewards.add(town.raidItem("plate", Math.max(1, ci("reward.steel")))); } catch (RuntimeException ignored) { }
+        try { rewards.add(town.levelVoucher(Math.max(1, ci("reward.level-vouchers")))); } catch (RuntimeException ignored) { }
+        try { rewards.add(town.raidItem("soul", Math.max(1, ci("reward.soul-stone")))); } catch (RuntimeException ignored) { }
+        rewards.add(accessoryPlaceholder(Math.max(1, ci("auction.accessory-count"))));
+        List<?> books = plugin.getConfig().getList(P + "reward.auction-skillbooks");
+        rewards.add(skillBookPlaceholder(books == null || books.isEmpty() ? "미정" : books.size() + "종 중 1권"));
+        for (int i = 0; i < rewards.size() && i < 9; i++) menu.inv.setItem(GATE_REWARDS + i, rewards.get(i));
+        String why = gateBlocked(p);
+        menu.inv.setItem(GATE_ENTER, why == null ? plugin.statusIcon(Material.LIME_DYE, "§a입장하기", "§7파티원 전원이 찬성하면 보스방으로 이동합니다")
+            : plugin.statusIcon(Material.GRAY_DYE, "§7" + why));
+        menu.inv.setItem(GATE_CLOSE, plugin.statusIcon(Material.BARRIER, "§c닫기"));
+        p.openInventory(menu.inv);
+        p.playSound(p.getLocation(), Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, .35f, .7f);
+    }
+
+    @EventHandler public void gateClick(org.bukkit.event.inventory.InventoryClickEvent e) {
+        if (!(e.getView().getTopInventory().getHolder() instanceof GateMenu menu)) return;
+        e.setCancelled(true);
+        if (!(e.getWhoClicked() instanceof Player p) || e.getClickedInventory() != e.getView().getTopInventory()) return;
+        if (e.getRawSlot() == GATE_CLOSE) { p.closeInventory(); return; }
+        if (e.getRawSlot() != GATE_ENTER) return;
+        p.closeInventory();
+        startGateVote(p, menu.at);
+    }
+
+    @EventHandler public void gateDrag(org.bukkit.event.inventory.InventoryDragEvent e) {
+        if (e.getView().getTopInventory().getHolder() instanceof GateMenu) e.setCancelled(true);
+    }
+
+    /** Leader pressed 입장하기: reserve the raid and ask every online party member (wherever they are). */
+    private void startGateVote(Player leader, Location at) {
+        String why = gateBlocked(leader);
+        if (why != null) { say(leader, "§c" + why + "."); return; }
+        if (leader.isDead()) return;
+        if (at == null || at.getWorld() != leader.getWorld() || at.distance(leader.getLocation()) > GATE_REACH) { say(leader, "§c봉인된 비석 가까이에서 입장할 수 있습니다."); return; }
+        if (world() == null) { say(leader, "§c딥 다크 맵이 없습니다. 관리자가 /pipilife maps builddeepdark 를 실행해야 합니다."); return; }
+        Session s = new Session();
+        s.leader = leader.getUniqueId();
+        int cap = Math.max(1, ci("max-players"));
+        for (Player m : town.partyOnline(leader)) {
+            if (s.members.size() >= cap) break;
+            if (m.isDead() || ghost(m) || !plugin.canTravel(m) || sessionOf(m) != null) continue;
+            s.members.add(m.getUniqueId());
+        }
+        session = s;
+        List<Player> voters = online(s);
+        if (voters.size() <= 1) { gateEnter(s, voters); return; } // solo: no vote needed
+        Vote v = new Vote(VoteKind.ENTER, Math.max(5, ci("vote-seconds")) * 20);
+        for (Player m : voters) { v.voters.add(m.getUniqueId()); v.state.put(m.getUniqueId(), 0); }
+        v.state.put(leader.getUniqueId(), 1);
+        s.vote = v;
+        s.gate = true;
+        for (Player m : voters) {
+            m.playSound(m.getLocation(), Sound.BLOCK_NOTE_BLOCK_CHIME, 1f, 1.2f);
+            say(m, "§d[" + RAID_NAME + "] §f" + leader.getName() + "님이 보스 입장을 신청했습니다. §a찬성 Y §7/ §c반대 N §8(/pipilife raid vote yes|no)");
+        }
+        sendVote(s);
+    }
+
+    /** Gate vote passed (or solo): everyone who agreed goes straight into the arena. */
+    private void gateEnter(Session s, List<Player> voters) {
+        World w = world();
+        if (w == null) { endSession(s, "§c맵을 열지 못했습니다."); return; }
+        s.ready.clear();
+        for (Player p : voters) {
+            if (p == null || !p.isOnline() || p.isDead() || !s.members.contains(p.getUniqueId())) continue;
+            toPrep(p); // into the raid world first (heals, lands in the prep room as the fallback)
+            s.ready.add(p.getUniqueId());
+            p.sendTitle("§b봉인 해제", "§7" + RAID_NAME + "에 입장합니다", 5, 40, 10);
+            p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_EMERGE, .8f, 1f);
+        }
+        if (s.ready.isEmpty()) { endSession(s, null); return; }
+        s.lastActivity = System.currentTimeMillis();
+        startFight(s);
+    }
+
 
     // ---- entry / exit vote ----
     private static final String RAID_NAME = "깊은 어둠";
@@ -469,7 +615,7 @@ final class RaidDeepDark implements Listener {
         v.left--;
         // voters that left the raid / went offline drop out of the vote
         boolean changed = v.voters.removeIf(id -> { Player p = Bukkit.getPlayer(id); return p == null || !p.isOnline() || !s.members.contains(id); });
-        if (v.voters.isEmpty()) { s.vote = null; return; }
+        if (v.voters.isEmpty()) { s.vote = null; if (s.gate) { s.gate = false; endSession(s, null); } return; }
         boolean all = true;
         for (UUID id : v.voters) if (v.state.getOrDefault(id, 0) != 1) all = false;
         if (all && v.age >= 20) { resolveVote(s, true, null); return; }
@@ -487,9 +633,13 @@ final class RaidDeepDark implements Listener {
         String what = v.kind == VoteKind.ENTER ? "입장" : "퇴장";
         if (!ok) {
             for (Player p : voters) { say(p, "§c" + what + " 투표가 취소되었습니다. §7" + (why == null ? "" : why)); p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 1f, .6f); }
+            if (v.kind == VoteKind.ENTER && s.gate) { s.gate = false; endSession(s, null); } // nobody moved yet: just drop the reservation
             return;
         }
-        if (v.kind == VoteKind.ENTER) {
+        if (v.kind == VoteKind.ENTER && s.gate) {
+            s.gate = false;
+            gateEnter(s, voters);
+        } else if (v.kind == VoteKind.ENTER) {
             if (s.stage != Stage.PREP) return;
             s.ready.clear();
             s.ready.addAll(v.voters);

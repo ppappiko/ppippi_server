@@ -75,13 +75,25 @@ final class ReturnStone implements Listener {
         if (!is(e.getItem())) return;
         e.setCancelled(true);
         if (e.getHand() != EquipmentSlot.HAND && is(e.getPlayer().getInventory().getItemInMainHand())) return; // main hand handles it
-        Player p = e.getPlayer();
-        if (channels.containsKey(p.getUniqueId())) return;
+        start(e.getPlayer());
+    }
+
+    /** True when the player carries at least one 귀환석 (main inventory or off hand). */
+    static boolean has(Player p) {
+        for (ItemStack s : p.getInventory().getContents()) if (is(s)) return true;
+        return false;
+    }
+
+    /** Starts the 3 s channel (right-click, or the warp map home button in the wild). True when it started or is already running. */
+    boolean start(Player p) {
+        if (channels.containsKey(p.getUniqueId())) return true;
+        if (!has(p)) { bar(p, "§c귀환석이 없습니다."); return false; }
         String why = blocked(p);
-        if (why != null) { bar(p, "§c" + why); return; }
-        if (plugin.homeFor(p) == null) { bar(p, "§c돌아갈 거주지가 없습니다."); return; }
+        if (why != null) { bar(p, "§c" + why); return false; }
+        if (plugin.homeFor(p) == null) { bar(p, "§c돌아갈 거주지가 없습니다."); return false; }
         channels.put(p.getUniqueId(), new Channel(p.getLocation().clone()));
         p.playSound(p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, .7f, 1.6f);
+        return true;
     }
 
     private void cancel(Player p, String why) {
