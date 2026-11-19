@@ -35,7 +35,9 @@ final class Mounts implements Listener {
         this.plugin = plugin;
         this.pets = pets;
         var c = plugin.getConfig();
-        c.addDefault("mounts.allowed", List.of());
+        c.addDefault("mounts.allowed", List.of("moonbear", "tortoise", "thundersheep", "sunlizard", "cow", "imugi"));
+        // Ridden pets are shown bigger than their walking size (render + hitbox, Attribute.GENERIC_SCALE). 1 = unchanged.
+        c.addDefault("mounts.scale", Map.of("moonbear", 1.1, "tortoise", 1.2, "thundersheep", 1.3, "sunlizard", 1.25, "cow", 1.15));
         c.addDefault("mounts.default-speed", 0.3);
         c.addDefault("mounts.default-jump", 0.5);
         c.addDefault("mounts.blocked-worlds", List.of(VillageMaps.TUTORIAL, DeepDarkMap.WORLD));
@@ -141,6 +143,9 @@ final class Mounts implements Listener {
         Location at = player.getLocation();
         LivingEntity mount = pets.spawnMount(at, skin(pet));
         if (mount == null) { player.sendMessage("탈것 펫을 부르지 못했어요."); return true; }
+        double scale = value("scale", pet, 1);
+        var scaleAttr = mount.getAttribute(org.bukkit.attribute.Attribute.GENERIC_SCALE);
+        if (scaleAttr != null && scale > 0 && scale != 1) scaleAttr.setBaseValue(scale);
         if (!bridge(mount, value("speed", pet, cfg().getDouble("default-speed", .3)),
                 value("seat", pet, 0), value("jump", pet, cfg().getDouble("default-jump", .5)))
             || !mount.addPassenger(player)) {

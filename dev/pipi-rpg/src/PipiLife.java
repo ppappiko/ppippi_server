@@ -44,7 +44,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
         FROG(EntityType.FROG, "가마", Facility.LUMBER, 2, "mangrove_swamp"),
         SUNLIZARD(EntityType.AXOLOTL, "파로", Facility.FARM, 3, "stony_peaks"),
         IMUGI(EntityType.SILVERFISH, "이무기", Facility.TRANSPORT, 2, "bastion"),
-        VAMPBAT(EntityType.BAT, "블벳", Facility.TRANSPORT, 1, "fortress");
+        VAMPBAT(EntityType.BAT, "블벳", Facility.TRANSPORT, 1, "fortress"),
+        COW(EntityType.COW, "젖소", Facility.RANCH, 2, "meadow");
 
         final EntityType type;
         final String label;
@@ -72,6 +73,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
         int captureRate() { return new int[]{120, 3, 1}[level - 1]; }
         int salePrice() { return new int[]{3000, 8000, 20000}[level - 1]; }
         boolean transport() { return aptitude == Facility.TRANSPORT; }
+        /** 방목 적성: can graze in a ranch (as a second aptitude for 썬더쉽 / 해달수). */
+        boolean grazes() { return this == THUNDERSHEEP || this == OTTER || this == COW; }
+        /** Mod item id this pet produces in a ranch. */
+        String ranchProduct() { return this == OTTER ? "hide" : this == COW ? "milk" : "wool"; }
         boolean netherPlace() { return place.equals("bastion") || place.equals("fortress"); }
     }
 
@@ -252,6 +257,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(damageNumbers, this);
         try { raid = new RaidDeepDark(this, town, damageNumbers); getServer().getPluginManager().registerEvents(raid, this); } catch (Throwable t) { raid = null; getLogger().warning("레이드(딥 다크 시티)를 시작하지 못했습니다: " + t); }
         try { returnStone = new ReturnStone(this); getServer().getPluginManager().registerEvents(returnStone, this); } catch (Throwable t) { returnStone = null; getLogger().warning("귀환석을 시작하지 못했습니다: " + t); }
+        try { escape = new EmergencyEscape(this); getServer().getPluginManager().registerEvents(escape, this); } catch (Throwable t) { escape = null; getLogger().warning("긴급 탈출을 시작하지 못했습니다: " + t); }
         try { deepDarkFinder = new DeepDarkFinder(this); getServer().getPluginManager().registerEvents(deepDarkFinder, this); } catch (Throwable t) { deepDarkFinder = null; getLogger().warning("심층 나침반을 시작하지 못했습니다: " + t); }
         getServer().getScheduler().runTaskTimer(this, this::previewStations, 5, 5);
         getServer().getScheduler().runTaskTimer(this, this::hungerTick, 40, 40);
@@ -498,7 +504,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     private Pet eligible(LivingEntity entity) {
         if (entity.getScoreboardTags().contains("pipi_pet_worker") || Mounts.isMount(entity) || entity.isDead()) return null;
-        String species = entity.getPersistentDataContainer().get(NamespacedKey.fromString("pipilife:pet_species"), PersistentDataType.STRING);
+        NamespacedKey key = NamespacedKey.fromString("pipilife:pet_species");
+        String species = entity.getPersistentDataContainer().get(key, PersistentDataType.STRING);
+        // The species tag of a mod pet can be lost on a chunk reload: recover it from the entity type and re-tag.
+        if (species == null && entity.getType().name().startsWith("PIPIFACILITIES_PET_")) {
+            species = entity.getType().name().substring("PIPIFACILITIES_PET_".length()).toLowerCase(Locale.ROOT);
+            if (petBySkin(species) != null) entity.getPersistentDataContainer().set(key, PersistentDataType.STRING, species);
+        }
         return petBySkin(species);
     }
 
@@ -634,6 +646,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             out.addAll(List.of("capture", "pets", "petstorage", "skill", "workstation", "warp", "raid", "party", "auction"));
             out.add("tutorial");
             out.add("mount");
+            out.add("escape");
             out.add("accessory");
             if (sender.isOp()) out.addAll(List.of("petspawn", "spawninfo", "armory", "bossclear"));
             if (regions != null && (sender.isOp() || sender.hasPermission("pipilife.admin"))) out.add("region");
@@ -710,6 +723,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length > 0 && args[0].equals("social")) return social.command(player, args);
         if (args.length > 0 && args[0].equals("petstorage")) return storageCommand(player, args);
         if (args.length > 0 && args[0].equals("market")) return marketCommand(player, args);
+        if (args.length > 0 && args[0].equals("escape")) { if (escape != null) return escape.command(player, args); player.sendMessage("긴급 탈출을 사용할 수 없습니다."); return true; }
         if (args.length > 0 && args[0].equals("mount")) { if (mounts != null) return mounts.command(player, args); player.sendMessage("ModelEngine과 전용 펫 모델을 먼저 로드하세요."); return true; }
         if (args.length > 0 && args[0].equals("accessory")) return accessories.command(player, args);
         if (args.length > 0 && args[0].equals("armory")) return armory.command(player, args);
@@ -907,6 +921,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             case CRAFT -> "제작";
             case MINE, DIAMOND_MINE, AMBER_QUARRY -> "채광";
             case TRANSPORT -> "운반";
+            case RANCH -> "방목";
             default -> "";
         };
     }
@@ -917,6 +932,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     private int aptitude(OfflinePlayer player, Pet pet, Facility facility) {
+        if (facility == Facility.RANCH) return pet != null && pet.grazes() ? 1 : 0;   // 방목 has no levels
         if (facility == null || pet == null || !sameAptitudeKind(facility, pet.aptitude)) return 0;
         return pet.level;
     }
@@ -1185,7 +1201,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     private org.bukkit.block.Block feederAnchor(org.bukkit.block.Block wall) {
         if (wall == null || wall.getType() != FEEDER_WALL && wall.getType() != Material.BARRIER) return null;
-        for (int x = 0; x <= 2; x++) for (int z = 0; z <= 2; z++) {
+        for (int x = 0; x < Facility.RANCH_SIZE; x++) for (int z = 0; z < Facility.RANCH_SIZE; z++) {
             if (x == 0 && z == 0) continue;
             var anchor = wall.getRelative(-x, 0, -z);
             Facility facility = facilityAt(anchor);
@@ -1215,7 +1231,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     private Material stationModelItem(Facility facility) {
         return switch (facility) {
-            case FARM, CARROT_FARM, POTATO_FARM, CABBAGE_FARM, MINE, DIAMOND_MINE, AMBER_QUARRY, GOLD_MINE, LUMBER, REDWOOD_LUMBER ->
+            case FARM, CARROT_FARM, POTATO_FARM, CABBAGE_FARM, MINE, DIAMOND_MINE, AMBER_QUARRY, GOLD_MINE, LUMBER, REDWOOD_LUMBER, RANCH ->
                 Material.matchMaterial("PIPIFACILITIES_STATION_" + facility.name());
             default -> null;
         };
@@ -1267,6 +1283,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     private void showStationModel(org.bukkit.block.Block anchor, Facility facility) {
+        if (facility == Facility.RANCH) fixRanch(anchor);
         Material modItem = stationModelItem(facility);
         if (modItem == null && !Bukkit.getPluginManager().isPluginEnabled("ItemsAdder")) return;
         boolean wide = facility == Facility.FEEDER ? wideFeeder(anchor) : wideStation(anchor);
@@ -1285,7 +1302,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         var existing = center.getWorld().getNearbyEntities(center, 8, 8, 8).stream()
             .filter(entity -> entity.getScoreboardTags().contains(tag)).toList();
         if (!existing.isEmpty()) {
-            String need = facility.isQuarry() ? STATION_V3_TAG : STATION_V2_TAG;
+            String need = facility == Facility.RANCH ? RANCH_MODEL_TAG : facility.isQuarry() ? STATION_V3_TAG : STATION_V2_TAG;
             if (modItem == null || existing.stream().allMatch(entity -> entity.getScoreboardTags().contains(need))) {
                 for (int i = 1; i < existing.size(); i++) existing.get(i).remove(); // drop stacked duplicates, keep one
                 return;
@@ -1310,6 +1327,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 display.addScoreboardTag(tag);
                 display.addScoreboardTag(STATION_V2_TAG);
                 if (facility.isQuarry()) display.addScoreboardTag(STATION_V3_TAG);
+                if (facility == Facility.RANCH) display.addScoreboardTag(RANCH_MODEL_TAG);
             });
             return;
         }
@@ -1341,6 +1359,32 @@ public final class PipiLife extends JavaPlugin implements Listener {
         } catch (ReflectiveOperationException | LinkageError ex) {
             getLogger().warning("시설 모델을 불러오지 못했습니다: " + ex.getMessage());
         }
+    }
+
+    // ---- ranch (목장): one 15x15 item model + invisible barriers on Facility.ranchSolid cells ----
+    static final String RANCH_MODEL_TAG = "pipi_station_ranch15";
+    /**
+     * Makes the barrier cells match the current layout and converts older ranches: the 6x6 barrier version (size data 6) and the
+     * short-lived real-block version (oak fences, hay blocks, dirt path) are cleared first.
+     */
+    private void fixRanch(org.bukkit.block.Block anchor) {
+        int n = Facility.RANCH_SIZE;
+        String view = facilityViewKey(anchor);
+        boolean convert = data.getInt(view + ".width", n) != n || data.contains(view + ".facing");
+        for (int x = 0; x < n; x++) for (int z = 0; z < n; z++) {
+            if (x == 0 && z == 0) continue;
+            var cell = anchor.getRelative(x, 0, z);
+            if (!cell.getWorld().isChunkLoaded(cell.getX() >> 4, cell.getZ() >> 4)) continue;
+            Material m = cell.getType();
+            if (convert) {
+                if (m == Material.OAK_FENCE || m == Material.HAY_BLOCK) { cell.setType(Material.AIR, false); m = Material.AIR; }
+                var ground = cell.getRelative(0, -1, 0);
+                if (ground.getType() == Material.DIRT_PATH) ground.setType(Material.GRASS_BLOCK, false);
+            }
+            if (Facility.ranchSolid(x, z)) { if (m.isAir()) cell.setType(Material.BARRIER, false); }
+            else if (m == Material.BARRIER) cell.setType(Material.AIR, false);
+        }
+        if (convert) { data.set(view + ".width", n); data.set(view + ".depth", n); data.set(view + ".facing", null); persist(); }
     }
 
     private void buildFeeder(org.bukkit.block.Block anchor) {
@@ -1391,7 +1435,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (facility != Facility.FEEDER) {
             anchor.getChunk().getPersistentDataContainer().set(wideStationKey(anchor), PersistentDataType.BYTE, (byte) 1);
             for (int x = 0; x < width; x++) for (int z = 0; z < depth; z++)
-                if (x != 0 || z != 0) anchor.getRelative(x, 0, z).setType(Material.BARRIER, false);
+                if ((x != 0 || z != 0) && (facility != Facility.RANCH || Facility.ranchSolid(x, z))) anchor.getRelative(x, 0, z).setType(Material.BARRIER, false);
         }
         applyFacilityLevel(player, plot, facility, anchor, item);
         finishStation(player, anchor, facility);
@@ -1442,7 +1486,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             player.sendMessage("시설을 저장하지 못했습니다.");
         } else {
             if (facility != Facility.FEEDER) for (int x=0;x<facility.width();x++) for(int z=0;z<facility.depth();z++)
-                if(x!=0 || z!=0) block.getRelative(x,0,z).setType(Material.BARRIER,false);
+                if((x!=0 || z!=0) && (facility != Facility.RANCH || Facility.ranchSolid(x, z))) block.getRelative(x,0,z).setType(Material.BARRIER,false);
             applyFacilityLevel(player, plot, facility, block, item);
             finishStation(player, block, facility);
         }
@@ -1633,7 +1677,8 @@ public final class PipiLife extends JavaPlugin implements Listener {
             foodInventories.remove(facilityViewKey(anchor) + ".food");
             persist();
             String tag = feederModelTag(anchor);
-            anchor.getWorld().getNearbyEntities(anchor.getLocation().add(1.5, 1, 1.5), 4, 4, 4).stream() // tag is per-anchor; wide box covers 3x3 quarry displays (lifted by scale/2)
+            double reach = facility == Facility.RANCH ? Facility.RANCH_SIZE / 2.0 + 1 : 4;
+            anchor.getWorld().getNearbyEntities(anchor.getLocation().add(facility == Facility.RANCH ? Facility.RANCH_SIZE / 2.0 : 1.5, 1, facility == Facility.RANCH ? Facility.RANCH_SIZE / 2.0 : 1.5), reach, reach, reach).stream() // tag is per-anchor; wide box covers 3x3 quarry displays (lifted by scale/2)
                 .filter(entity -> entity.getScoreboardTags().contains(tag)).forEach(org.bukkit.entity.Entity::remove);
             event.setDropItems(false);
             event.getBlock().getWorld().dropItemNaturally(event.getBlock().getLocation(), stationItem(facility, keptLevel)).setOwner(player.getUniqueId());
@@ -2162,7 +2207,22 @@ public final class PipiLife extends JavaPlugin implements Listener {
     boolean nearFacility(Player player, Facility facility) {
         return owns(player, plotAt(player.getLocation())) && facilityBlocks(ownedPlot(player), facility).stream()
             .anyMatch(block -> block.getWorld().equals(player.getWorld())
-                && block.getLocation().add(.5,.5,.5).distanceSquared(player.getLocation()) <= 36);
+                && nearStation(player, block));
+    }
+
+    /**
+     * Within 6 blocks of the facility's footprint (not just its anchor corner): a 15x15 ranch opened from its middle or far side
+     * used to fail the anchor-distance check, so pet clicks and drags in its menu were silently ignored.
+     */
+    boolean nearStation(Player player, org.bukkit.block.Block anchor) {
+        if (!player.getWorld().equals(anchor.getWorld())) return false;
+        String view = facilityViewKey(anchor);
+        int w = Math.max(1, data.getInt(view + ".width", 1)), d = Math.max(1, data.getInt(view + ".depth", 1));
+        var at = player.getLocation();
+        double dx = Math.max(0, Math.max(anchor.getX() - at.getX(), at.getX() - (anchor.getX() + w)));
+        double dz = Math.max(0, Math.max(anchor.getZ() - at.getZ(), at.getZ() - (anchor.getZ() + d)));
+        double dy = at.getY() - (anchor.getY() + .5);
+        return dx * dx + dz * dz + dy * dy <= 36;
     }
 
     int craftLevel(Player player) {
@@ -2335,7 +2395,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         for(int i=0;i<MARKET_ROWS;i++){
             String rp=marketRow(owner,i),entry=data.getString(rp+".entry","");Pet pet=entryPet(entry);if(entry.isEmpty()||pet==null)continue;
             int food=data.getInt(rp+".data.food");
-            inv.setItem(i,statusIcon(petIcon(pet),pet.label,String.valueOf(data.getInt(rp+".price")),aptitudeLabel(pet.aptitude)+" 적성 Lv."+pet.level,"포만도 "+food+"/100",mine?"판매 중 · 판매 중지로 회수":"클릭하여 구매"));
+            inv.setItem(i,statusIcon(petIcon(pet),pet.label,String.valueOf(data.getInt(rp+".price")),aptitudeLabel(pet.aptitude)+(pet.aptitude==Facility.RANCH?" 적성":" 적성 Lv."+pet.level),"포만도 "+food+"/100",mine?"판매 중 · 판매 중지로 회수":"클릭하여 구매"));
         }
     }
     private void openPetMarket(Player p,int page){
@@ -2345,7 +2405,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         fillMarketRows(h.inventory,h.owner,true);
         for(int i=0;i<STORAGE_PAGE_SIZE;i++){
             String e=entries.get(page*STORAGE_PAGE_SIZE+i);Pet pet=entryPet(e);if(e.isEmpty()||pet==null)continue;
-            h.inventory.setItem(9+i,statusIcon(petIcon(pet),pet.label,petAssignment(p,e),TownSystems.fmt(petSalePrice(p,e))+" 골드",aptitudeLabel(pet.aptitude)+" 적성 Lv."+pet.level));
+            h.inventory.setItem(9+i,statusIcon(petIcon(pet),pet.label,petAssignment(p,e),TownSystems.fmt(petSalePrice(p,e))+" 골드",aptitudeLabel(pet.aptitude)+(pet.aptitude==Facility.RANCH?" 적성":" 적성 Lv."+pet.level)));
         }
         h.inventory.setItem(5,statusIcon(Material.GOLD_INGOT,"판매 대금",String.valueOf(data.getLong(marketKey(h.owner)+".proceeds"))));
         h.inventory.setItem(53,statusIcon(Material.NAME_TAG,"주인",p.getName()));h.inventory.setItem(52,statusIcon(Material.BOOK,"페이지",String.valueOf(page+1)));
@@ -2523,7 +2583,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
             Pet pet = entryPet(saved);
             if (pet == null) continue;
             List<String> details = new ArrayList<>();
-            details.add(aptitudeLabel(pet.aptitude) + " 적성 Lv." + pet.level);
+            details.add(aptitudeLabel(pet.aptitude) + (pet.aptitude == Facility.RANCH ? " 적성" : " 적성 Lv." + pet.level));
+            if (pet.grazes() && pet.aptitude != Facility.RANCH) details.add("방목 적성");
+            if (rideable(pet)) details.add("탑승 적성");
             if (levelBonusText(pet.level, pet.aptitude) != null) details.add(levelBonusText(pet.level, pet.aptitude));
             if (saved.indexOf(':') < 0) {
                 Workshop state = workshop(player, pet, System.currentTimeMillis());
@@ -2639,7 +2701,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 String anchor=assignedProducer(p,entry,f);var block=facilityBlocks(plot,f).stream().filter(b->coordinates(b).equals(anchor)).findFirst().orElse(null);if(block==null)continue;
                 Workshop state=productionState(p,entry,now);Eater er=eaters.get(p.getUniqueId()+":"+entry);boolean out=er!=null&&(er.phase==Meal.GO||er.phase==Meal.EAT)&&er.feeder!=null;
                 boolean work=state.food()>0&&!data.getBoolean(craftEntryPath(p,entry)+".away")&&(er==null||er.phase==Meal.WORK)&&state.stock()<state.cap()&&data.getLong(producerKey(plot,f,anchor)+".paused")==0;
-                scenes.add(new PetScene(p.getUniqueId()+":"+entry,skin,block.getLocation().add(.4+productionSlot(p,entry)*.45,0,-.7),stationFocus(block,f),work,state.food(),out?feederSpot(er.feeder):null,f==Facility.LUMBER||f==Facility.REDWOOD_LUMBER?2:aptitudeLabel(f).equals("농사")?0:1,block.getWorld().getUID()+":"+coordinates(block),er!=null&&er.phase==Meal.EAT,idleStatus(workerStatus(p,entry),work,data.getLong(producerKey(plot,f,anchor)+".paused")>0||lumberPause(p,f)>0?"작업 대기 중":state.stock()>=state.cap()?"보관함 가득 참":"대기 중")));
+                scenes.add(new PetScene(p.getUniqueId()+":"+entry,skin,f==Facility.RANCH?block.getLocation().add(Facility.RANCH_SIZE/2,0,Facility.RANCH_SIZE/2):block.getLocation().add(.4+productionSlot(p,entry)*.45,0,-.7),stationFocus(block,f),work,state.food(),out?feederSpot(er.feeder):null,f==Facility.RANCH?5:f==Facility.LUMBER||f==Facility.REDWOOD_LUMBER?2:aptitudeLabel(f).equals("농사")?0:1,block.getWorld().getUID()+":"+coordinates(block),er!=null&&er.phase==Meal.EAT,idleStatus(workerStatus(p,entry),work,data.getLong(producerKey(plot,f,anchor)+".paused")>0||lumberPause(p,f)>0?"작업 대기 중":state.stock()>=state.cap()?"보관함 가득 참":"대기 중")));
             }
         }return scenes;
     }
@@ -2711,7 +2773,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         Facility facility = facilityAt(menu.station);
         if (facility == null || !facility.isProducer() && facility != Facility.CRAFT || !owns(player, plotAt(menu.station.getLocation()))
             || !player.getWorld().equals(menu.station.getWorld())
-            || player.getLocation().distanceSquared(menu.station.getLocation().add(.5, .5, .5)) > 36) return true;
+            || !nearStation(player, menu.station)) return true;
         if (args.length >= 2 && (Set.of("page", "select", "assign").contains(args[1])
             || facility == Facility.CRAFT && Set.of("release", "feed").contains(args[1])))
             return stationStorageAction(player, menu, args);
@@ -2730,7 +2792,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length == 2 && args[1].equals("toggle")) {
             if (facility == Facility.CRAFT) town.toggleCraft(player);
             else toggleLumber(player, facility);
-        } else if (args.length == 2 && args[1].equals("upgrade") && facility.isProducer()) {
+        } else if (args.length == 2 && args[1].equals("upgrade") && facility.isProducer() && facility != Facility.RANCH) {
             int level = lumberLevel(player, facility);
             if (level < MAX_FACILITY_LEVEL) {
                 final Pet backPet = selected;
@@ -2805,13 +2867,24 @@ public final class PipiLife extends JavaPlugin implements Listener {
         String entry = menu.craftSelection;
         Pet pet = entryPet(entry);
         List<String> details = new ArrayList<>();
-        details.add(aptitudeLabel(pet.aptitude) + " 적성 Lv." + pet.level);
+        details.add(aptitudeIcons(pet));   // client draws this as the aptitude icon row (all aptitudes, own ones lit, level below)
         if (levelBonusText(pet.level, facility) != null) details.add(levelBonusText(pet.level, facility));
         details.add(stationPetStatus(player, entry, facility));
         details.add(petAssignment(player, entry));
         inventory.setItem(16, statusIcon(petIcon(pet), pet.label, details.toArray(String[]::new)));
         inventory.setItem(25, statusIcon(Material.CARROT, "먹이 " + data.getInt(craftEntryPath(player, entry) + ".food") + "/100"));
         if (facility == Facility.CRAFT && craftAptitude(player, entry) > 0) inventory.setItem(21, statusIcon(Material.LEAD, "제작대에 배치"));
+    }
+
+    /**
+     * Hidden data line for PipiTravel's pet info: APT:farm=L,lumber=L,mine=L,craft=L,transport=L,ranch=L,mount=L
+     * (L = level, 0 = not this pet's aptitude, -1 = has it without levels: 방목 / 탑승).
+     */
+    String aptitudeIcons(Pet pet) {
+        String kind = aptitudeLabel(pet.aptitude);
+        java.util.function.Function<String, Integer> lv = k -> k.equals(kind) ? pet.level : 0;
+        return "APT:farm=" + lv.apply("농사") + ",lumber=" + lv.apply("벌목") + ",mine=" + lv.apply("채광") + ",craft=" + lv.apply("제작")
+            + ",transport=" + lv.apply("운반") + ",ranch=" + (pet.grazes() ? -1 : 0) + ",mount=" + (rideable(pet) ? -1 : 0);
     }
 
     private String petAssignment(Player player, String entry) {
@@ -2907,7 +2980,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             long paused = data.getLong(producerKey(plot, facility, anchor) + ".paused");
             settleFacility(player, facility, anchor, paused > 0 ? Math.min(paused, now) : now);
         }
-        int cap = active ? facilityCapacity(player, facility, anchor) : CAPACITY;
+        int cap = active ? (facility == Facility.RANCH ? RANCH_CAP : facilityCapacity(player, facility, anchor)) : CAPACITY;
         return new Workshop(data.getInt(key + ".food"), data.getInt(key + ".stock"), data.getLong(key + ".since"), active, cap);
     }
 
@@ -2937,7 +3010,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return String.format(java.util.Locale.ROOT, "%.1f", millis / 1000.0);
     }
     static String levelBonusText(int level, Facility kind) {
-        if (kind != null && kind.isProducer()) return "작업 속도 -" + Math.round(producerReduction(level) * 100.0) + "%";
+        if (kind != null && kind.isProducer() && kind != Facility.RANCH) return "작업 속도 -" + Math.round(producerReduction(level) * 100.0) + "%";
         long pct = Math.round((1.0 - levelMultiplier(level)) * 100.0);
         return pct > 0 ? "적성 보너스 -" + pct + "%" : null;
     }
@@ -2973,6 +3046,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         List<String> group = facilityGroup(player, facility, anchor);
         int size = group.size();
         if (size == 0) return;
+        if (facility == Facility.RANCH) { settleRanch(player, group, end); return; }
         int[] food = new int[size], stock = new int[size], lvl = new int[size];
         boolean[] away = new boolean[size];
         long clock = end;
@@ -3007,8 +3081,37 @@ public final class PipiLife extends JavaPlugin implements Listener {
         }
     }
 
+    /** Ranch stock per grazing pet (each pet keeps its own product and clock). */
+    static final int RANCH_CAP = 64;
+    /** Menu slots of the per-pet ranch outputs (work slot 1..5); free of pet slots and dividers. Mirrored in PipiTravel CraftScreen. */
+    static final int[] RANCH_OUT = {39, 40, 41, 43, 44};
+    /** Ms per ranch product for one pet: 20 s for every grazing pet (방목 has no levels). */
+    static long ranchPeriod(int level) { return 20_000L; }
+
+    /** Each grazing pet that has food and is not away fills its own stock (RANCH_CAP) on its own clock. */
+    private void settleRanch(OfflinePlayer player, List<String> group, long end) {
+        for (String entry : group) {
+            String key = craftEntryPath(player, entry);
+            int stock = data.getInt(key + ".stock");
+            long since = data.getLong(key + ".since");
+            if (since <= 0 || since > end) { data.set(key + ".since", end); continue; }
+            boolean working = data.getInt(key + ".food") > 0 && !data.getBoolean(key + ".away") && stock < RANCH_CAP;
+            if (!working) { data.set(key + ".since", end); continue; }
+            long period = ranchPeriod(Math.max(1, productionAptitude(player, entry, Facility.RANCH)));
+            long made = Math.min((end - since) / period, RANCH_CAP - stock);
+            stock += (int) made;
+            data.set(key + ".stock", stock);
+            data.set(key + ".since", stock >= RANCH_CAP ? end : since + made * period);
+        }
+    }
+
+    private ItemStack ranchItem(Pet pet) {
+        Material m = ModItems.byIdOrNull(pet.ranchProduct());
+        return new ItemStack(m != null ? m : Material.WHITE_WOOL);
+    }
+
     private void assignLumber(Player player, String entry, int slot, Facility facility) {
-        if (currentProducer(player, facility) == null || productionAptitude(player, entry, facility) == 0 || slot < 1 || slot > facilitySlots(lumberLevel(player, facility))) {
+        if (currentProducer(player, facility) == null || productionAptitude(player, entry, facility) == 0 || slot < 1 || slot > (facility == Facility.RANCH ? 5 : facilitySlots(lumberLevel(player, facility)))) {
             player.sendMessage("시설에 맞는 적성의 펫을 열린 슬롯에 배치하세요.");
             return;
         }
@@ -3071,7 +3174,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             start = state.since();
         }
         room = working > 0 && total < cap;
-        long perItem = facilityPeriod(workLevels.stream().mapToInt(Integer::intValue).toArray());
+        long perItem = facility == Facility.RANCH ? ranchPeriod(1) : facilityPeriod(workLevels.stream().mapToInt(Integer::intValue).toArray());
         if (working > 0 && room) cycle = perItem;
         for (String[] item : shown) {
             Pet pet = entryPet(item[0]);
@@ -3080,6 +3183,23 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 "작업 중인 펫 " + working + "마리 · 개당 " + formatSeconds(perItem) + "초",
                 "먹이 " + state.food() + "/100", "생산품 " + state.stock() + "/" + state.cap(),
                 paused > 0 ? "작업 대기 중" : workerStatus(player, item[0])));
+        }
+        if (facility == Facility.RANCH) {
+            // per-pet output boxes (client draws them under the pets): name = product, lore = stock,since,period,paused
+            for (int s : RANCH_OUT) inventory.setItem(s, null);
+            for (String[] item : shown) {
+                Pet pet = entryPet(item[0]);
+                Workshop state = productionState(player, item[0], now);
+                String path = craftEntryPath(player, item[0]);
+                boolean grazing = state.food() > 0 && !data.getBoolean(path + ".away") && state.stock() < RANCH_CAP;
+                ItemStack out = ranchItem(pet);
+                var meta = out.getItemMeta();
+                meta.setDisplayName("§f" + pet.label + " 생산품 " + state.stock() + "/" + RANCH_CAP);
+                meta.setLore(List.of(state.stock() + "," + state.since() + "," + (grazing ? ranchPeriod(Math.max(1, productionAptitude(player, item[0], facility))) : 0) + "," + paused));
+                out.setItemMeta(meta);
+                int at = Integer.parseInt(item[1]);
+                if (at >= 1 && at <= RANCH_OUT.length) inventory.setItem(RANCH_OUT[at - 1], out);
+            }
         }
         inventory.setItem(34, statusIcon(product(facility), "생산품 " + total + "개",
             total + "," + start + "," + cycle + "," + paused));
@@ -3095,6 +3215,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             case AMBER_QUARRY -> modOr("amber", Material.AMETHYST_SHARD);
             case CABBAGE_FARM -> modOr("cabbage", Material.CARROT);
             case REDWOOD_LUMBER -> modOr("redwood_log", Material.DARK_OAK_LOG);
+            case RANCH -> modOr("wool", Material.WHITE_WOOL);
             default -> Material.OAK_LOG;
         };
     }
@@ -3104,7 +3225,37 @@ public final class PipiLife extends JavaPlugin implements Listener {
         return mod != null ? mod : fallback;
     }
 
+    /** 전체수령 of a ranch: every grazing pet hands over its own product (털 / 가죽 / 우유); what does not fit stays in the ranch. */
+    private void collectRanch(Player player) {
+        long now = System.currentTimeMillis();
+        int given = 0;
+        boolean full = false;
+        for (String entry : craftEntries(player)) {
+            if (!assignedHere(player, entry, Facility.RANCH)) continue;
+            Pet pet = entryPet(entry);
+            if (pet == null) continue;
+            Workshop state = productionState(player, entry, now);
+            if (state.stock() <= 0) continue;
+            ItemStack out = ranchItem(pet);
+            out.setAmount(Math.min(state.stock(), out.getMaxStackSize()));
+            int offered = out.getAmount();
+            int rest = player.getInventory().addItem(out).values().stream().mapToInt(ItemStack::getAmount).sum();
+            int taken = offered - rest;
+            if (rest > 0) full = true;
+            if (taken <= 0) continue;
+            String key = craftEntryPath(player, entry);
+            data.set(key + ".food", state.food());
+            data.set(key + ".stock", state.stock() - taken);
+            data.set(key + ".since", state.stock() >= state.cap() ? now : state.since());
+            given += taken;
+        }
+        if (given > 0) persist();
+        if (full) player.sendMessage("가방에 빈 칸이 더 필요합니다.");
+        else if (given == 0) player.sendMessage("§7아직 수령할 생산품이 없어요.");
+    }
+
     private void collectLumber(Player player, Facility facility) {
+        if (facility == Facility.RANCH) { collectRanch(player); return; }
         ItemStack output = switch (facility) {
             case FARM -> town.foodItem("straw");
             case CARROT_FARM -> town.foodItem("pet_carrot");
@@ -3242,7 +3393,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             inventory.setItem(4, statusIcon(product(facility), "Lv. " + level));
             inventory.setItem(32, statusIcon(Material.LEVER, lumberPause(player, facility) == 0 ? "작업 중단" : "작업 개시"));
             for (int i = 0; i < 5; i++)
-                inventory.setItem(11 + i, i < facilitySlots(level) ? null : statusIcon(Material.IRON_BARS, "잠긴 슬롯"));
+                inventory.setItem(11 + i, i < (facility == Facility.RANCH ? 5 : facilitySlots(level)) ? null : statusIcon(Material.IRON_BARS, "잠긴 슬롯"));
             drawStationStorage(player, holder, craftPage, craftSelection);
             updateLumber(player, inventory, facility);
         }
@@ -3268,7 +3419,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 if (!player.isOnline() || player.getOpenInventory().getTopInventory().getHolder() != menu) return;
                 if (!owns(player, plotAt(menu.station.getLocation())) || facilityAt(menu.station) != kind
                     || !player.getWorld().equals(menu.station.getWorld())
-                    || player.getLocation().distanceSquared(menu.station.getLocation().add(.5, .5, .5)) > 36) {
+                    || !nearStation(player, menu.station)) {
                     player.closeInventory();
                     return;
                 }
@@ -3298,7 +3449,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 || facilityAt(menu.station) != kind
                 || facilityAt(menu.station) == null && !legacyStation(menu.station, plotAt(menu.station.getLocation()))
                 || !player.getWorld().equals(menu.station.getWorld())
-                || player.getLocation().distanceSquared(menu.station.getLocation().add(.5,.5,.5)) > 36)) {
+                || !nearStation(player, menu.station))) {
                 player.closeInventory();
                 return;
             }
@@ -3820,6 +3971,12 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     ReturnStone returnStone;
+    EmergencyEscape escape;
+    /** 탑승 적성: listed in config mounts.allowed (empty list = every pet). */
+    boolean rideable(Pet pet) {
+        List<String> list = getConfig().getStringList("mounts.allowed");
+        return list.isEmpty() || list.contains(pet.name().toLowerCase(Locale.ROOT));
+    }
 
     /** Wild only: the residence is reachable just through a 귀환석 (starts its channel). False when not started. */
     boolean returnHomeWithStone(Player player) { return returnStone != null && returnStone.start(player); }

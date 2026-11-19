@@ -1,0 +1,6 @@
+{
+  "textures": {
+    "layer0": "pipifacilities:item/hide"
+  },
+  "parent": "minecraft:item/generated"
+}

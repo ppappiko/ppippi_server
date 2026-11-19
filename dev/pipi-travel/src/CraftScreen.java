@@ -18,10 +18,14 @@ import org.lwjgl.glfw.GLFW;
 final class CraftScreen extends ContainerScreen {
     static final String TITLE = "삐삐서버 · 기본 작업대";
     static final String LUMBER_TITLE = "삐삐서버 · 벌목장";
+    static final String RANCH_TITLE = "삐삐서버 · 목장";
+    /** Per-pet ranch output slots (work slot 1..5); mirrors PipiLife.RANCH_OUT. Lore: stock,since,period,paused. */
+    private static final int[] RANCH_OUT = {39, 40, 41, 43, 44};
+    static final net.minecraft.resources.ResourceLocation SADDLE = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("pipitravel", "textures/gui/aptitude_mount.png");
     static boolean isProductionTitle(String title) {
-        return java.util.Set.of(LUMBER_TITLE, "삐삐서버 · 밀 농장", "삐삐서버 · 철광석 채석장", "삐삐서버 · 금광석 채석장", "삐삐서버 · 다이아 채석장").contains(title);
+        return java.util.Set.of(LUMBER_TITLE, "삐삐서버 · 밀 농장", "삐삐서버 · 철광석 채석장", "삐삐서버 · 금광석 채석장", "삐삐서버 · 다이아 채석장", "삐삐서버 · 호박석 채석장", "삐삐서버 · 양배추 농장", "삐삐서버 · 홍서나무 벌목장", "삐삐서버 · 당근 농장", "삐삐서버 · 감자 농장", RANCH_TITLE).contains(title);
     }
-    private final boolean lumber;
+    private final boolean lumber, ranch;
     private final String facilityTitle;
     private int draggedPet = -1;
     private static final int W = 720, H = 358, MAX_BATCH = 64;
@@ -37,6 +41,7 @@ final class CraftScreen extends ContainerScreen {
     CraftScreen(ChestMenu menu, Inventory inventory, Component title, CraftScreen previous) {
         super(menu, inventory, title);
         lumber = isProductionTitle(title.getString());
+        ranch = RANCH_TITLE.equals(title.getString());
         facilityTitle = title.getString().replace("삐삐서버 · ", "");
         if (previous != null) {
             recipe = previous.recipe;
@@ -144,8 +149,8 @@ final class CraftScreen extends ContainerScreen {
 
     private void drawLumber(GuiGraphics g, int x, int y) {
         String level = name(item(4));
-        g.drawString(font, level, 391, 58, CYAN, false);
-        button(g, 435, 53, 81, 19, level.equals("Lv. 3") ? "최대 레벨" : "레벨업", x, y, !level.equals("Lv. 3"));
+        if (!ranch) g.drawString(font, level, 391, 58, CYAN, false);
+        if (!ranch) button(g, 435, 53, 81, 19, level.equals("Lv. 3") ? "최대 레벨" : "레벨업", x, y, !level.equals("Lv. 3"));
         // upgrade cost/effect is shown only in the confirm window opened by 레벨업
         for (int i = 0; i < 5; i++) {
             int px = 212 + i * 61;
@@ -157,6 +162,7 @@ final class CraftScreen extends ContainerScreen {
                 g.drawCenteredString(font, font.plainSubstrByWidth(name(pet), 48), px + 27, 144, TEXT);
             } else g.drawCenteredString(font, "+", px + 27, 128, MUTED);
         }
+        if (ranch) { drawRanch(g, x, y); return; }
         panel(g, 205, 179, 311, 103, 0xff0d1925, 0xff344e64);
         long[] progress = lumberProgress();
         panel(g, 334, 186, 54, 49, 0xff111f2e, progress[0] > 0 ? CYAN : 0xff385166);
@@ -171,6 +177,39 @@ final class CraftScreen extends ContainerScreen {
         g.drawCenteredString(font, progress[3] > 0 ? "작업 대기 중" : progress[2] == 0 ? "작업 대기" : "다음 생산품 준비 중", 361, 262, MUTED);
         g.drawCenteredString(font, "Shift+좌클릭으로 완성품 수령", 361, 287, MUTED);
         button(g, 282, 311, 158, 24, name(item(32)), x, y, !item(32).isEmpty());
+    }
+
+    /** Ranch: one output box under each grazing pet (its own 털 / 가죽 / 우유 with count and progress), 전체수령 and 작업 중단. */
+    private void drawRanch(GuiGraphics g, int x, int y) {
+        panel(g, 205, 172, 311, 120, 0xff0d1925, 0xff344e64);
+        long now = System.currentTimeMillis();
+        boolean any = false;
+        for (int i = 0; i < 5; i++) {
+            int px = 212 + i * 61, py = 180;
+            ItemStack out = item(RANCH_OUT[i]);
+            long[] p = ranchProgress(out);
+            panel(g, px, py, 54, 66, 0xff111f2e, p[0] > 0 ? CYAN : 0xff385166);
+            if (out.isEmpty()) { g.drawCenteredString(font, "-", px + 27, py + 26, MUTED); continue; }
+            icon(g, out, px + 11, py + 6, 2);
+            g.drawString(font, Long.toString(p[0]), px + 50 - font.width(Long.toString(p[0])), py + 40, p[0] >= 64 ? 0xffffd27a : TEXT);
+            long clock = p[3] > 0 ? p[3] : now;
+            int filled = p[2] <= 0 ? 0 : (int) (46 * Math.clamp(clock - p[1], 0, p[2]) / p[2]);
+            g.fill(px + 4, py + 55, px + 50, py + 60, 0xff344e64);
+            if (filled > 0) g.fill(px + 4, py + 55, px + 4 + filled, py + 60, CYAN);
+            if (p[0] > 0) any = true;
+        }
+        g.drawString(font, "방목 중인 펫이 생산품을 모읍니다", 214, 262, MUTED, false);
+        button(g, 424, 256, 86, 22, "전체수령", x, y, any);
+        button(g, 282, 311, 158, 24, name(item(32)), x, y, !item(32).isEmpty());
+    }
+
+    private static long[] ranchProgress(ItemStack out) {
+        long[] values = new long[4];
+        var lines = lore(out);
+        if (lines.isEmpty()) return values;
+        String[] fields = lines.getFirst().split(",");
+        if (fields.length == 4) try { for (int i = 0; i < 4; i++) values[i] = Long.parseLong(fields[i]); } catch (NumberFormatException ignored) { return new long[4]; }
+        return values;
     }
 
     private long[] lumberProgress() {
@@ -281,15 +320,38 @@ final class CraftScreen extends ContainerScreen {
         int lineY=152;
         for(var text:font.split(Component.literal(name(pet)),109)){g.drawCenteredString(font,text,641,lineY,TEXT);lineY+=12;}
         lineY=Math.max(176,lineY+8);
+        String apt=null;
         for(String text:lore(pet)){
+            if(text.startsWith("APT:")){apt=text.substring(4);continue;}
+            if(text.equals("탑승 적성")){if(lineY>265)break;g.blit(SADDLE,587,lineY-2,0,0,11,11,11,11);g.drawString(font,text,601,lineY,0xffffd27a,false);lineY+=12;continue;}
             for(var row:font.split(Component.literal(text),109)){if(lineY>265)break;g.drawString(font,row,587,lineY,MUTED,false);lineY+=12;}
         }
         if(!item(25).isEmpty())wrapped(g,name(item(25)),587,278,109,CYAN,1);
+        if(apt!=null)drawAptitudes(g,apt,x,y);
+    }
+    private static final String[][] APTITUDES={{"farm","농사"},{"lumber","벌목"},{"mine","채광"},{"craft","제작"},{"transport","운반"},{"ranch","방목"},{"mount","탑승"}};
+    /** Aptitude row under 먹이: every aptitude icon in order, the pet's own lit (level below), the others dimmed. Data: APT:farm=L,...,mount=L (0 none, -1 no level). */
+    private void drawAptitudes(GuiGraphics g,String data,int mx,int my){
+        java.util.Map<String,Integer> lv=new java.util.HashMap<>();
+        for(String kv:data.split(",")){String[] p=kv.split("=");if(p.length==2)try{lv.put(p[0],Integer.parseInt(p[1].trim()));}catch(NumberFormatException ignored){}}
+        g.fill(583,296,700,297,0xff2c4256);
+        String hover=null;
+        for(int i=0;i<APTITUDES.length;i++){
+            int ix=584+i*17,iy=303;int level=lv.getOrDefault(APTITUDES[i][0],0);boolean own=level!=0;
+            var tex=APTITUDES[i][0].equals("mount")?SADDLE:net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("pipitravel","textures/gui/task_"+APTITUDES[i][0]+".png");
+            if(own)g.fill(ix-1,iy-1,ix+15,iy+15,0xff1f3a4c);
+            if(!own)com.mojang.blaze3d.systems.RenderSystem.setShaderColor(.28f,.3f,.34f,1f);
+            g.blit(tex,ix,iy,0,0,14,14,14,14);
+            com.mojang.blaze3d.systems.RenderSystem.setShaderColor(1f,1f,1f,1f);
+            if(level>0){g.pose().pushPose();g.pose().translate(ix+7,iy+17,0);g.pose().scale(.75f,.75f,1);g.drawCenteredString(font,"Lv"+level,0,0,0xffffd27a);g.pose().popPose();}
+            if(hit(mx,my,ix-1,iy-1,16,16))hover=APTITUDES[i][1]+" 적성"+(level>0?" Lv."+level:level<0?"":" 없음");
+        }
+        if(hover!=null)g.drawCenteredString(font,hover,641,330,TEXT);
     }
     private void wrapped(GuiGraphics g,String text,int x,int y,int width,int color,int maxLines){int n=0;for(var line:font.split(Component.literal(text),width)){if(n++>=maxLines)break;g.drawString(font,line,x,y,color,false);y+=12;}}
 
     private void drawBag(GuiGraphics g) {}
-    private void drawAssignment(GuiGraphics g,ItemStack pet,int x,int y){String status=String.join(" ",lore(pet));String task=null;if(status.contains("배치 중")||status.contains("작업 대기 중")){task=status.contains("농장")?"farm":status.contains("채석장")?"mine":status.contains("벌목")?"lumber":status.contains("기본 작업대")?"craft":status.contains("운반")?"transport":null;}if(task!=null){g.pose().pushPose();g.pose().translate(0,0,260);g.blit(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("pipitravel","textures/gui/task_"+task+".png"),x,y,0,0,14,14,14,14);g.pose().popPose();}}
+    private void drawAssignment(GuiGraphics g,ItemStack pet,int x,int y){String status=String.join(" ",lore(pet));String task=null;if(status.contains("배치 중")||status.contains("작업 대기 중")){task=status.contains("벌목")?"lumber":status.contains("목장")?"ranch":status.contains("농장")?"farm":status.contains("채석장")?"mine":status.contains("벌목")?"lumber":status.contains("기본 작업대")?"craft":status.contains("운반")?"transport":null;}if(task!=null){g.pose().pushPose();g.pose().translate(0,0,260);g.blit(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("pipitravel","textures/gui/task_"+task+".png"),x,y,0,0,14,14,14,14);g.pose().popPose();}}
     private static double inputX(double x){if(x>=234&&x<=567)return x-40;return x;}
 
     private static int workerLevel(ItemStack item) {
@@ -397,8 +459,9 @@ final class CraftScreen extends ContainerScreen {
             return true;
         }
         if (lumber) {
-            if (hit(x,y,435,53,81,19)) command("upgrade");
+            if (!ranch && hit(x,y,435,53,81,19)) command("upgrade");
             else if (hit(x,y,282,311,158,24)) command("toggle");
+            else if (ranch && hit(x,y,424,256,86,22)) sendSlot(34, ClickType.QUICK_MOVE);
             else if (hit(x,y,334,186,54,49) && lumberProgress()[0] > 0)
                 { if (hasShiftDown()) sendSlot(34, ClickType.QUICK_MOVE); }
 
