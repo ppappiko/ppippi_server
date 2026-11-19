@@ -207,7 +207,20 @@ tutorial:
 # 펫 타고 다니기 (지상). Z 키 = /pipilife mount, 탈것 지정 = /pipilife mount set <펫>, 관리자 테스트 = /pipilife mount test <펫>
 mounts:
   # 탈 수 있는 펫 (명령어 이름: imugi, moonbear ...). 비워 두면 모든 펫을 탈 수 있습니다.
-  allowed: []
+  allowed:
+  - moonbear
+  - tortoise
+  - thundersheep
+  - sunlizard
+  - cow
+  - imugi
+  # 탈 때 커지는 배율 (1 = 그대로). 렌더링과 히트박스가 함께 커집니다.
+  scale:
+    moonbear: 1.1
+    tortoise: 1.2
+    thundersheep: 1.3
+    sunlizard: 1.25
+    cow: 1.15
   # 기본 이동 속도 (말은 약 0.225). 펫별로 바꾸려면 아래 speed 에 적으세요.
   default-speed: 0.3
   # 기본 점프 높이 (0.5 = 약 1.5칸). 펫별로 바꾸려면 아래 jump 에 적으세요.

@@ -16,8 +16,26 @@ import com.ticxo.modelengine.api.model.ActiveModel;
 /** Stable species IDs share existing capture, storage and aptitude data; models are purely visual. */
 final class CustomPets implements Listener {
  private final PipiLife plugin;private final NamespacedKey species;private final Map<UUID,ActiveModel> models=new HashMap<>();private final Map<UUID,String> animations=new HashMap<>();private final Map<String,Worker> workers=new HashMap<>();private boolean warned;
- private static final Map<String,EntityType> TYPES=Map.ofEntries(Map.entry("sparrow",EntityType.CHICKEN),Map.entry("frog",EntityType.FROG),Map.entry("cat",EntityType.CAT),Map.entry("rabbit",EntityType.RABBIT),Map.entry("fox",EntityType.FOX),Map.entry("redpanda",EntityType.PANDA),Map.entry("otter",EntityType.AXOLOTL),Map.entry("tortoise",EntityType.TURTLE),Map.entry("raccoon",EntityType.PANDA),Map.entry("hornrabbit",EntityType.RABBIT),Map.entry("mole",EntityType.SILVERFISH),Map.entry("thundersheep",EntityType.SHEEP),Map.entry("moonbear",EntityType.POLAR_BEAR),Map.entry("ferret",EntityType.FOX),Map.entry("angelpig",EntityType.PIG),Map.entry("sunlizard",EntityType.AXOLOTL),Map.entry("imugi",EntityType.SILVERFISH),Map.entry("vampbat",EntityType.BAT));
- private static class Worker { LivingEntity entity;int food=100;long mealUntil,visitAfter;boolean visiting;TextDisplay label;String shown; Worker(LivingEntity e){entity=e;} }
+ private static final Map<String,EntityType> TYPES=Map.ofEntries(Map.entry("sparrow",EntityType.CHICKEN),Map.entry("frog",EntityType.FROG),Map.entry("cat",EntityType.CAT),Map.entry("rabbit",EntityType.RABBIT),Map.entry("fox",EntityType.FOX),Map.entry("redpanda",EntityType.PANDA),Map.entry("otter",EntityType.AXOLOTL),Map.entry("tortoise",EntityType.TURTLE),Map.entry("raccoon",EntityType.PANDA),Map.entry("hornrabbit",EntityType.RABBIT),Map.entry("mole",EntityType.SILVERFISH),Map.entry("thundersheep",EntityType.SHEEP),Map.entry("moonbear",EntityType.POLAR_BEAR),Map.entry("ferret",EntityType.FOX),Map.entry("angelpig",EntityType.PIG),Map.entry("sunlizard",EntityType.AXOLOTL),Map.entry("imugi",EntityType.SILVERFISH),Map.entry("vampbat",EntityType.BAT),Map.entry("cow",EntityType.COW));
+ private static class Worker { LivingEntity entity;int food=100;long mealUntil,visitAfter;boolean visiting;TextDisplay label;String shown;Location wander,look;long arrivedAt;int wanderAction;boolean still; Worker(LivingEntity e){entity=e;} }
+ /** Ranch grazing (scene task 5): just walk around between random spots inside the ranch (short pause at each, no work or eat motion); not working (no food, full) = stand still where it is. */
+ private static final int RANCH_TASK=5;
+ private Location ranchSpot(Location center,ThreadLocalRandom rnd){
+  // center = anchor + (7, 0, 7) of the 15x15 ranch; graze on open ground inside the fence ring (radius 6): within 4.5 cells of the centre
+  for(int i=0;i<20;i++){int dx=rnd.nextInt(-4,5),dz=rnd.nextInt(-4,5);if(dx*dx+dz*dz>20)continue;var b=center.clone().add(dx,0,dz).getBlock();if(b.isPassable()&&!b.isLiquid()&&b.getRelative(0,1,0).isPassable()&&b.getRelative(0,-1,0).getType().isSolid())return center.clone().add(dx+.5,0,dz+.5);}
+  return center.clone().add(.5,0,.5);
+ }
+ private void ranchTarget(Worker w,PipiLife.PetScene scene,long now){
+  LivingEntity e=w.entity;ThreadLocalRandom rnd=ThreadLocalRandom.current();
+  if(!scene.working()){
+   if(!w.still||w.wander==null){Location at=e.getLocation();w.wander=new Location(at.getWorld(),at.getBlockX()+.5,scene.station().getY(),at.getBlockZ()+.5);w.look=null;w.still=true;}
+   w.wanderAction=0;return;
+  }
+  if(w.still||w.wander==null){w.still=false;w.wander=ranchSpot(scene.station(),rnd);w.arrivedAt=0;w.wanderAction=0;return;}
+  if(!arrived(e,w.wander))return;
+  if(w.arrivedAt==0){w.arrivedAt=now;double a=rnd.nextDouble()*Math.PI*2;w.look=w.wander.clone().add(Math.cos(a),0,Math.sin(a));return;}
+  if(now-w.arrivedAt>1500+rnd.nextInt(0,25)*100){w.wander=ranchSpot(scene.station(),rnd);w.arrivedAt=0;w.look=null;w.wanderAction=0;}
+ }
  private static final String LABEL_TAG="pipi_pet_label";
  /** Floating worker-status label (작업 중 / 식사하러 가는 중 / ...) that follows the pet; non-persistent, removed with the pet. */
  private void label(Worker w,String status){
@@ -36,7 +54,7 @@ final class CustomPets implements Listener {
  private void followLabels(){for(Worker w:workers.values()){if(w.label==null)continue;if(!w.label.isValid()||!w.entity.isValid()){dropLabel(w);continue;}Location at=labelSpot(w.entity);if(!w.label.getWorld().equals(at.getWorld())||w.label.getLocation().distanceSquared(at)>.0004)w.label.teleport(at);}}
  CustomPets(PipiLife plugin){this.plugin=plugin;species=new NamespacedKey(plugin,"pet_species");for(World w:Bukkit.getWorlds())for(Entity e:w.getEntities())if(e.getScoreboardTags().contains("pipi_pet_worker")||e.getScoreboardTags().contains(LABEL_TAG))e.remove();Bukkit.getScheduler().runTaskTimer(plugin,this::followLabels,40,2);}
  private boolean ready(String skin){return skin!=null&&TYPES.containsKey(skin);}
- private String skin(LivingEntity e){return e.getPersistentDataContainer().get(species,PersistentDataType.STRING);}
+ private String skin(LivingEntity e){String s=e.getPersistentDataContainer().get(species,PersistentDataType.STRING);if(s==null&&e.getType().name().startsWith("PIPIFACILITIES_PET_"))s=e.getType().name().substring(19).toLowerCase(java.util.Locale.ROOT);return s;}
  private boolean attach(LivingEntity e){String skin=skin(e);if(dedicated(e)){var previous=ModelEngineAPI.getModeledEntity(e);if(previous!=null){previous.removeModel("pipi_"+skin);previous.setBaseEntityVisible(true);}return true;}if(!ready(skin))return false;if(models.containsKey(e.getUniqueId()))return true;
   try{var modeled=ModelEngineAPI.getOrCreateModeledEntity(e);var model=ModelEngineAPI.createActiveModel("pipi_"+skin);model.setScale(.65);modeled.addModel(model,true);modeled.setBaseEntityVisible(false);models.put(e.getUniqueId(),model);animation(e,"idle");return true;}catch(RuntimeException|LinkageError ex){if(!warned){plugin.getLogger().warning("전용 펫 모델 연결 실패: "+ex);warned=true;}return false;}
  }
@@ -103,7 +121,7 @@ final class CustomPets implements Listener {
   if(normal.isEmpty())return null;
   return normal.get(rnd.nextInt(normal.size()));
  }
- private static final Map<String,String> BIOME_KO=Map.ofEntries(Map.entry("forest","숲"),Map.entry("plains","평원"),Map.entry("cherry_grove","벚나무 숲"),Map.entry("desert","사막"),Map.entry("warm_ocean","따뜻한 바다"),Map.entry("windswept_gravelly_hills","바람이 세찬 자갈투성이 언덕"),Map.entry("mushroom_fields","버섯섬"),Map.entry("ice_spikes","역고드름"),Map.entry("wooded_badlands","나무가 우거진 악지"),Map.entry("sunflower_plains","해바라기 평원"),Map.entry("deep_dark","딥 다크"),Map.entry("flower_forest","꽃 숲"),Map.entry("mangrove_swamp","맹그로브 늪"),Map.entry("stony_peaks","돌 봉우리"),Map.entry("fortress","네더 요새"),Map.entry("bastion","바스티온"));
+ private static final Map<String,String> BIOME_KO=Map.ofEntries(Map.entry("meadow","초원"),Map.entry("forest","숲"),Map.entry("plains","평원"),Map.entry("cherry_grove","벚나무 숲"),Map.entry("desert","사막"),Map.entry("warm_ocean","따뜻한 바다"),Map.entry("windswept_gravelly_hills","바람이 세찬 자갈투성이 언덕"),Map.entry("mushroom_fields","버섯섬"),Map.entry("ice_spikes","역고드름"),Map.entry("wooded_badlands","나무가 우거진 악지"),Map.entry("sunflower_plains","해바라기 평원"),Map.entry("deep_dark","딥 다크"),Map.entry("flower_forest","꽃 숲"),Map.entry("mangrove_swamp","맹그로브 늪"),Map.entry("stony_peaks","돌 봉우리"),Map.entry("fortress","네더 요새"),Map.entry("bastion","바스티온"));
  private static String pct(double v){String t=String.format(Locale.ROOT,"%.2f",v*100);t=t.replaceAll("0+$","").replaceAll("\\.$","");return t+"%";}
  private String placeName(String place){String ko=BIOME_KO.get(place);return ko==null?place:ko+"("+place+")";}
  boolean spawnInfo(Player p,String[] args){
@@ -184,9 +202,10 @@ final class CustomPets implements Listener {
    if(!ready(scene.species())||!chunkLoaded(scene.station()))return;wanted.add(scene.key());Worker worker=workers.get(scene.key());if(worker==null||!worker.entity.isValid()){if(worker!=null)dropLabel(worker);LivingEntity e=spawn(scene.station(),scene.species(),true);if(e==null)return;worker=new Worker(e);workers.put(scene.key(),worker);}
    worker.visiting=scene.feeder()!=null;
    String status=scene.status();if("작업 중".equals(status)&&!scene.working())status="대기 중";label(worker,status);
-   worker.food=scene.food();Location target=worker.visiting?scene.feeder():scene.station();if(target==null)target=scene.station();var e=worker.entity;double dist=e.getLocation().distanceSquared(target);
-   int action=scene.working()?2:0;if(worker.visiting&&scene.eating()&&arrived(e,target))action=3;
-   try{Object nms=e.getClass().getMethod("getHandle").invoke(e);Class.forName("dev.pipi.facilities.PipiPets").getMethod("worker",Object.class,int.class,double.class,double.class,double.class,int.class,String.class).invoke(null,nms,action,target.getX(),target.getY(),target.getZ(),scene.task(),scene.soundGroup());Location focus=worker.visiting?target.clone().add(0,0,1):scene.focus();Class.forName("dev.pipi.facilities.PipiPets").getMethod("face",Object.class,double.class,double.class).invoke(null,nms,focus.getX(),focus.getZ());}catch(ReflectiveOperationException ex){if(!warned){warned=true;plugin.getLogger().warning("펫 작업 동작 연결 실패: "+ex);}}
+   worker.food=scene.food();Location target=worker.visiting?scene.feeder():scene.station();if(target==null)target=scene.station();var e=worker.entity;
+   boolean ranch=scene.task()==RANCH_TASK&&!worker.visiting;if(ranch){ranchTarget(worker,scene,now);target=worker.wander;}else{worker.wander=null;worker.still=false;}
+   int action=ranch?worker.wanderAction:scene.working()?2:0;if(worker.visiting&&scene.eating()&&arrived(e,target))action=3;
+   try{Object nms=e.getClass().getMethod("getHandle").invoke(e);Class.forName("dev.pipi.facilities.PipiPets").getMethod("worker",Object.class,int.class,double.class,double.class,double.class,int.class,String.class).invoke(null,nms,action,target.getX(),target.getY(),target.getZ(),scene.task(),scene.soundGroup());Location focus=worker.visiting?target.clone().add(0,0,1):ranch?(worker.look!=null?worker.look:target.clone().add(0,0,1)):scene.focus();Class.forName("dev.pipi.facilities.PipiPets").getMethod("face",Object.class,double.class,double.class).invoke(null,nms,focus.getX(),focus.getZ());}catch(ReflectiveOperationException ex){if(!warned){warned=true;plugin.getLogger().warning("펫 작업 동작 연결 실패: "+ex);}}
  }
  private boolean arrived(LivingEntity e,Location target){try{Object nms=e.getClass().getMethod("getHandle").invoke(e);return (boolean)Class.forName("dev.pipi.facilities.PipiPets").getMethod("reached",Object.class,double.class,double.class,double.class).invoke(null,nms,target.getX(),target.getY(),target.getZ());}catch(ReflectiveOperationException ex){return false;}}
  private void workAudio(java.util.List<PipiLife.PetScene> scenes){

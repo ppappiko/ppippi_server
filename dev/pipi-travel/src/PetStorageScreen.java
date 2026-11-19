@@ -73,6 +73,7 @@ final class PetStorageScreen extends ContainerScreen {
                     g.drawCenteredString(font,item.getHoverName(),468,167,TEXT);
                     int iy=193;
                     for(Component line:item.getOrDefault(DataComponents.LORE,ItemLore.EMPTY).lines()){
+                        if(line.getString().equals("탑승 적성")){g.blit(CraftScreen.SADDLE,392,iy-2,0,0,11,11,11,11);g.drawString(font,line.getString(),406,iy,0xffffd27a,false);iy+=15;continue;}
                         g.drawString(font,font.plainSubstrByWidth(line.getString(),151),392,iy,MUTED,false);
                         iy+=15;
                     }

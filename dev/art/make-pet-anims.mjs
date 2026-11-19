@@ -388,6 +388,52 @@ const SPECS = {
   ],
 
   // 썬더쉽 — fluffy thunder sheep: bouncy prance, wool puffs and crackles, charging headbutt with a spark burst
+  // 젖소 — big calm dairy cow (ranch): slow 4-beat amble with bell swing, grazes head-down chewing a grass tuft (grass_eat)
+  cow: () => {
+    const graze = p => 58 + 4 * sin(p, 4);                     // head down to the grass, chewing
+    return [
+    A("idle", 4, {
+      body: { ...breathe(.02, 2), rot: p => [0, 0, 1.2 * sin(p, 1)], n: 40 },
+      head: { rot: p => [6 * sin(p, 1) + 18 * hold(p, .55, .8) + 2.5 * sin(p, 12) * hold(p, .6, .78), 6 * sin(p, 1, .25) * (1 - hold(p, .55, .8)), -10 * sin(p, 4) * bump(p, .2, .32)], n: 80 },
+      ear_l: { rot: p => [0, 0, -25 * (bump(p, .1, .16) + bump(p, .4, .45))], n: 80 },
+      ear_r: { rot: p => [0, 0, 25 * bump(p, .7, .76)], n: 80 },
+      tail: { rot: p => [6 * sin(p, 1), 30 * sin(p, 3) * (hold(p, 0, .25) + hold(p, .5, .7)), 0], n: 80 },
+      bell: { rot: p => [8 * sin(p, 4) * bump(p, .2, .32) + 3 * sin(p, 2), 0, 10 * sin(p, 4) * bump(p, .2, .34)], n: 80 },
+    }),
+    A("walk", 1.4, {
+      root: { pos: p => [0, .5 * Math.abs(sin(p, 2)), 0], n: 28 },
+      body: { rot: p => [1.5 * sin(p, 2), 0, 3 * sin(p, 1)], n: 28 },
+      leg_fl: { rot: p => [22 * sin(p, 1), 0, 0], n: 28 }, leg_bl: { rot: p => [22 * sin(p, 1, .25), 0, 0], n: 28 },
+      leg_fr: { rot: p => [22 * sin(p, 1, .5), 0, 0], n: 28 }, leg_br: { rot: p => [22 * sin(p, 1, .75), 0, 0], n: 28 },
+      head: { rot: p => [5 + 5 * sin(p, 2, .1), 4 * sin(p, 1), 0], n: 28 },
+      bell: { rot: p => [-14 * sin(p, 2, .2), 0, 16 * sin(p, 1, .3)], n: 28 },
+      udder: { rot: p => [0, 0, 6 * sin(p, 1, .4)], n: 28 },
+      tail: { rot: p => [8, 14 * sin(p, 1, .3), 0], n: 28 },
+      ear_l: { rot: p => [0, 0, -6 * sin(p, 2)], n: 28 }, ear_r: { rot: p => [0, 0, 6 * sin(p, 2)], n: 28 },
+    }),
+    // ranch grazing: head down sniffing the grass, a slow step forward, chew, look up, back down
+    A("work", 4, {
+      root: { pos: p => [0, -.6 * (1 - hold(p, .42, .58)), -1.5 * bump(p, .2, .4)], n: 60 },
+      body: { rot: p => [6 * (1 - hold(p, .42, .58)), 0, 1.5 * sin(p, 2)], n: 60 },
+      head: { rot: p => [graze(p) * (1 - hold(p, .42, .58)) + 3 * sin(p, 1), 6 * sin(p, 2) * (1 - hold(p, .42, .58)), 0], pos: p => lerp3([0, -1.6, -.8], 1 - hold(p, .42, .58)), n: 80 },
+      leg_fl: { rot: p => [-18 * bump(p, .2, .3), 0, 0], n: 60 }, leg_fr: { rot: p => [-18 * bump(p, .28, .38), 0, 0], n: 60 },
+      tail: { rot: p => [6, 28 * sin(p, 5) * hold(p, .6, .9), 0], n: 80 },
+      ear_l: { rot: p => [0, 0, -20 * bump(p, .45, .52)], n: 60 }, ear_r: { rot: p => [0, 0, 20 * bump(p, .47, .54)], n: 60 },
+      bell: { rot: p => [-25 * (1 - hold(p, .42, .58)) + 5 * sin(p, 4), 0, 6 * sin(p, 2)], n: 60 },
+    }),
+    A("eat", 1.6, {
+      root: { pos: () => [0, -.6, 0], n: 2 },
+      body: { rot: p => [6, 0, 1 * sin(p, 1)], n: 16 },
+      head: { rot: p => [graze(p), 5 * sin(p, 1), 3 * sin(p, 2)], pos: () => [0, -1.6, -.8], n: 32 },
+      grass_eat: { scl: p => { const s = 1 - .25 * Math.abs(sin(p, 2)); return [s, 1, 1]; }, n: 16 },
+      tail: { rot: p => [6, 22 * sin(p, 2), 0], n: 16 },
+      bell: { rot: p => [-25 + 4 * sin(p, 4), 0, 0], n: 16 },
+      ear_l: { rot: p => [0, 0, -8 * sin(p, 2)], n: 16 }, ear_r: { rot: p => [0, 0, 8 * sin(p, 2, .5)], n: 16 },
+    }),
+    hurtSquash("body", "head", { bell: { rot: p => [0, 0, 40 * sin(p, 2) * (1 - p)] }, tail: { rot: p => [-30 * (1 - p), 0, 0] } }),
+  ];
+  },
+
   thundersheep: () => [
     A("idle", 4, {
       body: { scl: p => { const s = 1 + .04 * (1 + sin(p, 2)) / 2 + .08 * bump(p, .62, .72); return [s, s, s]; }, n: 48 },
