@@ -2043,6 +2043,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     @Override public void onDisable() {
+        PartySystem.clearVoice();
         if(wildRegions!=null)wildRegions.shutdown();
         if(raid!=null)raid.shutdown();
         if(tutorial!=null)tutorial.close();

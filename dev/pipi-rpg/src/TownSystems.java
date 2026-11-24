@@ -2360,7 +2360,7 @@ final class TownSystems implements Listener {
         double total = 0;
         for (var l : lines) {
             var o = Enchants.byId(l.opt());
-            if (o != null && o.kind().equals(kind)) total += Enchants.value(o, l.grade());
+            if (o != null && o.kind().equals(kind)) total += Enchants.value(o, l);
         }
         return total;
     }
