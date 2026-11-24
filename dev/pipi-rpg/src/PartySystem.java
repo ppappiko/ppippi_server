@@ -31,6 +31,8 @@ final class PartySystem implements Listener {
     private static final long INVITE_MS = 20_000;
 
     static final class Party {
+        /** Stable id (voice group id in PipiFacilities). */
+        final UUID id = UUID.randomUUID();
         UUID leader;
         final LinkedHashSet<UUID> members = new LinkedHashSet<>();
     }
@@ -331,7 +333,22 @@ final class PartySystem implements Listener {
         if (p != null && hudShown.remove(id)) p.sendMessage("PIPI_PARTY:");
     }
 
+    /**
+     * 파티 음성: 매초 "플레이어 UUID → 파티 id" 표(불변 Map)를 JVM 공용 System properties 에 올린다.
+     * PipiFacilities(NeoForge 모드, 다른 클래스로더)가 이 표를 읽어 Simple Voice Chat 파티 그룹을 맞춘다 (PartyVoice).
+     */
+    static final String VOICE_KEY = "pipilife.party-voice";
+
+    private void publishVoice() {
+        Map<UUID, UUID> out = new HashMap<>();
+        for (var en : byMember.entrySet()) out.put(en.getKey(), en.getValue().id);
+        System.getProperties().put(VOICE_KEY, Map.copyOf(out));
+    }
+
+    static void clearVoice() { System.getProperties().remove(VOICE_KEY); }
+
     private void tick() {
+        publishVoice();
         long now = System.currentTimeMillis();
         for (Iterator<Map.Entry<UUID, Invite>> it = invites.entrySet().iterator(); it.hasNext(); ) {
             var en = it.next();

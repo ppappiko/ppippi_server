@@ -25,6 +25,13 @@ else
   python dev/mc-classpath.py "$CPARGS" 2>/dev/null || node dev/mc-classpath.cjs "$CPARGS"
 fi
 
+# compile-only libraries (e.g. Simple Voice Chat API for PartyVoice): provided at runtime by the mod itself, not bundled
+for j in dev/pipi-facilities/lib/*.jar; do
+  [ -f "$j" ] || continue
+  J="$(cygpath -m "$REPO/$j" 2>/dev/null || echo "$REPO/$j")"
+  sed -i "2s|\"\$|;$J\"|" "$CPARGS"
+done
+
 BASE=""
 for f in $(ls mods/PipiFacilities-*.jar 2>/dev/null | grep -v '\.bak' | sort -V); do BASE="$f"; done
 if [ -z "$BASE" ]; then

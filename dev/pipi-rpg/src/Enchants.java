@@ -10,7 +10,8 @@ import org.bukkit.persistence.PersistentDataType;
 /**
  * Enchant (cube + ability-lock) data model.
  * PDC (namespace pipilife): smith_lines (int slot count), smith_grade (int 0..3 item grade),
- * smith_enchant (string "optId:grade,optId:grade,..."; one entry per filled line, absent = never enchanted).
+ * smith_enchant (string "optId:grade,optId:grade,..."; one entry per filled line, absent = never enchanted;
+ * a line may carry a rolled value as "optId:grade:value", which replaces the grade value).
  * Legacy smith_rolls is converted on read (see legacy()).
  */
 final class Enchants {
@@ -63,7 +64,15 @@ final class Enchants {
     /** Armor option ids (이동속도/방어력/체력/스탯 계열). */
     static final int[] ARMOR_IDS = {201, 202, 203, 204, 205, 208, 206, 207, 211, 209, 210, 212, 213, 214, 222, 223};
 
-    record Line(int opt, int grade) {}
+    /** fixed: rolled value that overrides the grade value (NaN = use the grade value). Raid accessories roll e.g. 힘 +5~20. */
+    record Line(int opt, int grade, double fixed) {
+        Line(int opt, int grade) { this(opt, grade, Double.NaN); }
+    }
+
+    /** Value of a line: its rolled value if it has one, otherwise the option's grade value. */
+    static double value(Opt o, Line l) {
+        return Double.isFinite(l.fixed()) ? l.fixed() : value(o, l.grade());
+    }
 
     static Opt byId(int id) {
         for (Opt o : PICK) if (o.id() == id) return o;
@@ -88,14 +97,18 @@ final class Enchants {
     }
 
     static String describe(Opt o, int grade) {
-        return o.label() + " +" + fmt(value(o, grade)) + (o.pct() ? "%" : "");
+        return describe(o, value(o, grade));
+    }
+
+    private static String describe(Opt o, double v) {
+        return o.label() + " +" + fmt(v) + (o.pct() ? "%" : "");
     }
 
     /** Colored lore line: "[등급] 옵션 +값". */
     static String loreLine(Line l) {
         Opt o = byId(l.opt());
         int g = Math.clamp(l.grade(), 0, 3);
-        return COLORS[g] + "[" + GRADES[g] + "] " + (o == null ? "?" : describe(o, g));
+        return COLORS[g] + "[" + GRADES[g] + "] " + (o == null ? "?" : describe(o, value(o, l)));
     }
 
     static List<Opt> pool(ItemStack item, int grade) {
@@ -133,15 +146,23 @@ final class Enchants {
         if (s == null || s.isBlank()) return out;
         for (String part : s.split(",")) {
             String[] p = part.split(":");
-            try { out.add(new Line(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()))); }
+            try {
+                double fixed = p.length >= 3 ? Double.parseDouble(p[2].trim()) : Double.NaN;
+                out.add(new Line(Integer.parseInt(p[0].trim()), Integer.parseInt(p[1].trim()), fixed));
+            }
             catch (RuntimeException ignored) {}
         }
         return out;
     }
 
+    /** "optId:grade" per line, "optId:grade:value" when the line has a rolled value. */
     static String encode(List<Line> lines) {
         StringBuilder b = new StringBuilder();
-        for (Line l : lines) { if (b.length() > 0) b.append(','); b.append(l.opt()).append(':').append(l.grade()); }
+        for (Line l : lines) {
+            if (b.length() > 0) b.append(',');
+            b.append(l.opt()).append(':').append(l.grade());
+            if (Double.isFinite(l.fixed())) b.append(':').append(fmt(l.fixed()));
+        }
         return b.toString();
     }
 
@@ -185,7 +206,7 @@ final class Enchants {
         double total = 0;
         for (Line l : read(item)) {
             Opt o = byId(l.opt());
-            if (o != null && o.kind().equals(kind)) total += value(o, l.grade());
+            if (o != null && o.kind().equals(kind)) total += value(o, l);
         }
         return total;
     }

@@ -209,26 +209,47 @@ final class Accessories implements Listener {
 
     /** 테스트용 악세서리: 옵션 줄 2개 (스탯 기획 전 임시 값). */
     private ItemStack testItem(Slot slot, String model) {
-        ItemStack item = new ItemStack(slot.icon);
-        var meta = item.getItemMeta();
-        meta.setDisplayName("§b[테스트] " + slot.label);
         List<Enchants.Line> lines = switch (slot) {
             case NECKLACE -> List.of(new Enchants.Line(205, 1), new Enchants.Line(212, 0));   // 행운 +40, 치명타 +3%
             case EARRING -> List.of(new Enchants.Line(206, 1), new Enchants.Line(213, 0));    // 힘 +40, 체력 +20
             case BRACELET -> List.of(new Enchants.Line(207, 1), new Enchants.Line(214, 0));   // 민첩 +40, 체력 +3%
         };
+        return create(slot, "§b[테스트] " + slot.label, model, "악세서리", lines, List.of("§8스탯은 기획 확정 전 임시 값입니다."));
+    }
+
+    private ItemStack create(Slot slot, String name, String model, String kind, List<Enchants.Line> lines, List<String> extra) {
+        ItemStack item = new ItemStack(slot.icon);
+        var meta = item.getItemMeta();
+        meta.setDisplayName(name);
         Enchants.write(meta, lines, 0);
         List<String> lore = new ArrayList<>();
-        lore.add("§7" + slot.label + " §8· 악세서리");
+        lore.add("§7" + slot.label + " §8· " + kind);
         for (Enchants.Line l : lines) lore.add(Enchants.loreLine(l));
         lore.add("§8우클릭하거나 가방(E)의 " + slot.label + " 칸에 넣어 장착");
-        lore.add("§8스탯은 기획 확정 전 임시 값입니다.");
+        lore.addAll(extra);
         meta.setLore(lore);
         meta.getPersistentDataContainer().set(typeKey, PersistentDataType.STRING, slot.id);
         meta.getPersistentDataContainer().set(modelKey, PersistentDataType.STRING, model);
         meta.setMaxStackSize(1);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /** 1단계 장신구 옵션: 행운 / 힘 / 민첩 / 지능 (2단계 보스부터 옵션을 늘릴 예정). */
+    private static final int[] TIER1_OPTS = {205, 206, 207, 208};
+
+    /**
+     * 1단계 보스(딥 다크 시티) 보상 장신구: 부위 3종 중 하나, 옵션 1줄 (4종 중 하나, 값 min~max 정수 동일 확률), 레어 등급.
+     * 악세서리 시스템이 아직 준비되지 않았으면 null.
+     */
+    static ItemStack tier1(String source, int min, int max) {
+        Accessories a = instance;
+        if (a == null) return null;
+        var r = java.util.concurrent.ThreadLocalRandom.current();
+        Slot slot = Slot.values()[r.nextInt(Slot.values().length)];
+        int lo = Math.max(1, Math.min(min, max)), hi = Math.max(lo, Math.max(min, max));
+        var line = new Enchants.Line(TIER1_OPTS[r.nextInt(TIER1_OPTS.length)], 0, r.nextInt(lo, hi + 1));
+        return a.create(slot, Enchants.COLORS[0] + source + " " + slot.label, "basic", "1단계 장신구", List.of(line), List.of("§8" + source + " 클리어 보상"));
     }
 
     // ------------------------------------------------------------------ 동기화

@@ -100,6 +100,11 @@ raid:
       - 공명 폭발
       - 심연의 방벽
       - 고요한 질주
+      # 1단계 장신구 (전원): 개수 min~max, 부위 랜덤, 힘/민첩/지능/행운 중 1줄 +stat-min~max (모두 동일 확률)
+      accessory-count-min: 2
+      accessory-count-max: 6
+      accessory-stat-min: 5
+      accessory-stat-max: 20
     auction:
       step: 55
       start: 55
@@ -108,7 +113,6 @@ raid:
       lot-seconds: 20
       extend-seconds: 10
       gap-seconds: 3
-      accessory-count: 1
 hourly-sale-limit-per-pet: 16
 food-cleared-floor-objective: pipi_cleared_floor
 combat:

@@ -259,7 +259,7 @@ final class CombatStats implements Listener {
             }
             for(var line:Enchants.read(item)) {
                 var o=Enchants.byId(line.opt());if(o==null)continue;
-                double v=Enchants.value(o,line.grade());
+                double v=Enchants.value(o,line);
                 switch(o.kind()) {
                     case "str"->strF+=v;case "dex"->dexF+=v;case "int"->intF+=v;case "luck"->luckF+=v;
                     case "str%"->strP+=v;case "dex%"->dexP+=v;case "int%"->intP+=v;

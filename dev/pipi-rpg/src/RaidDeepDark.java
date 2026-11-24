@@ -56,7 +56,6 @@ final class RaidDeepDark implements Listener {
     private static final String P = "raid.deepdark.";
     private static final NamespacedKeyHolder KEYS = new NamespacedKeyHolder();
     private static final class NamespacedKeyHolder {
-        final NamespacedKey accessory = NamespacedKey.fromString("pipilife:raid_accessory");
         final NamespacedKey skillbook = NamespacedKey.fromString("pipilife:raid_skillbook");
     }
 
@@ -168,15 +167,19 @@ final class RaidDeepDark implements Listener {
         c.addDefault(P + "reward.soul-stone", 1);
         c.addDefault(P + "reward.level-vouchers", 5);
         c.addDefault(P + "reward.auction-skillbooks", List.of("어둠 가르기", "정적의 화살", "공명 폭발", "심연의 방벽", "고요한 질주"));
-        // 전리품 경매 (클리어 직후): 영혼석 -> 장신구 -> 스킬북 순서
+        // 1단계 장신구 (전원): count-min~max 개, 각각 부위 랜덤 + 힘/민첩/지능/행운 중 1줄 stat-min~max (모두 동일 확률)
+        c.addDefault(P + "reward.accessory-count-min", 2);
+        c.addDefault(P + "reward.accessory-count-max", 6);
+        c.addDefault(P + "reward.accessory-stat-min", 5);
+        c.addDefault(P + "reward.accessory-stat-max", 20);
+        // 전리품 경매 (클리어 직후): 영혼석 -> 스킬북 순서
         c.addDefault(P + "auction.step", 55);                // 입찰 단위 (현재가 + step 이상)
         c.addDefault(P + "auction.start", 55);               // 파티(2인 이상) 최소 입찰가
         c.addDefault(P + "auction.solo-start-first", 200000);   // 솔로: 1번(영혼석) 최소 입찰가
-        c.addDefault(P + "auction.solo-start-other", 1000000);  // 솔로: 2, 3번 최소 입찰가
+        c.addDefault(P + "auction.solo-start-other", 1000000);  // 솔로: 2번(스킬북) 최소 입찰가
         c.addDefault(P + "auction.lot-seconds", 20);
         c.addDefault(P + "auction.extend-seconds", 10);      // 입찰 시 남은 시간을 최소 이만큼으로
         c.addDefault(P + "auction.gap-seconds", 3);          // 낙찰/유찰 결과를 보여 준 뒤 다음 물품까지
-        c.addDefault(P + "auction.accessory-count", 1);
         c.options().copyDefaults(true);
         plugin.saveConfig();
         Bukkit.getScheduler().runTaskTimer(plugin, this::tick, 1, 1);
@@ -448,7 +451,10 @@ final class RaidDeepDark implements Listener {
         try { rewards.add(town.raidItem("plate", Math.max(1, ci("reward.steel")))); } catch (RuntimeException ignored) { }
         try { rewards.add(town.levelVoucher(Math.max(1, ci("reward.level-vouchers")))); } catch (RuntimeException ignored) { }
         try { rewards.add(town.raidItem("soul", Math.max(1, ci("reward.soul-stone")))); } catch (RuntimeException ignored) { }
-        rewards.add(accessoryPlaceholder(Math.max(1, ci("auction.accessory-count"))));
+        int[] acc = accessoryRange("reward.accessory-count-min", "reward.accessory-count-max");
+        int[] stat = accessoryRange("reward.accessory-stat-min", "reward.accessory-stat-max");
+        rewards.add(plugin.statusIcon(Material.ECHO_SHARD, "§91단계 장신구 " + acc[0] + "~" + acc[1] + "개",
+            "§7클리어 보상 (전원) · 부위 랜덤", "§7힘 / 민첩 / 지능 / 행운 중 1줄 +" + stat[0] + "~" + stat[1]));
         List<?> books = plugin.getConfig().getList(P + "reward.auction-skillbooks");
         rewards.add(skillBookPlaceholder(books == null || books.isEmpty() ? "미정" : books.size() + "종 중 1권"));
         for (int i = 0; i < rewards.size() && i < 9; i++) menu.inv.setItem(GATE_REWARDS + i, rewards.get(i));
@@ -1060,7 +1066,6 @@ final class RaidDeepDark implements Listener {
         long first = solo ? ci("auction.solo-start-first") : ci("auction.start"), other = solo ? ci("auction.solo-start-other") : ci("auction.start");
         List<RaidAuction.Lot> lots = new ArrayList<>();
         lots.add(new RaidAuction.Lot("워든의 영혼석", town.raidItem("soul", Math.max(1, ci("reward.soul-stone"))), Math.max(1, first)));
-        lots.add(new RaidAuction.Lot("딥 다크 장신구", accessoryPlaceholder(Math.max(1, ci("auction.accessory-count"))), Math.max(1, other)));
         lots.add(new RaidAuction.Lot("스킬북 · " + book, skillBookPlaceholder(book), Math.max(1, other)));
         auction = new RaidAuction(plugin, RAID_NAME, on, lots, solo, ci("auction.step"), ci("auction.lot-seconds") * 1000L,
             ci("auction.extend-seconds") * 1000L, ci("auction.gap-seconds") * 1000L);
@@ -1094,13 +1099,10 @@ final class RaidDeepDark implements Listener {
         }
     }
 
-    private ItemStack accessoryPlaceholder(int n) {
-        ItemStack it = plugin.statusIcon(Material.ECHO_SHARD, "§5[임시] 딥 다크 장신구", "§7장신구 시스템 구현 전까지 쓰는 임시 토큰입니다.", "§7시스템이 열리면 실제 장신구로 교환됩니다.", "§8딥 다크 시티 클리어 보상");
-        var m = it.getItemMeta();
-        m.getPersistentDataContainer().set(KEYS.accessory, PersistentDataType.BYTE, (byte) 1);
-        it.setItemMeta(m);
-        it.setAmount(n);
-        return it;
+    /** {min, max} from two config keys, swapped if reversed and at least 1. */
+    private int[] accessoryRange(String minKey, String maxKey) {
+        int a = Math.max(1, ci(minKey)), b = Math.max(1, ci(maxKey));
+        return new int[] { Math.min(a, b), Math.max(a, b) };
     }
 
     private ItemStack skillBookPlaceholder(String skill) {
@@ -1125,7 +1127,28 @@ final class RaidDeepDark implements Listener {
                 plugin.getLogger().severe("raid reward failed for " + p.getName() + ": " + ex);
                 say(p, "§c보상 지급 중 오류가 발생했습니다. 관리자에게 문의하세요.");
             }
+            try { giveAccessories(p); } catch (RuntimeException ex) {
+                plugin.getLogger().severe("raid accessory reward failed for " + p.getName() + ": " + ex);
+                say(p, "§c장신구 지급 중 오류가 발생했습니다. 관리자에게 문의하세요.");
+            }
         }
+    }
+
+    /** 1단계 장신구 count-min~count-max 개 (동일 확률), 각각 부위·옵션·수치 랜덤. */
+    private void giveAccessories(Player p) {
+        int[] count = accessoryRange("reward.accessory-count-min", "reward.accessory-count-max");
+        int[] stat = accessoryRange("reward.accessory-stat-min", "reward.accessory-stat-max");
+        int n = ThreadLocalRandom.current().nextInt(count[0], count[1] + 1);
+        List<String> got = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            ItemStack it = Accessories.tier1(RAID_NAME, stat[0], stat[1]);
+            if (it == null) return;
+            give(p, it);
+            List<String> lore = it.getItemMeta().getLore();
+            got.add(it.getItemMeta().getDisplayName() + " §7(" + (lore != null && lore.size() > 1 ? lore.get(1).replaceAll("§.", "").replaceFirst("^\\[[^]]+] ", "") : "") + ")");
+        }
+        say(p, "§6[클리어 보상] §f1단계 장신구 " + n + "개");
+        for (String g : got) p.sendMessage("  §8- " + g);
     }
 
     // =====================================================================================
