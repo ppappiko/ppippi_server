@@ -20,8 +20,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class PipiArmorLayerMixin {
     @Shadow protected abstract void setPartVisibility(HumanoidModel model, EquipmentSlot slot);
 
-    @Inject(method = "renderArmorPiece", at = @At("HEAD"), cancellable = true)
-    private void pipiArmor(PoseStack poseStack, MultiBufferSource buffer, LivingEntity entity, EquipmentSlot slot, int light, HumanoidModel model, CallbackInfo callback) {
+    // NeoForge draws armour through its 12-argument overload (extra limb / head angles); the vanilla 6-argument one is no longer
+    // called, so hooking it left PipiLife gear rendered as plain iron armour. Target the overload NeoForge actually uses.
+    @Inject(method = "renderArmorPiece(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/entity/EquipmentSlot;ILnet/minecraft/client/model/HumanoidModel;FFFFFF)V",
+        at = @At("HEAD"), cancellable = true)
+    private void pipiArmor(PoseStack poseStack, MultiBufferSource buffer, LivingEntity entity, EquipmentSlot slot, int light, HumanoidModel model,
+                           float limbSwing, float limbSwingAmount, float partialTick, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callback) {
         PipiArmor.Info info = PipiArmor.identify(entity.getItemBySlot(slot), slot);
         if (info == null) return;
         ((HumanoidModel) ((RenderLayer) (Object) this).getParentModel()).copyPropertiesTo(model);

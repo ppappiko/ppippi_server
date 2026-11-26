@@ -9,8 +9,8 @@ import { readPng, writePng } from "./class-icons/pngio.mjs";
 import { SIZE } from "./pet-sizes.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const petDir = path.resolve(here, "../pipi-facilities/assets/pipifacilities/pets");
-const outDir = path.join(here, "preview/pets"); fs.mkdirSync(outDir, { recursive: true });
+const petDir = process.env.PET_DIR ? path.resolve(process.env.PET_DIR) : path.resolve(here, "../pipi-facilities/assets/pipifacilities/pets");
+const outDir = process.env.OUT_DIR ? path.resolve(process.env.OUT_DIR) : path.join(here, "preview/pets"); fs.mkdirSync(outDir, { recursive: true });
 const YAW = +(process.env.YAW ?? -35), PITCH = +(process.env.PITCH ?? 22);
 
 // ---------------------------------------------------------------- model
@@ -139,7 +139,7 @@ function drawModel(cv, model, animName, t, view, action) {
       const n = apN(full, NRM[fi]), nl = Math.hypot(...n) || 1;
       const wn = apN(m, NRM[fi]), wl = Math.hypot(...wn) || 1;
       const shade = .58 + .42 * Math.max(0, (wn[0] * LIGHT[0] + wn[1] * LIGHT[1] + wn[2] * LIGHT[2]) / wl);
-      const nu = Math.max(1, Math.round(Math.abs(u2 - u1))), nv = Math.max(1, Math.round(Math.abs(v2 - v1))), N = Math.max(nu, nv);
+      const nu = Math.max(1, Math.ceil(Math.abs(u2 - u1) * 4 - 1e-6)), nv = Math.max(1, Math.ceil(Math.abs(v2 - v1) * 4 - 1e-6)), N = Math.max(nu, nv); // 4 samples per texel: fractional UVs (rounded pets) stay exact
       const scr = p => { const w = ap(full, p); return [w[0], w[1], w[2]]; };
       void nl; void n;
       for (let i = 0; i < N; i++) for (let j = 0; j < N; j++) {
@@ -179,7 +179,7 @@ const skins = fs.readdirSync(petDir).filter(f => f.endsWith(".bbmodel")).map(f =
 
 const [skinArg, animArg = "idle", framesArg = "6"] = process.argv.slice(2);
 if (skinArg) {
-  const model = load(skinArg), anim = model.anims[animArg], frames = +framesArg, PX = 8, cell = 46 * PX * (SIZE[skinArg] ?? 1);
+  const model = load(skinArg), anim = model.anims[animArg], frames = +framesArg, PX = 8, cell = +(process.env.CELL ?? 46) * PX * (SIZE[skinArg] ?? 1);
   const cv = canvas(Math.ceil(cell * frames), Math.ceil(cell), [236, 238, 242, 255]);
   for (let f = 0; f < frames; f++) {
     const t = anim ? anim.length * f / frames : 0;

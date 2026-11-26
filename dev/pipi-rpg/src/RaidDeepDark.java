@@ -125,10 +125,13 @@ final class RaidDeepDark implements Listener {
         c.addDefault(P + "darkness.duration-ticks", 100);
         c.addDefault(P + "damage.multiplier", 1.0);          // 전체 피해 배율
         c.addDefault(P + "damage.enrage-multiplier", 1.25);  // 1페이즈 이후 피해 배율
-        c.addDefault(P + "damage.sonic", 28);                // 아래 값은 모두 대상 최대 체력의 % (방어력 적용 전)
-        c.addDefault(P + "damage.slam", 22);
-        c.addDefault(P + "damage.charge", 55);
-        c.addDefault(P + "damage.survive", 20);              // 2페이즈 음파를 견뎠을 때
+        // 고정 피해량 (체력 비례 아님, 장비 레벨 차이 보정 없음). 방어력으로만 줄어든다 (survive 는 방어력 무시, 체력 1은 남김).
+        // 기준: 권장 장비 레벨 160 = 0티어 +6 풀세트 (방어력 1039 → 20.8% 감소, 최대 체력 검사 1071 / 궁수 948 / 마법사 813, 평균 약 944)
+        //  -> 방어력 적용 후 평균 체력의 음파 28% · 내려찍기 22% · 돌진 55% · 버티기 성공 20% 가 되도록 맞춘 값
+        c.addDefault(P + "damage.sonic", 335);
+        c.addDefault(P + "damage.slam", 260);
+        c.addDefault(P + "damage.charge", 655);
+        c.addDefault(P + "damage.survive", 0);               // 2페이즈 광역 음파를 파훼했을 때 받는 피해 (0 = 피해 없음). 실패하면 전원 사망 → 레이드 실패
         c.addDefault(P + "attack.interval-ticks", 40);
         c.addDefault(P + "sonic.radius", 7.0);
         c.addDefault(P + "sonic.telegraph-ticks", 28);
@@ -1601,11 +1604,10 @@ final class RaidDeepDark implements Listener {
             }
         }
 
-        void hurt(Player p, double pct) {
+        /** Fixed boss damage (config damage.*), reduced only by the target's defense (CombatStats.defenseDamage). */
+        void hurt(Player p, double base) {
             if (!p.isOnline() || p.isDead()) return;
-            var a = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-            double maxHp = a == null ? 20 : a.getValue();
-            double amt = maxHp * pct / 100.0 * cd("damage.multiplier") * (enraged ? cd("damage.enrage-multiplier") : 1);
+            double amt = base * cd("damage.multiplier") * (enraged ? cd("damage.enrage-multiplier") : 1);
             p.setNoDamageTicks(0);
             p.damage(amt, boss);
         }
@@ -1956,8 +1958,8 @@ final class RaidDeepDark implements Listener {
             for (Player p : alive) p.playSound(p.getLocation(), Sound.ENTITY_WARDEN_SONIC_BOOM, SoundCategory.HOSTILE, 4f, .7f);
             if (ok) {
                 for (Player p : alive) {
-                    var a = p.getAttribute(Attribute.GENERIC_MAX_HEALTH);
-                    double maxHp = a == null ? 20 : a.getValue(), dmg = maxHp * cd("damage.survive") / 100.0 * cd("damage.multiplier");
+                    double dmg = cd("damage.survive") * cd("damage.multiplier");
+                    if (dmg <= 0) continue;   // 파훼 성공: 피해 없음
                     p.setHealth(Math.max(1, p.getHealth() - dmg));
                     p.playEffect(EntityEffect.HURT);
                 }

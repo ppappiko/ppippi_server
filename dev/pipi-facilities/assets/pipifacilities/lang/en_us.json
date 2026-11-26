@@ -57,5 +57,7 @@
   "item.pipifacilities.hearty_veggie_salad": "든든한 채소 샐러드",
   "item.pipifacilities.failed_dish": "정체불명의 요리",
   "item.pipifacilities.warp_stone_blueprint": "Residence Warp Stone Blueprint",
-  "block.pipifacilities.sealed_stele": "Sealed Stele"
+  "block.pipifacilities.sealed_stele": "Sealed Stele",
+  "block.pipifacilities.wailing_stele": "Wailing Stele",
+  "block.pipifacilities.facility_footprint": "Facility Footprint"
 }

@@ -49,7 +49,7 @@ final class EmergencyEscape implements Listener {
 
     private String blocked(Player p) {
         String world = p.getWorld().getName();
-        if (world.equals(DeepDarkMap.WORLD)) return "레이드 지역에서는 긴급 탈출을 쓸 수 없어요.";
+        if (world.equals(DeepDarkMap.WORLD) || world.equals(SorrowMap.WORLD)) return "레이드 지역에서는 긴급 탈출을 쓸 수 없어요.";
         if (world.equals(VillageMaps.TUTORIAL)) return "튜토리얼에서는 긴급 탈출을 쓸 수 없어요.";
         if (RaidDeepDark.ghost(p) || p.isDead()) return "지금은 긴급 탈출을 쓸 수 없어요.";
         return null;

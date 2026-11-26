@@ -404,9 +404,13 @@ final class Regions implements Listener {
         if (r == null) { p.sendMessage("§e/pipilife region pets <id> none|all|스킨,스킨"); return; }
         String v = args[3].toLowerCase(Locale.ROOT);
         if (!v.equals("none") && !v.equals("all")) {
-            Set<String> valid = new HashSet<>();
-            for (PipiLife.Pet pet : PipiLife.Pet.values()) valid.add(pet.name().toLowerCase(Locale.ROOT));
-            for (String s : v.split(",")) if (!valid.contains(s.trim())) { p.sendMessage("§c알 수 없는 펫 스킨: " + s); return; }
+            List<String> ids = new ArrayList<>();
+            for (String s : v.split(",")) {
+                PipiLife.Pet pet = PipiLife.Pet.byCommand(s.trim());
+                if (pet == null) { p.sendMessage("§c알 수 없는 펫 스킨: " + s); return; }
+                ids.add(pet.name().toLowerCase(Locale.ROOT)); // stored as the internal id
+            }
+            v = String.join(",", ids);
         }
         r.pets = v;
         save();
@@ -441,7 +445,7 @@ final class Regions implements Listener {
         else if (args.length == 3 && List.of("remove", "name", "pets", "expand").contains(args[1].toLowerCase(Locale.ROOT))) out.addAll(regions.keySet());
         else if (args.length == 4 && args[1].equalsIgnoreCase("pets")) {
             out.addAll(List.of("none", "all"));
-            for (PipiLife.Pet pet : PipiLife.Pet.values()) out.add(pet.name().toLowerCase(Locale.ROOT));
+            for (PipiLife.Pet pet : PipiLife.Pet.values()) out.add(pet.cmd());
         } else if (args.length == 4 && args[1].equalsIgnoreCase("expand")) out.addAll(List.of("up", "down", "n", "s", "e", "w"));
         return out;
     }

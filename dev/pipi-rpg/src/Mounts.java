@@ -35,9 +35,9 @@ final class Mounts implements Listener {
         this.plugin = plugin;
         this.pets = pets;
         var c = plugin.getConfig();
-        c.addDefault("mounts.allowed", List.of("moonbear", "tortoise", "thundersheep", "sunlizard", "cow", "imugi"));
+        c.addDefault("mounts.allowed", List.of("moonbear", "tortoise", "thundersheep", "sunlizard", "cow"));
         // Ridden pets are shown bigger than their walking size (render + hitbox, Attribute.GENERIC_SCALE). 1 = unchanged.
-        c.addDefault("mounts.scale", Map.of("moonbear", 1.1, "tortoise", 1.2, "thundersheep", 1.3, "sunlizard", 1.25, "cow", 1.15));
+        c.addDefault("mounts.scale", Map.of("moonbear", 1.1, "tortoise", 1.2, "thundersheep", 1.2, "sunlizard", 1.3, "cow", 1.1));
         c.addDefault("mounts.default-speed", 0.3);
         c.addDefault("mounts.default-jump", 0.5);
         c.addDefault("mounts.blocked-worlds", List.of(VillageMaps.TUTORIAL, DeepDarkMap.WORLD));
@@ -66,11 +66,11 @@ final class Mounts implements Listener {
 
     private static PipiLife.Pet pet(String name) {
         if (name == null) return null;
-        try { return PipiLife.Pet.valueOf(name.toUpperCase(Locale.ROOT)); } catch (IllegalArgumentException ex) { return null; }
+        return PipiLife.Pet.byCommand(name);
     }
 
     private String blockedReason(Player player) {
-        if (plugin.getConfig().getStringList("mounts.blocked-worlds").contains(player.getWorld().getName())) return "이 지역에서는 펫을 탈 수 없어요.";
+        if (SorrowMap.WORLD.equals(player.getWorld().getName()) || plugin.getConfig().getStringList("mounts.blocked-worlds").contains(player.getWorld().getName())) return "이 지역에서는 펫을 탈 수 없어요.";
         if (Armory.inCombatMode(player)) return "전투 모드에서는 펫을 탈 수 없어요. (Alt로 전투 모드를 끄세요)";
         if (player.getVehicle() != null && !isMount(player.getVehicle())) return "다른 것을 타고 있을 때는 펫을 부를 수 없어요.";
         if (player.isFlying() || player.isGliding() || player.isSwimming()) return "땅 위에서만 펫을 탈 수 있어요.";
@@ -105,7 +105,7 @@ final class Mounts implements Listener {
         PipiLife.Pet chosen = pet(plugin.data().getString(key(player)));
         List<String> names = new ArrayList<>();
         for (PipiLife.Pet pet : PipiLife.Pet.values())
-            if (owns(player, pet) && allowed(pet)) names.add((pet == chosen ? "§a★ " : "§f") + pet.label + " §7(" + skin(pet) + ")");
+            if (owns(player, pet) && allowed(pet)) names.add((pet == chosen ? "§a★ " : "§f") + pet.label + " §7(" + pet.cmd() + ")");
         if (names.isEmpty()) player.sendMessage("§7탈 수 있는 펫이 없어요.");
         else player.sendMessage("§6[탈것] §f탈 수 있는 펫: " + String.join("§7, ", names));
         player.sendMessage("§7/pipilife mount set <이름> 으로 탈것을 지정하세요.");

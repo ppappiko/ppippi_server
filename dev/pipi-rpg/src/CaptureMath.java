@@ -1,6 +1,6 @@
 package dev.pipi.life;
 
-/** Design-sheet capture formula (Pokemon gen-5 style).
+/** Design-sheet capture formula (from the 개발 예정및 기획 sheet).
  * a = (3*M - 2*H) * rate * ball / (3*M) with M max HP, H current HP,
  * rate the species capture rate and ball 1 / 1.5 / 2 for basic / iron / diamond frames.
  * If a >= 255 the capture succeeds immediately. Otherwise b = 65536 / (255/a)^(3/16)

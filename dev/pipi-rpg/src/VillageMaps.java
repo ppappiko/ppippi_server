@@ -134,7 +134,7 @@ final class VillageMaps {
         }
     }
 
-    /** 튜토리얼 맵에서 레시 안내 펫이 서 있는 자리 (펫 안내소 가운데). */
+    /** 튜토리얼 맵에서 바라 안내 펫이 서 있는 자리 (펫 안내소 가운데). */
     static Location tutorialPetSpot(World world) { return new Location(world, 8.5, 64, 12.5, 180, 0); }
 
     private void tutorial(World world) {
@@ -149,12 +149,12 @@ final class VillageMaps {
         fill(world, -2, 68, 27, 2, 68, 27, Material.SPRUCE_PLANKS);
     }
 
-    /** 펫 안내소: 레시가 서 있는 받침과 안내 표지판. */
+    /** 펫 안내소: 바라가 서 있는 받침과 안내 표지판. */
     private void petCorner(World world) {
         fill(world, 6, GROUND, 10, 10, GROUND, 15, Material.POLISHED_ANDESITE);
         put(world, 6, 64, 15, Material.SHROOMLIGHT);
         put(world, 10, 64, 15, Material.SHROOMLIGHT);
-        sign(world, 8, 64, 9, "펫 안내소", "레시를 우클릭해", "첫 펫으로", "데려가세요");
+        sign(world, 8, 64, 9, "펫 안내소", "바라를 우클릭해", "첫 펫으로", "데려가세요");
         sign(world, 3, 64, 12, "펫은 함께 일하고", "재료를 모으고", "물건을 만들어요");
     }
 
