@@ -35,6 +35,11 @@ import org.lwjgl.glfw.GLFW;
  */
 final class RaidGateScreen extends ContainerScreen {
     static final String TITLE = "깊은 어둠 · 봉인된 비석";
+    /** Same window for the 통곡의 비석 (PipiLife RaidSorrow): the art shows the wraith lord (fx_sorrow_* item models) instead of the warden. */
+    static final String SORROW_TITLE = "통곡의 왕좌 · 통곡의 비석";
+    static boolean handles(String title) { return TITLE.equals(title) || SORROW_TITLE.equals(title); }
+    private boolean sorrow() { return SORROW_TITLE.equals(title.getString()); }
+    private static ItemStack fx(String id) { return new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("pipifacilities", id))); }
     private static final int W = 520, H = 300, ART_W = 356, RX = 362, RW = 152;
     private static final int TEXT = 0xffe6eef6, MUTED = 0xff8fa6b8, GOLD = 0xffe6c588, CYAN = 0xff5ff6ee, LINE = 0xff2a3a46;
     private static final Pattern NUM = Pattern.compile("(\\d+)\\s*/\\s*(\\d+)");
@@ -92,7 +97,15 @@ final class RaidGateScreen extends ContainerScreen {
                 int s = i % 5 == 0 ? 2 : 1;
                 g.fill((int) px, (int) py, (int) px + s, (int) py + s, (Math.max(0, Math.min(255, a)) << 24) | 0x5ff6ee);
             }
-            LivingEntity e = boss();
+            LivingEntity e = sorrow() ? null : boss();
+            if (sorrow()) { // floating wraith lord: body + two hands bobbing out of phase
+                float size = 4.5f, cx = ART_W / 2f, cy = 150 + (float) Math.sin(t * 1.1) * 3f;
+                icon(g, fx("sorrow_body"), Math.round(cx - 8 * size), Math.round(cy - 8 * size), size);
+                for (int side = -1; side <= 1; side += 2) {
+                    float hy = cy - 20 + (float) Math.sin(t * 1.6 + side) * 4f, hx = cx + side * 22;
+                    icon(g, fx(side < 0 ? "sorrow_hand_r" : "sorrow_hand_l"), Math.round(hx - 8 * size), Math.round(hy - 8 * size), size);
+                }
+            }
             if (e != null) {
                 float sway = (float) Math.sin(t * .6) * 8f;
                 e.yBodyRot = e.yBodyRotO = 180 + 20 + sway;
@@ -143,7 +156,7 @@ final class RaidGateScreen extends ContainerScreen {
             ring(g, RX + RW / 2, 51, 30, 1, 0xff3a4a66);
             g.fill(RX + 8, 51, RX + RW / 2 - 38, 52, 0xff5d5038);
             g.fill(RX + RW / 2 + 39, 51, RX + RW - 8, 52, 0xff5d5038);
-            ItemStack stele = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("pipifacilities", "sealed_stele")));
+            ItemStack stele = new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.fromNamespaceAndPath("pipifacilities", sorrow() ? "wailing_stele" : "sealed_stele")));
             if (stele.is(Items.AIR)) stele = item(4);
             icon(g, stele, RX + RW / 2 - 18, 33, 2.25f);
             if (hit(x, y, RX + RW / 2 - 30, 21, 60, 60) && !item(4).isEmpty()) tip = item(4);
@@ -181,7 +194,7 @@ final class RaidGateScreen extends ContainerScreen {
             if (ok) {
                 g.fill(RX, 266, RX + RW, 294, hov ? 0xffe2b65e : 0xffa98242);
                 g.fillGradient(RX + 1, 267, RX + RW - 1, 293, hov ? 0xffc79a4c : 0xff9b7436, hov ? 0xff8f6a2c : 0xff6e5020);
-                g.drawCenteredString(font, "입장하기", RX + RW / 2, 276, 0xfffff4dc);
+                g.drawCenteredString(font, sorrow() ? plain(item(49)) + "하기" : "입장하기", RX + RW / 2, 276, 0xfffff4dc); // 통곡의 왕좌: "1관문 입장" / "2관문 입장"
             } else {
                 g.fill(RX, 266, RX + RW, 294, 0xff3a4550);
                 g.fillGradient(RX + 1, 267, RX + RW - 1, 293, 0xff222b33, 0xff171e24);

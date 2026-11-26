@@ -1,5 +1,76 @@
 village-world: village
 raid:
+  sorrow:
+    enabled: true
+    min-players: 2
+    max-players: 6
+    vote-seconds: 15
+    recommended-item-level: 170
+    g1:
+      time-limit-minutes: 25
+      blessing-seconds: 60
+      curse-seconds: 15
+      sync-window-ticks: 20
+      wave:
+        base: 3
+        max-seconds: 30
+      hp:
+        wailer: 14000
+        howler: 10000
+        shield: 70000
+        per-extra-player-pct: 35
+      shield:
+        regen-seconds: 12
+      damage:
+        wailer: 150
+        howler: 110
+        shield: 230
+      lord-scale: 1.6
+      reward:
+        gold: 120000
+        steel: 25
+        level-vouchers: 2
+    g2:
+      time-limit-minutes: 30
+      blessing-seconds: 60
+      enrage-blessing-seconds: 45
+      enrage-pct: 30
+      curse-seconds: 15
+      sync-window-ticks: 20
+      hp:
+        lord: 360000
+        gem: 20000
+        hand: 20000
+        mob: 9000
+        per-extra-player-pct: 35
+      mobs:
+        seconds: 60
+        max: 3
+      shield:
+        rounds: 3
+        mobs: 2
+      gate:
+        stun-seconds: 12
+        hand-hits: 3
+        fireball-interval-seconds: 1
+      orb:
+        hits: 10
+      dps:
+        stagger-seconds: 15
+        seconds: 10
+      hands:
+        seconds: 15
+      crystal:
+        interval-seconds: 30
+        seconds: 30
+      damage:
+        fireball: 220
+        axe: 500
+      lord-scale: 2.2
+      reward:
+        gold: 150000
+        steel: 30
+        level-vouchers: 2
   deepdark:
     recommended-item-level: 160
     vote-seconds: 15
@@ -28,10 +99,11 @@ raid:
     damage:
       multiplier: 1.0
       enrage-multiplier: 1.25
-      sonic: 28
-      slam: 22
-      charge: 55
-      survive: 20
+      # 고정 피해량 (방어력으로만 감소). 기준: 장비 레벨 160 = 0티어 +6 풀세트
+      sonic: 335
+      slam: 260
+      charge: 655
+      survive: 0
     attack:
       interval-ticks: 40
     sonic:
@@ -173,6 +245,8 @@ residence-default-world: pipi_village2
 wild-nether-world: ''
 # 야생 펫 스폰 설정
 pet-spawn:
+  # 야생 펫이 빛나는 개체로 나올 확률 (0.01 = 1%). 빛나는 개체: 색이 다르고 반짝임, 포획 확률 절반, 작업 속도 +10%
+  shiny-chance: 0.01
   # 스폰 시도 주기 (틱). 200 = 10초
   interval-ticks: 200
   # 플레이어 64블록 안 야생 펫 최대 수. 이 수 이상이면 스폰하지 않고, 넘치면 먼 펫부터 정리합니다.
@@ -222,9 +296,9 @@ mounts:
   scale:
     moonbear: 1.1
     tortoise: 1.2
-    thundersheep: 1.3
-    sunlizard: 1.25
-    cow: 1.15
+    thundersheep: 1.2
+    sunlizard: 1.3
+    cow: 1.1
   # 기본 이동 속도 (말은 약 0.225). 펫별로 바꾸려면 아래 speed 에 적으세요.
   default-speed: 0.3
   # 기본 점프 높이 (0.5 = 약 1.5칸). 펫별로 바꾸려면 아래 jump 에 적으세요.

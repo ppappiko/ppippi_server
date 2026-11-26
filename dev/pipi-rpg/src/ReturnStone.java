@@ -63,7 +63,7 @@ final class ReturnStone implements Listener {
 
     private String blocked(Player p) {
         String world = p.getWorld().getName();
-        if (world.equals(DeepDarkMap.WORLD)) return "레이드 지역에서는 귀환석을 사용할 수 없습니다.";
+        if (world.equals(DeepDarkMap.WORLD) || world.equals(SorrowMap.WORLD)) return "레이드 지역에서는 귀환석을 사용할 수 없습니다.";
         if (world.equals(VillageMaps.TUTORIAL) || !plugin.canTravel(p)) return "튜토리얼 중에는 귀환석을 사용할 수 없습니다.";
         if (RaidDeepDark.ghost(p)) return "지금은 귀환석을 사용할 수 없습니다.";
         return null;

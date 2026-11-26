@@ -25,6 +25,7 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(CombatBar::layerPre);
         NeoForge.EVENT_BUS.addListener(HudBar::receive);
         NeoForge.EVENT_BUS.addListener(ChargeOverlay::receive);
+        NeoForge.EVENT_BUS.addListener(UltBanner::receive);
         NeoForge.EVENT_BUS.addListener(UpgradeFx::receive);
         NeoForge.EVENT_BUS.addListener(CastAnim::receive);
         NeoForge.EVENT_BUS.addListener(CastAnim::hand);
@@ -48,6 +49,7 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(AccessorySlots::release);
         NeoForge.EVENT_BUS.addListener(WarpScreen::receive);
         NeoForge.EVENT_BUS.addListener(CaptureInput::tick);
+        NeoForge.EVENT_BUS.addListener(CombatBar::holdTick);
         NeoForge.EVENT_BUS.addListener(CaptureInput::receive);
         NeoForge.EVENT_BUS.addListener(BragChat::receive);
         NeoForge.EVENT_BUS.addListener(PlayerMenuScreen::receive);
@@ -80,7 +82,7 @@ public final class PipiTravel {
             event.setNewScreen(new CharacterScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (UpgradeScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new UpgradeScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
-        else if (RaidGateScreen.TITLE.equals(incoming.getTitle().getString()))
+        else if (RaidGateScreen.handles(incoming.getTitle().getString()))
             event.setNewScreen(new RaidGateScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
         else if (UpgradeConfirmScreen.TITLE.equals(incoming.getTitle().getString()))
             event.setNewScreen(new UpgradeConfirmScreen(incoming.getMenu(), client.player.getInventory(), incoming.getTitle()));
@@ -115,6 +117,7 @@ public final class PipiTravel {
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "hud_info"), (graphics, delta) -> HudInfo.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "party_list"), (graphics, delta) -> PartyHud.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "raid_hud"), (graphics, delta) -> RaidHud.draw(graphics));
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "ult_banner"), (graphics, delta) -> UltBanner.draw(graphics));
         event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("pipitravel", "menu_bar"), (graphics, delta) -> {
             Minecraft client = Minecraft.getInstance();
             if (client.player != null && client.level != null && !client.options.hideGui

@@ -30,12 +30,16 @@ public final class CombatBar {
     // ---- skill loadout (server: PIPI_LOADOUT:<w|a|m>:<g1>,<g2>,<g3>,<buff>,<ult>; the old 3-id form keeps buff / ult at defaults)
     /** Equippable general skills per class (index 0 = warrior, 1 = archer, 2 = mage). */
     static final String[][] GENERAL = {
-        {"w_rush", "w_whirl", "w_split", "w_heavy", "w_impale", "w_iai"},
+        {"w_rush", "w_whirl", "w_split", "w_heavy", "w_impale", "w_iai", "w_thrust"},
         {"a_triple", "a_rain", "a_pierce", "a_spread", "a_shotgun", "a_gale"},
-        {"m_seek", "m_frost", "m_thunder", "m_wave", "m_hammer", "m_bow"}};
+        {"m_seek", "m_frost", "m_thunder", "m_wave", "m_hammer", "m_bow", "m_mrain", "m_spear"}};
     /** Buff choices (key 4, one equipped) and ultimate choices (key 5, one equipped) per class. */
-    static final String[][] BUFF = {{"w_heal", "w_rage", "w_fort"}, {"a_heal", "a_focus", "a_spirit"}, {"m_heal", "m_focus", "m_reset"}};
-    static final String[][] ULT = {{"w_ult", "w_tiger"}, {"a_ult", "a_wolf"}, {"m_cannon", "m_dragon"}};
+    static final String[][] BUFF = {{"w_heal", "w_rage", "w_fort"}, {"a_heal", "a_focus", "a_spirit", "a_tiger", "a_turtle"}, {"m_heal", "m_focus", "m_reset"}};
+    static final String[][] ULT = {{"w_ult", "w_tiger", "w_meteor"}, {"a_ult", "a_wolf", "a_dragon"}, {"m_cannon", "m_moon"}};
+    /** Boss skills (server PIPI_BOSSSKILL:0|1 says whether the player has cleared the warden and may equip them). */
+    static final java.util.Set<String> BOSS = java.util.Set.of("w_thrust", "w_meteor", "m_mrain", "m_spear", "a_dragon", "a_tiger", "a_turtle");
+    private static boolean bossUnlocked;
+    static boolean bossLocked(String id) { return BOSS.contains(id) && !bossUnlocked; }
     private static final String LOADOUT_PREFIX = "PIPI_LOADOUT:";
     private static final String[][] loadouts = {
         {"w_rush", "w_whirl", "w_split", "w_heal", "w_ult"}, {"a_triple", "a_rain", "a_pierce", "a_heal", "a_ult"}, {"m_seek", "m_frost", "m_thunder", "m_heal", "m_cannon"}};
@@ -118,6 +122,20 @@ public final class CombatBar {
         return true;
     }
 
+    /** Holding the left mouse button in combat mode keeps firing the basic attack: the server fires it whenever its cooldown is
+     *  ready (and plays the vanilla arm swing), so the client just re-sends every 3 ticks while the button stays down. /pipilife is
+     *  in spigot.yml commands.spam-exclusions, so this cannot trip the chat spam kick. */
+    private static int holdTicks = -1;
+    static void holdTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        Minecraft mc = client();
+        if (mc.player == null || mc.getConnection() == null) { holdTicks = -1; return; }
+        boolean down = active() && mc.screen == null && mc.isWindowActive() && mc.mouseHandler.isMouseGrabbed()
+            && GLFW.glfwGetMouseButton(mc.getWindow().getWindow(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        if (!down) { holdTicks = -1; return; }
+        if (holdTicks < 0) { holdTicks = 0; return; } // the press itself already fired (CombatScrollMixin)
+        if (++holdTicks % 3 == 0) mc.getConnection().sendCommand("pipilife skill basic");
+    }
+
     public static void basicAttack() {
         selectedSkill = 6;
         client().getConnection().sendCommand("pipilife skill basic");
@@ -159,6 +177,11 @@ public final class CombatBar {
         if (text.startsWith(LOADOUT_PREFIX)) {
             event.setCanceled(true);
             receiveLoadout(text);
+            return;
+        }
+        if (text.startsWith("PIPI_BOSSSKILL:")) {
+            event.setCanceled(true);
+            bossUnlocked = text.endsWith("1");
             return;
         }
         if (text.startsWith(MSG_START) || text.equals(MSG_BASIC) || text.equals(MSG_END)) {

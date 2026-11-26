@@ -61,18 +61,24 @@ final class ClassSkills implements Listener {
 
     // ---------------------------------------------------------------- loadout (equipped general skills)
 
-    // Cooldown / charge array layout: 0-7 fixed slots, 8-25 general (6 per class), 26-34 buffs (3 per class), 35-40 ultimates (2 per class).
-    private static final int KEYS = 41;
+    // Cooldown / charge array layout: 0-7 fixed slots, 8-25 general (6 per class), 26-34 buffs (3 per class), 35-40 ultimates (2 per class),
+    // 41-47 boss skills (unlocked by the first warden clear). Key per class / ordinal comes from GEN_KEYS / BUFF_KEYS / ULT_KEYS.
+    private static final int KEYS = 48;
     /** General (equippable in keys 1-3) skill ids per class; the index is the skill's ordinal used for cooldown keys. */
     private static final String[][] IDS = {
-        {"w_rush", "w_whirl", "w_split", "w_heavy", "w_impale", "w_iai"},
+        {"w_rush", "w_whirl", "w_split", "w_heavy", "w_impale", "w_iai", "w_thrust"},
         {"a_triple", "a_rain", "a_pierce", "a_spread", "a_shotgun", "a_gale"},
-        {"m_seek", "m_frost", "m_thunder", "m_wave", "m_hammer", "m_bow"}};
+        {"m_seek", "m_frost", "m_thunder", "m_wave", "m_hammer", "m_bow", "m_mrain", "m_spear"}};
     /** Buff ids per class (key 4, slot 0). */
     private static final String[][] BUFFS = {
-        {"w_heal", "w_rage", "w_fort"}, {"a_heal", "a_focus", "a_spirit"}, {"m_heal", "m_focus", "m_reset"}};
-    /** Ultimate ids per class (key 5, slot 4). */
-    private static final String[][] ULTS = {{"w_ult", "w_tiger"}, {"a_ult", "a_wolf"}, {"m_cannon", "m_dragon"}};
+        {"w_heal", "w_rage", "w_fort"}, {"a_heal", "a_focus", "a_spirit", "a_tiger", "a_turtle"}, {"m_heal", "m_focus", "m_reset"}};
+    /** Ultimate ids per class (key 5, slot 4). m_moon (만월의 추억) replaced m_dragon; 청룡의 진노 moved to the archer as a boss skill. */
+    private static final String[][] ULTS = {{"w_ult", "w_tiger", "w_meteor"}, {"a_ult", "a_wolf", "a_dragon"}, {"m_cannon", "m_moon"}};
+    /** Boss skills: equippable only after the player's first warden clear. */
+    static final java.util.Set<String> BOSS_SKILLS = java.util.Set.of("w_thrust", "w_meteor", "m_mrain", "m_spear", "a_dragon", "a_tiger", "a_turtle");
+    private static final int[][] GEN_KEYS = {{8, 9, 10, 11, 12, 13, 41}, {14, 15, 16, 17, 18, 19}, {20, 21, 22, 23, 24, 25, 42, 43}};
+    private static final int[][] BUFF_KEYS = {{26, 27, 28}, {29, 30, 31, 44, 45}, {32, 33, 34}};
+    private static final int[][] ULT_KEYS = {{35, 36, 46}, {37, 38, 47}, {39, 40}};
     private static final char[] CLS = {'w', 'a', 'm'};
 
     // skill keys (cooldown / charge / mark index)
@@ -81,17 +87,20 @@ final class ClassSkills implements Listener {
     private static final int K_SEEK = 20, K_FROST = 21, K_THUNDER = 22, K_WAVE = 23, K_HAMMER = 24, K_BOW = 25;
     private static final int K_W_HEAL = 26, K_W_RAGE = 27, K_W_FORT = 28, K_A_HEAL = 29, K_A_FOCUS = 30, K_A_SPIRIT = 31;
     private static final int K_M_HEAL = 32, K_M_FOCUS = 33, K_M_RESET = 34;
-    private static final int K_W_ULT = 35, K_W_TIGER = 36, K_A_ULT = 37, K_A_WOLF = 38, K_M_CANNON = 39, K_M_DRAGON = 40;
+    private static final int K_W_ULT = 35, K_W_TIGER = 36, K_A_ULT = 37, K_A_WOLF = 38, K_M_CANNON = 39, K_M_DRAGON = 40; // K_M_DRAGON = 만월의 추억 (m_moon)
+    private static final int K_W_THRUST = 41, K_M_MRAIN = 42, K_M_SPEAR = 43, K_A_TIGER = 44, K_A_TURTLE = 45, K_W_METEOR = 46, K_A_DRAGON = 47;
 
     /** Base cooldowns (ms) per key; fixed slots (5 basic, 7 shield) are handled in baseCooldown. */
     private static final int[] CDS = new int[KEYS];
     static {
-        int[] g = {4_000, 5_000, 6_000, 8_000, 9_000, 14_000,   3_000, 7_000, 6_000, 4_000, 12_000, 9_000,   3_000, 5_000, 9_000, 5_000, 10_000, 14_000};
+        int[] g = {4_000, 5_000, 6_000, 8_000, 9_000, 5_000,   3_000, 7_000, 6_000, 4_000, 12_000, 9_000,   3_000, 5_000, 9_000, 5_000, 10_000, 14_000};
         System.arraycopy(g, 0, CDS, 8, g.length);
         int[] b = {25_000, 30_000, 45_000,   25_000, 30_000, 45_000,   30_000, 30_000, 90_000};
         System.arraycopy(b, 0, CDS, 26, b.length);
         int[] u = {90_000, 90_000, 90_000, 90_000, 100_000, 100_000};
         System.arraycopy(u, 0, CDS, 35, u.length);
+        int[] boss = {7_000, 8_000, 9_000, 40_000, 60_000, 100_000, 100_000}; // 광속 찌르기, 마력비, 마력창, 백호 강림, 현무의 가오, 유성우, 청룡의 진노
+        System.arraycopy(boss, 0, CDS, 41, boss.length);
     }
 
     private static ClassSkills current;
@@ -100,9 +109,10 @@ final class ClassSkills implements Listener {
     private final java.io.File loadoutFile;
     private final org.bukkit.configuration.file.YamlConfiguration loadoutData;
 
-    private static int gen(Job job, int ord) { return 8 + job.ordinal() * 6 + ord; }
-    private static int buffKey(Job job, int ord) { return 26 + job.ordinal() * 3 + ord; }
-    private static int ultKey(Job job, int ord) { return 35 + job.ordinal() * 2 + ord; }
+    private static int gen(Job job, int ord) { return GEN_KEYS[job.ordinal()][ord]; }
+    private static int buffKey(Job job, int ord) { return BUFF_KEYS[job.ordinal()][ord]; }
+    private static int ultKey(Job job, int ord) { return ULT_KEYS[job.ordinal()][ord]; }
+    private boolean bossUnlocked(Player p) { return plugin.bossCleared(p.getUniqueId(), "warden"); }
 
     private static int[][] defaultLoadout() { return new int[][] {{0, 1, 2, 0, 0}, {0, 1, 2, 0, 0}, {0, 1, 2, 0, 0}}; }
 
@@ -117,6 +127,7 @@ final class ClassSkills implements Listener {
     /** Parses 3 (old form: buff/ult default) or 5 ids; null when any id is unknown/duplicated. */
     private static int[] parseLoadout(int j, String[] parts) {
         if (parts.length != 3 && parts.length != 5) return null;
+        for (int k = 0; k < parts.length; k++) if (parts[k].trim().equals("m_dragon")) parts[k] = "m_moon"; // old save
         int[] o = new int[5];
         for (int k = 0; k < 3; k++) {
             o[k] = java.util.Arrays.asList(IDS[j]).indexOf(parts[k].trim());
@@ -168,6 +179,7 @@ final class ClassSkills implements Listener {
             if (ords[k] < 0) { p.sendMessage("이 직업의 스킬이 아니에요: " + args[3 + k]); return true; }
         }
         if (ords[0] == ords[1] || ords[0] == ords[2] || ords[1] == ords[2]) { p.sendMessage("같은 스킬을 두 번 장착할 수 없어요."); return true; }
+        if (!bossUnlocked(p)) for (int k = 3; k < args.length; k++) if (BOSS_SKILLS.contains(args[k])) { p.sendMessage("§c보스 스킬이에요. 워든을 처치하면 해금돼요."); return true; }
         if (args.length == 8) {
             ords[3] = java.util.Arrays.asList(BUFFS[j]).indexOf(args[6]);
             ords[4] = java.util.Arrays.asList(ULTS[j]).indexOf(args[7]);
@@ -184,6 +196,7 @@ final class ClassSkills implements Listener {
     void syncLoadouts(Player p) {
         int[][] all = loadouts.computeIfAbsent(p.getUniqueId(), k -> defaultLoadout());
         for (int j = 0; j < 3; j++) p.sendMessage("PIPI_LOADOUT:" + CLS[j] + ":" + loadoutText(j, all[j]));
+        p.sendMessage("PIPI_BOSSSKILL:" + (bossUnlocked(p) ? 1 : 0));
         Job job = combatJob(p);
         long[] cd = cooldowns.get(p.getUniqueId());
         if (job == null || cd == null) return;
@@ -266,7 +279,7 @@ final class ClassSkills implements Listener {
     public void quit(PlayerQuitEvent event) {
         Player p = event.getPlayer();
         UUID id = p.getUniqueId();
-        lastGround.remove(id); phoenixUntil.remove(id); fortress.remove(id); rooted.remove(id); atkBuff.remove(id); will.remove(id); dashInputs.remove(id); kill(shells.remove(id));
+        lastGround.remove(id); phoenixUntil.remove(id); tigerUntil.remove(id); phantomLast.remove(id); kill(phantoms.remove(id)); fortress.remove(id); rooted.remove(id); atkBuff.remove(id); will.remove(id); dashInputs.remove(id); kill(shells.remove(id));
         clearSpeedMod(p);
     }
 
@@ -333,7 +346,7 @@ final class ClassSkills implements Listener {
             : slot == 0 ? buffKey(job, lo[3]) : slot == 4 ? ultKey(job, lo[4]) : slot;
         long[] cd = cooldowns.computeIfAbsent(player.getUniqueId(), ignored -> new long[KEYS]);
         long now = System.currentTimeMillis();
-        if (rooted.getOrDefault(player.getUniqueId(), 0L) > now && (slot == 6 || key == K_RUSH || key == K_IAI)) return true; // 백호참 자세 중 이동기 불가
+        if (rooted.getOrDefault(player.getUniqueId(), 0L) > now && (slot == 6 || key == K_RUSH)) return true; // 백호참 자세 중 이동기 불가
         long remaining = cd[key] - now;
         int maxCharges = job == null ? 1 : maxCharges(job, key);
         int[] charge = null;
@@ -347,7 +360,8 @@ final class ClassSkills implements Listener {
             // on cooldown: no chat notice
             return true;
         }
-        if (slot != 6) pipiAnim(player, job, slot);
+        if (slot == 5) player.swingMainHand();
+        else if (slot != 6) pipiAnim(player, job, slot);
         boolean fired = true;
         if (slot == 6) {
             fired = dash(player, now);
@@ -355,10 +369,10 @@ final class ClassSkills implements Listener {
             Runnable effect = () -> {
                 switch (slot) {
                     case 0 -> heal(player, job, key);
-                    case 4 -> ultimate(player, job, key);
+                    case 4 -> { phantomAct(player, job); ultimate(player, job, key); }
                     case 5 -> basic(player, job);
                     case 7 -> shield(player, job);
-                    default -> skill(player, job, key);
+                    default -> { phantomAct(player, job); skill(player, job, key); }
                 }
             };
             int windup = windupTicks(job, key);
@@ -400,7 +414,7 @@ final class ClassSkills implements Listener {
     private final Map<String, Long> markCasts = new HashMap<>(); // same key -> id of the cast that placed the mark
     private long castSeq;
 
-    /** 2-charge skills: 전사 대지 가르기, 궁수 삼연사, 마법사 유도 마탄. */
+    /** 2-charge skills: 전사 삼연 비검, 궁수 삼연사, 마법사 유도 마탄. */
     private static int maxCharges(Job job, int key) {
         return key == K_SPLIT || key == K_TRIPLE || key == K_SEEK ? 2 : 1;
     }
@@ -460,18 +474,18 @@ final class ClassSkills implements Listener {
     /** Ticks between cast start (animation) and the actual effect; matches the client's release keyframe (CastAnim). */
     private static int windupTicks(Job job, int key) {
         switch (key) {
-            case 5: return job == Job.WARRIOR ? 5 : job == Job.MAGE ? 6 : 0;
+            case 5: return job == Job.WARRIOR ? 5 : job == Job.MAGE ? 8 : 0; // mage: gathers energy on the phantom staff, then shoots
             case 7: return 0;
-            case K_HEAVY: return 20;
-            case K_IAI: return 40;
             case K_SHOTGUN: return 20;
             case K_BOW: return 30;
-            case K_M_CANNON: case K_M_DRAGON: return 60;
+            case K_W_METEOR: return 20;
+            case K_M_DRAGON: case K_A_DRAGON: return 20;
+            case K_M_CANNON: return 60;
             case K_THUNDER: return 12;
             case K_W_TIGER: return 0; // 백호참: the 2 s stance is handled inside tiger()
             default: break;
         }
-        if (key >= 26 && key < 35) return 4; // buffs
+        if (key >= 26 && key < 35 || key == K_A_TIGER || key == K_A_TURTLE) return 4; // buffs
         return switch (job) { case MAGE -> 7; case ARCHER -> 6; case WARRIOR -> 6; };
     }
 
@@ -506,7 +520,11 @@ final class ClassSkills implements Listener {
             case K_A_ULT -> snd(w, at, Sound.ENTITY_BREEZE_CHARGE, .7f, 1.2f);
             case K_A_WOLF -> snd(w, at, Sound.ENTITY_PHANTOM_FLAP, .8f, .8f);
             case K_M_CANNON -> snd(w, at, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE, .8f, 1f);
-            case K_M_DRAGON -> snd(w, at, Sound.ENTITY_ENDER_DRAGON_GROWL, .35f, 1.6f);
+            case K_M_DRAGON -> snd(w, at, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, .8f, .7f);
+            case K_A_DRAGON -> snd(w, at, Sound.ENTITY_ENDER_DRAGON_GROWL, .35f, 1.6f);
+            case K_W_METEOR -> snd(w, at, Sound.ENTITY_WITHER_SPAWN, .3f, 1.8f);
+            case K_W_THRUST -> snd(w, at, Sound.ITEM_TRIDENT_RIPTIDE_2, .6f, 1.6f);
+            case K_M_MRAIN, K_M_SPEAR -> snd(w, at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, .7f, .8f);
             default -> { }
         }
     }
@@ -514,11 +532,10 @@ final class ClassSkills implements Listener {
     /** Wind-up visuals / restrictions that run from cast until the effect fires. */
     private void prepare(Player p, Job job, int slot, int key, int windup) {
         castCue(p, job, slot, key);
-        if (key == K_SPLIT || key == K_HEAVY) chargeFx(p, windup);
         if (key == K_M_CANNON) cannonChargeFx(p, windup);
         if (key == K_THUNDER) thunderChargeFx(p, windup);
+        if ((job == Job.MAGE || job == Job.ARCHER) && slot != 0 && slot != 7) phantomHold(p, job, windup);
         if (job == Job.MAGE && slot != 0) staffCharge(p, windup, key == K_BOW ? 1 : key == K_M_DRAGON ? 2 : 0);
-        if (key == K_HEAVY) p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, windup + 2, 3, false, false));
         if (key == K_IAI || key == K_SHOTGUN) {
             boolean iai = key == K_IAI;
             p.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, windup + 2, iai ? 2 : 4, false, false)); // iai: Slowness III (movable but slow)
@@ -604,28 +621,44 @@ final class ClassSkills implements Listener {
     }
 
     /** Mage wind-up: purple motes spiral into the staff tip (held straight out front) with a growing glow and rising pitch. */
-    private void staffCharge(Player p, int ticks, int mode) { // mode 1: low and to the side (bow), 2: above the head (dragon)
+    /**
+     * Mage wind-up (every mage cast that has one, basic attack included): mana gathers into the phantom staff's orb while a magic
+     * circle (fx_mana_circle) is drawn in front of it - a bright point traces the rim, the circle grows and spins faster - and at
+     * the cast it flashes and fades. mode is kept for the callers (old: 1 bow, 2 dragon); everything now starts at the staff.
+     */
+    private void staffCharge(Player p, int ticks, int mode) {
         World w = p.getWorld();
+        Vector d0 = p.getEyeLocation().getDirection().normalize();
+        float size = ticks >= 20 ? .95f : .6f;
+        ItemDisplay circle = fx("mana_circle", muzzle(p, Job.MAGE).add(d0.clone().multiply(.35)), facing(d0, 0), vec(.05f), null, ticks + 8);
         run(1, ticks, i -> {
-            if (!ready(p, w)) return true;
-            Location eye = p.getEyeLocation();
-            Vector d = eye.getDirection().normalize();
+            if (!ready(p, w)) { kill(circle); return true; }
+            Vector d = p.getEyeLocation().getDirection().normalize();
+            Location tip = muzzle(p, Job.MAGE), c = tip.clone().add(d.clone().multiply(.35));
             Vector side = new Vector(-d.getZ(), 0, d.getX());
             if (side.lengthSquared() < 1e-6) side = new Vector(1, 0, 0); else side.normalize();
             Vector up = side.clone().crossProduct(d).normalize();
-            Location tip = eye.clone().add(d.clone().multiply(1.6)).add(side.clone().multiply(-.25)).add(0, -.35, 0);
-            if (mode == 1) tip = eye.clone().add(d.clone().multiply(2.4)).add(side.clone().multiply(1.0)).add(0, -1.0, 0);
-            else if (mode == 2) tip = eye.clone().add(d.clone().setY(0).normalize().multiply(.6)).add(0, 1.4, 0);
-            double frac = i / (double) ticks;
-            double r = .9 * (1 - frac) + .1;
+            double frac = (i + 1) / (double) ticks;
+            // the circle is drawn: a pen point runs around the rim, leaving a trail, while the circle model grows in
+            float sc = (float) (size * Math.min(1, frac * 1.15));
+            poseFx(circle, c, facing(d, (float) (i * (.25 + frac * .5))), vec(Math.max(.05f, sc)), 1);
+            double rim = sc * 1.15, pen = frac * Math.PI * 2;
             for (int k = 0; k < 4; k++) {
-                double a = i * .9 + k * Math.PI / 2;
-                Vector off = side.clone().multiply(Math.cos(a) * r).add(up.clone().multiply(Math.sin(a) * r));
-                w.spawnParticle(Particle.DUST, tip.clone().add(off), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(176, 110, 255), 1.1f));
-                if (k % 2 == 0) w.spawnParticle(Particle.ENCHANT, tip.clone().add(off), 1, 0, 0, 0, 0);
+                double a = pen - k * .25;
+                w.spawnParticle(Particle.DUST, c.clone().add(side.clone().multiply(Math.cos(a) * rim)).add(up.clone().multiply(Math.sin(a) * rim)), 1, 0, 0, 0, 0,
+                    new Particle.DustOptions(k == 0 ? Color.fromRGB(245, 225, 255) : Color.fromRGB(176, 110, 255), k == 0 ? 1.2f : .8f));
             }
-            w.spawnParticle(Particle.DUST, tip, 1, .05, .05, .05, 0, new Particle.DustOptions(Color.fromRGB(230, 200, 255), (float) (.7 + frac * (mode == 0 ? 1.6 : .5))));
+            // motes pulled into the orb
+            double r = .9 * (1 - frac) + .1;
+            for (int k = 0; k < 2; k++) {
+                double a = i * .9 + k * Math.PI;
+                w.spawnParticle(Particle.DUST, tip.clone().add(side.clone().multiply(Math.cos(a) * r)).add(up.clone().multiply(Math.sin(a) * r)), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(190, 130, 255), .9f));
+            }
             if (i % 4 == 0) snd(w, tip, Sound.BLOCK_AMETHYST_BLOCK_CHIME, .4f, (float) (.8 + frac * 1.1));
+            if (i == ticks - 1) { // cast: the circle flashes and fades away
+                tween(circle, 1, 2, new Vector3f(), facing(d, (float) (i * .8)), vec(sc * 1.25f));
+                tween(circle, 4, 3, new Vector3f(), facing(d, (float) (i * .8 + 1)), vec(.05f));
+            }
             return false;
         }, null);
     }
@@ -660,8 +693,11 @@ final class ClassSkills implements Listener {
     private void basic(Player p, Job job) {
         switch (job) {
             case WARRIOR -> warriorBasic(p);
-            case ARCHER -> { if (phoenixOn(p)) fireArrow(p); else arrowShot(p, BASIC_ARCHER, null); }
-            case MAGE -> mageOrb(p, BASIC_MAGE);
+            case ARCHER -> {
+                if (phoenixOn(p)) fireArrow(p); else phantomArrow(p);
+                if (tigerUntil.getOrDefault(p.getUniqueId(), 0L) > System.currentTimeMillis()) tigerExtra(p);
+            }
+            case MAGE -> phantomOrb(p);
         }
     }
 
@@ -685,6 +721,9 @@ final class ClassSkills implements Listener {
             case K_WAVE -> wave(p);
             case K_HAMMER -> hammer(p);
             case K_BOW -> manaBow(p);
+            case K_W_THRUST -> thrust(p);
+            case K_M_MRAIN -> manaRain(p);
+            case K_M_SPEAR -> manaSpear(p);
             default -> { }
         }
     }
@@ -700,6 +739,8 @@ final class ClassSkills implements Listener {
             case K_M_HEAL -> light(p);
             case K_M_FOCUS -> manaFocus(p);
             case K_M_RESET -> timeReset(p, job);
+            case K_A_TIGER -> whiteTiger(p);
+            case K_A_TURTLE -> blackTortoise(p);
             default -> { }
         }
     }
@@ -762,13 +803,27 @@ final class ClassSkills implements Listener {
     }
 
     private void ultimate(Player p, Job job, int key) {
+        String[] banner = switch (key) { // PIPI_ULT banner (PipiTravel UltBanner): colour, name
+            case K_W_ULT -> new String[]{"ff4a3a", "검기 난사"};
+            case K_W_TIGER -> new String[]{"e8f0ff", "백호참"};
+            case K_W_METEOR -> new String[]{"ffc83a", "유성우"};
+            case K_A_ULT -> new String[]{"79ff57", "화살 폭풍"};
+            case K_A_WOLF -> new String[]{"ff8a2a", "피닉스의 현현"};
+            case K_A_DRAGON -> new String[]{"4ab4ff", "청룡의 진노"};
+            case K_M_CANNON -> new String[]{"b57cff", "마력포"};
+            case K_M_DRAGON -> new String[]{"cfe6ff", "만월의 추억"};
+            default -> null;
+        };
+        if (banner != null) p.sendMessage("PIPI_ULT:" + banner[0] + ":" + banner[1]);
         switch (key) {
             case K_W_ULT -> swordFall(p);
             case K_W_TIGER -> tiger(p);
             case K_A_ULT -> arrowStorm(p);
             case K_A_WOLF -> phoenix(p);
             case K_M_CANNON -> cannon(p);
-            case K_M_DRAGON -> dragon(p);
+            case K_M_DRAGON -> moon(p);
+            case K_A_DRAGON -> blueThunder(p);
+            case K_W_METEOR -> meteorShower(p);
             default -> { }
         }
     }
@@ -779,17 +834,21 @@ final class ClassSkills implements Listener {
         Location eye = p.getEyeLocation();
         Vector dir = eye.getDirection().normalize();
         World w = p.getWorld();
-        w.spawnParticle(Particle.SWEEP_ATTACK, eye.clone().add(dir.clone().multiply(4.2)).add(0, -.3, 0), 1, 0, 0, 0, 0);
         Vector side = new Vector(-dir.getZ(), 0, dir.getX());
         if (side.lengthSquared() > 0) side.normalize();
-        for (double a = -1.1; a <= 1.1; a += .2) { // white arc
-            Vector point = dir.clone().multiply(Math.cos(a) * 5.6).add(side.clone().multiply(Math.sin(a) * 5.6));
-            w.spawnParticle(Particle.DUST, eye.clone().add(point).add(0, -.4, 0), 1, .03, .03, .03, 0,
-                new Particle.DustOptions(Color.WHITE, .5f));
-        }
+        // 분신 무기: a glowing red copy of the sword appears in front of the warrior and does the swing
+        Location far = eye.clone().add(dir.clone().multiply(5.4)).add(0, -.25, 0); // at the edge of the 6-block reach, out of the way
+        final boolean first = flip;
+        phantomAct(p, Job.WARRIOR, first);
+        lineSlash(far, dir, side, first);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> { // second hit: the sword cuts back the other way
+            if (!p.isOnline() || p.isDead()) return;
+            phantomAct(p, Job.WARRIOR, !first);
+            lineSlash(far, dir, side, !first);
+            snd(p.getWorld(), far, Sound.ENTITY_PLAYER_ATTACK_SWEEP, .5f, 1.3f);
+        }, 5);
         flip = !flip;
         snd(w, eye, Sound.ENTITY_PLAYER_ATTACK_SWEEP, .7f, flip ? 1.1f : 1f);
-        slashQuick("slash_arc", eye.clone().add(dir.clone().multiply(3.4)).add(0, -.4, 0), dir, 2.6f, flip ? .45f : -.45f, .8f);
         double dmg = power(p, Job.WARRIOR) * BASIC_WARRIOR;
         for (LivingEntity target : near(p, eye, 6)) { // reach 6 blocks
             Vector rel = target.getBoundingBox().getCenter().subtract(eye.toVector());
@@ -810,7 +869,8 @@ final class ClassSkills implements Listener {
         fallImmune.put(p.getUniqueId(), System.currentTimeMillis() + 2_000);
         snd(w, origin, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, .7f);
         snd(w, origin, Sound.ITEM_TRIDENT_RIPTIDE_2, .6f, 1.2f);
-        slash("slash_red", origin.clone().add(0, 1, 0).add(heading.clone().multiply(1.6)), heading, 1.4f, -.5f, .8f);
+        phantomAct(p, Job.WARRIOR, true);
+        lineSlash(origin.clone().add(0, 1.2, 0).add(heading.clone().multiply(5)), heading, new Vector(-heading.getZ(), 0, heading.getX()), true);
         // 6 ticks x ~1.35 blocks = ~8 blocks forward; velocity is re-applied each tick so ground friction cannot eat it
         run(1, 6, i -> {
             if (!ready(p, w)) return true;
@@ -841,8 +901,8 @@ final class ClassSkills implements Listener {
         snd(w, p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, .9f, .9f);
         snd(w, p.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_1, .5f, 1.4f);
         for (LivingEntity target : near(p, p.getLocation().add(0, 1, 0), 6)) burst(p, target, dmg, 4);
-        ItemDisplay ring = fx("whirl_ring", p.getLocation().add(0, 1, 0), new Quaternionf(), new Vector3f(1.2f, .35f, 1.2f), null, 14);
-        float[] sizes = {2.75f, 3.45f, 3.55f};
+        ItemDisplay ring = fx("whirl_ring", p.getLocation().add(0, 1, 0), new Quaternionf(), new Vector3f(3.2f, .35f, 3.2f), null, 14);
+        float[] sizes = {4.6f, 5.4f, 5.6f}; // out at the 6-block edge of the spin, not hugging the player
         for (int s = 1; s <= 3; s++)
             tween(ring, s * 3 - 2, 3, new Vector3f(), new Quaternionf().rotateY((float) Math.toRadians(120 * s)), new Vector3f(sizes[s - 1], sizes[s - 1] * .3f, sizes[s - 1]));
         tween(ring, 10, 3, new Vector3f(), new Quaternionf().rotateY((float) Math.toRadians(420)), new Vector3f(.3f, .05f, .3f));
@@ -858,36 +918,42 @@ final class ClassSkills implements Listener {
         }, null);
     }
 
+    /**
+     * 삼연 비검 (w_split, longsword): three thin red sword-aura crescents fly out 4 ticks apart (upright, tilted left / straight /
+     * right), each piercing 14.4 blocks for 75%; the phantom sword cuts with each one. 2 charges; consecutive hits keep the combo bonus.
+     */
     private void split(Player p) {
         World w = p.getWorld();
-        Location base = p.getLocation();
-        Vector dir = p.getEyeLocation().getDirection().setY(0);
-        if (dir.lengthSquared() < .01) dir = base.getDirection().setY(0);
-        dir.normalize();
-        Vector heading = dir;
         final long cast = ++castSeq;
+        double dmg = power(p, Job.WARRIOR) * .75;
+        snd(w, p.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_1, .5f, 1.5f);
+        float[] rolls = {1.15f, 1.57f, 2.0f};
+        run(4, 3, n -> {
+            if (!ready(p, w)) return true;
+            Vector heading = flatLook(p);
+            if (heading == null) return true;
+            phantomAct(p, Job.WARRIOR, n % 2 == 0);
+            flyingSlash(p, heading, rolls[n], dmg, cast);
+            snd(w, p.getLocation(), Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 1.15f + n * .15f);
+            return false;
+        }, null);
+    }
+
+    /** One thin flying sword-aura crescent (1.2 blocks / tick, 12 ticks = 14.4 blocks), stops at walls, hits each target once. */
+    private void flyingSlash(Player p, Vector heading, float roll, double dmg, long cast) {
+        World w = p.getWorld();
+        Location start = p.getLocation().add(0, 1.2, 0);
         Set<LivingEntity> done = new HashSet<>();
-        double dmg = power(p, Job.WARRIOR) * 2.2;
-        // sword-aura wave: same reach as the mage basic orb (1.2 blocks/tick × 12 = 14.4 blocks), chest height, big upright crescents
-        Location start = base.clone().add(0, 1.2, 0);
-        ItemDisplay arc = fx("slash_arc", start.clone().add(heading.clone().multiply(1.2)), facing(heading, 1.45f), new Vector3f(1.4f, .9f, 1.4f), null, 12);
-        ItemDisplay red = fx("slash_red", start.clone().add(heading.clone().multiply(1.0)), facing(heading, 1.45f), new Vector3f(1.3f, .8f, 1.3f), null, 12);
-        snd(w, base, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, .6f);
-        snd(w, base, Sound.ITEM_TRIDENT_RIPTIDE_1, .5f, 1.3f);
+        ItemDisplay red = fx("slash_red", start.clone().add(heading.clone().multiply(1.6)), facing(heading, roll), new Vector3f(2.2f, .16f, 1.5f), null, 13); // long thin crescent
         run(1, 12, i -> {
-            Location c = start.clone().add(heading.clone().multiply((i + 1) * 14.4 / 12 + .2));
+            Location c = start.clone().add(heading.clone().multiply((i + 1) * 14.4 / 12 + .4));
             if (!c.getBlock().isPassable()) return true;
-            moveFx(arc, c);
-            moveFx(red, c.clone().subtract(heading.clone().multiply(.5)));
-            w.spawnParticle(Particle.SWEEP_ATTACK, c, 1, .6, .6, .6, 0);
-            w.spawnParticle(Particle.CRIT, c, 4, .5, .5, .5, .1);
-            w.spawnParticle(Particle.DUST, c, 3, .5, .5, .5, 0, new Particle.DustOptions(Color.fromRGB(255, 80, 60), .8f));
-            for (LivingEntity target : near(p, c, 2.2)) {
-                if (!done.add(target)) continue;
-                chargeHit(p, target, dmg, K_SPLIT, cast, 4);
-            }
+            moveFx(red, c);
+            w.spawnParticle(Particle.DUST, c, 2, .35, .35, .35, 0, new Particle.DustOptions(Color.fromRGB(255, 80, 70), .7f));
+            if (i % 2 == 0) w.spawnParticle(Particle.CRIT, c, 2, .3, .3, .3, .05);
+            for (LivingEntity target : near(p, c, 2.0)) if (done.add(target)) chargeHit(p, target, dmg, K_SPLIT, cast, 1);
             return !p.isOnline();
-        }, () -> { kill(arc); kill(red); });
+        }, () -> kill(red));
     }
 
     private void resolve(Player p) { // 투지
@@ -929,7 +995,16 @@ final class ClassSkills implements Listener {
             if (!p.isOnline() || p.isDead()) return true;
             Location c = p.getLocation().add(0, 1, 0);
             ThreadLocalRandom rnd = ThreadLocalRandom.current();
-            for (int k = 0; k < 2; k++) {
+            // big flat crimson crescent sweeping around the warrior (fx_ult_crescent, radius ~6), alternating heights and tilts
+            float yaw = rnd.nextFloat() * 6.283f, tilt = (i % 3 - 1) * .22f;
+            Location sweepAt = p.getLocation().add(0, new double[]{.3, .8, 1.3}[i % 3], 0);
+            crescentSweep(sweepAt, yaw, tilt, i % 2 == 0 ? 1f : -1f, 4.2f);
+            for (int n = 0; n < 6; n++) { // embers flung off the rim
+                double a = yaw + (n - 2.5) * .35;
+                Location rim = sweepAt.clone().add(Math.sin(a) * 5.6, 0, Math.cos(a) * 5.6);
+                w.spawnParticle(Particle.DUST, rim, 1, .15, .15, .15, 0, new Particle.DustOptions(n % 2 == 0 ? Color.fromRGB(255, 214, 140) : Color.fromRGB(255, 70, 40), 1.1f));
+            }
+            for (int k = 0; k < 1; k++) {
                 double a = rnd.nextDouble() * Math.PI * 2, r = 1.7 + rnd.nextDouble() * 4.0;
                 Vector d = new Vector(Math.cos(a), 0, Math.sin(a));
                 Location at = c.clone().add(d.clone().multiply(r)).add(0, rnd.nextDouble() - .5, 0);
@@ -949,7 +1024,7 @@ final class ClassSkills implements Listener {
         Location eye = p.getEyeLocation();
         Vector adir = aimDir(p, eye, 25);
         List<LivingEntity> hits = beam(p, eye, adir, 25, .5, 1, Particle.CRIT, Color.WHITE);
-        bigArrow(eye.clone().add(adir.clone().multiply(.9)).add(0, -.2, 0), adir, .3f, beamLen, 4);
+        bowArrow(p, eye, adir, beamLen, .3f, 4);
         snd(p.getWorld(), eye, Sound.ENTITY_ARROW_SHOOT, .7f, 1.2f);
         double dmg = power(p, Job.ARCHER) * coef;
         for (LivingEntity t : hits) { if (mark != null) chargeHit(p, t, dmg, (int) mark[0], mark[1]); else burst(p, t, dmg, 2); } // basic: 45% x 2
@@ -1045,7 +1120,7 @@ final class ClassSkills implements Listener {
                 if (!ready(p, w)) return;
                 snd(w, p.getEyeLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, .6f, 1.6f); // mage basic launch sounds
                 snd(w, p.getEyeLocation(), Sound.ENTITY_EVOKER_CAST_SPELL, .3f, 1.7f);
-                orb(p, p.getEyeLocation().add(start.clone().multiply(.8)), start, .9, 24, dmg, target, mark, .6f);
+                orb(p, muzzle(p, Job.MAGE), start, .9, 24, dmg, target, mark, .6f);
             };
             if (delay == 0) launch.run(); else Bukkit.getScheduler().runTaskLater(plugin, launch, delay);
         }
@@ -1405,115 +1480,104 @@ final class ClassSkills implements Listener {
 
     // ---- warrior
 
-    /** 일도양단: after a 1 s charge a huge 140 degree, 6 block swing (320%). */
+    /**
+     * 검무 (w_heavy, longsword): six quick cuts over ~1 s; the phantom sword dances left / right and every cut leaves a thin red
+     * line at the far end of the reach. Each cut hits the 6-block 140 degree front for 55% (330% total).
+     */
     private void heavy(Player p) {
-        p.removePotionEffect(PotionEffectType.SLOWNESS);
-        Vector dir = flatLook(p);
-        if (dir == null) return;
         World w = p.getWorld();
-        Location base = p.getLocation();
-        double dmg = power(p, Job.WARRIOR) * 3.2;
-        Location at = base.clone().add(0, 1.2, 0).add(dir.clone().multiply(2.9));
-        snd(w, base, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, .5f);
-        snd(w, base, Sound.ITEM_MACE_SMASH_GROUND, 1f, 1.1f);
-        snd(w, base, Sound.BLOCK_ANVIL_LAND, .5f, 1.3f);
-        slash("slash_red", at, dir, 5.0f, -.35f, 1.1f);
-        slash("slash_arc", at.clone().add(dir.clone().multiply(.5)), dir, 4.1f, -.35f, 1.1f);
-        for (int k = 0; k < 2; k++) spikes(base.clone().add(dir.clone().multiply(2.6 + k * 1.9)).add(0, .05, 0), dir, 1.8f);
-        for (double a = -70; a <= 70; a += 10) {
-            Vector d = dir.clone().rotateAroundY(Math.toRadians(a));
-            for (double r = 1.5; r <= 6; r += 1.5) {
-                Location pt = base.clone().add(0, 1, 0).add(d.clone().multiply(r));
-                w.spawnParticle(Particle.DUST, pt, 1, .05, .05, .05, 0, new Particle.DustOptions(Color.fromRGB(255, 70, 50), .9f));
-                if (r > 5.4) w.spawnParticle(Particle.SWEEP_ATTACK, pt, 1, 0, 0, 0, 0);
-            }
-        }
-        Location center = base.clone().add(0, 1, 0);
-        double cos = Math.cos(Math.toRadians(70));
-        for (LivingEntity t : near(p, center, 6)) if (inCone(center, dir, t, cos, true)) burst(p, t, dmg, 4);
-    }
-
-    /** 대검 꽂기: giant sword stabs the ground in front (r 6): 120% at once, then 40% x4 every 0.5 s with slowness. */
-    private void impale(Player p) {
-        Vector dir = flatLook(p);
-        if (dir == null) return;
-        World w = p.getWorld();
-        Location c = p.getLocation().add(dir.clone().multiply(3));
-        double power = power(p, Job.WARRIOR);
-        Location top = c.clone().add(0, 9, 0), low = c.clone().add(0, .85, 0); // origin .85 above ground: everything below model y=0 (the whole point) is buried
-        ItemDisplay sword = fx("giant_sword", top, new Quaternionf(), vec(1.7f), null, 80);
-        snd(w, c, Sound.ITEM_TRIDENT_THROW, 1f, .6f);
-        run(1, 4, i -> {
-            moveFx(sword, top.clone().add(low.clone().subtract(top).toVector().multiply((i + 1) / 4.0)));
-            return !p.isOnline();
-        }, () -> {
-            snd(w, c, Sound.ENTITY_GENERIC_EXPLODE, 1f, .8f);
-            snd(w, c, Sound.ITEM_MACE_SMASH_GROUND, 1.2f, .8f);
-            w.spawnParticle(Particle.BLOCK, c.clone().add(0, .2, 0), 24, 1.5, .2, 1.5, 0, c.clone().subtract(0, .5, 0).getBlock().getBlockData());
-            for (int k = 0; k < 4; k++) spikes(c.clone().add(0, .05, 0), new Vector(Math.cos(k * Math.PI / 4), 0, Math.sin(k * Math.PI / 4)), 3f);
-            run(1, 4, i -> {
-                ring(c.clone().add(0, .2, 0), (1 + i) * 1.5, (int) ((1 + i) * 12), at -> w.spawnParticle(Particle.DUST, at, 1, 0, .1, 0, 0, new Particle.DustOptions(Color.fromRGB(110, 220, 255), .9f)));
-                return false;
-            }, null);
-            run(10, 5, i -> {
-                if (!ready(p, w)) return true;
-                if (i > 0) {
-                    snd(w, c, Sound.BLOCK_ANVIL_HIT, .4f, 1.4f);
-                    ring(c.clone().add(0, .2, 0), 5.7, 44, at -> w.spawnParticle(Particle.DUST, at, 1, 0, .1, 0, 0, new Particle.DustOptions(Color.fromRGB(110, 220, 255), .8f)));
-                    w.spawnParticle(Particle.CRIT, c.clone().add(0, .6, 0), 6, 2, .4, 2, .1);
-                }
-                for (LivingEntity t : near(p, c, 6)) {
-                    if (i == 0) burst(p, t, power * 1.2, 3); else hit(p, t, power * .4);
-                    if (t.isValid()) t.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 20, 2, false, true));
-                }
-                return false;
-            }, () -> kill(sword));
-        });
-    }
-
-    /** 일섬: after the 2 s draw (movable but slowed), dash 10 blocks in the facing direction in an instant and cut everything on the path (400%). */
-    private void iai(Player p) {
-        p.removePotionEffect(PotionEffectType.SLOWNESS);
-        Vector dir = flatLook(p);
-        if (dir == null) return;
-        World w = p.getWorld();
-        Location start = p.getLocation();
-        double reach = 0;
-        for (double s = .5; s <= 10; s += .5) {
-            Location c = start.clone().add(dir.clone().multiply(s));
-            if (!c.getBlock().isPassable() || !c.clone().add(0, 1, 0).getBlock().isPassable() || !w.getWorldBorder().isInside(c)) break;
-            reach = s;
-        }
-        if (reach < .5) return;
-        Location mid = start.clone().add(0, 1, 0);
-        List<LivingEntity> hits = along(p, mid, dir, reach, 2.5);
-        double dmg = power(p, Job.WARRIOR) * 4.0;
-        for (double s = 0; s <= reach; s += .5) {
-            Location c = mid.clone().add(dir.clone().multiply(s));
-            w.spawnParticle(Particle.SWEEP_ATTACK, c, 1, .3, .4, .3, 0);
-            w.spawnParticle(Particle.DUST, c, 2, .2, .4, .2, 0, new Particle.DustOptions(Color.fromRGB(235, 245, 255), .8f));
-            w.spawnParticle(Particle.END_ROD, c, 1, .2, .4, .2, .02);
-        }
-        snd(w, start, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.5f, .5f);
-        snd(w, start, Sound.ITEM_TRIDENT_RIPTIDE_3, 1f, 1.3f);
-        Location dest = start.clone().add(dir.clone().multiply(reach));
-        dest.setYaw(start.getYaw()); dest.setPitch(start.getPitch());
-        fallImmune.put(p.getUniqueId(), System.currentTimeMillis() + 2_000);
-        p.teleport(dest);
-        p.setVelocity(new Vector(0, 0, 0));
-        for (LivingEntity t : hits) {
-            burst(p, t, dmg, 5);
-            w.spawnParticle(Particle.CRIT, t.getBoundingBox().getCenter().toLocation(w), 16, .3, .4, .3, .3);
-            snd(w, t.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, .8f, 1f);
-        }
-        final double len = reach;
-        run(2, 3, i -> { // afterimage slashes along the path
-            for (int k = 0; k < 3; k++) {
-                Location at = mid.clone().add(dir.clone().multiply(len * (k + .5) / 3));
-                slashQuick(k == 1 ? "slash_red" : "slash_arc", at, dir, 3.0f, i % 2 == 0 ? .6f : -.6f, .9f);
-            }
+        double dmg = power(p, Job.WARRIOR) * .55, cos = Math.cos(Math.toRadians(70));
+        snd(w, p.getLocation(), Sound.ITEM_ARMOR_EQUIP_IRON, .7f, 1.4f);
+        run(4, 6, i -> {
+            if (!ready(p, w)) return true;
+            Vector dir = flatLook(p);
+            if (dir == null) return true;
+            Location eye = p.getEyeLocation();
+            Vector look = eye.getDirection().normalize();
+            Vector side = new Vector(-look.getZ(), 0, look.getX());
+            if (side.lengthSquared() < 1e-6) side = new Vector(1, 0, 0); else side.normalize();
+            boolean f = i % 2 == 0;
+            phantomAct(p, Job.WARRIOR, f);
+            Location far = eye.clone().add(look.clone().multiply(4.6 + (i % 3) * .4)).add(0, -.25 + (i % 3 - 1) * .35, 0);
+            lineSlash(far, look, side, f);
+            snd(w, eye, Sound.ENTITY_PLAYER_ATTACK_SWEEP, .8f, 1f + i * .08f);
+            Location center = p.getLocation().add(0, 1, 0);
+            for (LivingEntity t : near(p, center, 6)) if (inCone(center, dir, t, cos, true)) hit(p, t, dmg);
+            if (i == 5) w.spawnParticle(Particle.SWEEP_ATTACK, center.clone().add(dir.clone().multiply(3)), 6, 1.5, .4, 1.5, 0);
             return false;
         }, null);
+    }
+
+    /**
+     * 검막 (w_impale, longsword): for 3 s three phantom longswords whirl around the warrior (radius 2.2, chest height), blades
+     * pointing along the spin, and cut every enemy within 3.2 blocks 8 times (40% each, every 7-8 ticks). The swords follow the player.
+     */
+    private void impale(Player p) {
+        World w = p.getWorld();
+        double dmg = power(p, Job.WARRIOR) * .4;
+        ItemDisplay[] swords = new ItemDisplay[3];
+        for (int k = 0; k < 3; k++) swords[k] = fx("phantom_sword", p.getLocation().add(0, 1.1, 0), new Quaternionf(), vec(.2f), null, 66);
+        snd(w, p.getLocation(), Sound.ITEM_ARMOR_EQUIP_IRON, .9f, 1.5f);
+        snd(w, p.getLocation(), Sound.ITEM_TRIDENT_RIPTIDE_1, .6f, 1.6f);
+        Particle.DustOptions red = new Particle.DustOptions(Color.fromRGB(255, 80, 70), .8f);
+        run(1, 60, i -> {
+            if (!ready(p, w)) return true;
+            Location c = p.getLocation().add(0, 1.1, 0);
+            double spin = i * .42;
+            float grow = (float) Math.min(1, (i + 1) / 4.0);
+            for (int k = 0; k < 3; k++) {
+                if (swords[k] == null || !swords[k].isValid()) continue;
+                double a = spin + k * Math.PI * 2 / 3;
+                Location at = c.clone().add(Math.cos(a) * 4.3, Math.sin(i * .2 + k) * .15, Math.sin(a) * 4.3); // orbit 1.5x wider
+                Vector tangent = new Vector(-Math.sin(a), 0, Math.cos(a));
+                // the sword lies flat-ish along the spin: tip (model +Y) leads, edge outward
+                poseFx(swords[k], at, facing(tangent, 0).rotateX((float) (Math.PI / 2)), vec(.95f * grow), 1);
+                w.spawnParticle(Particle.DUST, at, 1, .05, .05, .05, 0, red);
+            }
+            if (i % 8 == 3) {
+                for (LivingEntity t : near(p, c, 6.2)) {
+                    hit(p, t, dmg);
+                    w.spawnParticle(Particle.CRIT, t.getBoundingBox().getCenter().toLocation(w), 4, .25, .3, .25, .2);
+                }
+                snd(w, c, Sound.ENTITY_PLAYER_ATTACK_SWEEP, .5f, 1.3f + (i % 16 == 3 ? .15f : 0));
+            }
+            return false;
+        }, () -> { for (ItemDisplay d : swords) kill(d); });
+    }
+
+
+    /** 더블어택 (w_iai): two quick slashes in a row straight ahead, each cutting everything on a 10 block line (100% x 2 per slash, 400% total). */
+    private void iai(Player p) {
+        Vector dir = flatLook(p);
+        if (dir == null) return;
+        World w = p.getWorld();
+        double dmg = power(p, Job.WARRIOR) * 2.0;
+        for (int k = 0; k < 2; k++) {
+            final boolean second = k == 1;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (!ready(p, w)) return;
+                Vector d = flatLook(p);
+                if (d == null) d = dir;
+                Location mid = p.getLocation().add(0, 1.1, 0);
+                double reach = 0;
+                for (double s = .5; s <= 10; s += .5) {
+                    if (!mid.clone().add(d.clone().multiply(s)).getBlock().isPassable()) break;
+                    reach = s;
+                }
+                Vector side = new Vector(-d.getZ(), 0, d.getX());
+                phantomAct(p, Job.WARRIOR, !second);
+                if (reach >= 1) lineSlash(mid.clone().add(d.clone().multiply(Math.max(1.5, reach - .4))), d, side, !second);
+                for (double s = .5; s <= reach; s += .3)
+                    w.spawnParticle(Particle.DUST, mid.clone().add(d.clone().multiply(s)), 1, 0, 0, 0, 0, new Particle.DustOptions(second ? Color.fromRGB(255, 90, 80) : Color.fromRGB(255, 235, 230), .45f));
+                snd(w, mid, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1.2f, second ? .8f : 1.2f);
+                snd(w, mid, Sound.ITEM_TRIDENT_RIPTIDE_1, .6f, second ? 1.4f : 1.7f);
+                if (reach < .5) return;
+                for (LivingEntity t : along(p, mid, d, reach, 1.8)) {
+                    burst(p, t, dmg, 2);
+                    w.spawnParticle(Particle.CRIT, t.getBoundingBox().getCenter().toLocation(w), 10, .3, .4, .3, .3);
+                }
+            }, second ? 5 : 1);
+        }
     }
 
     /** 백호참: the warrior is rooted for 2 s (looking allowed), then rakes one huge claw swipe (8 blocks, 160 degree fan, 180% x 5 = 900%). */
@@ -1624,12 +1688,14 @@ final class ClassSkills implements Listener {
         Vector dir = aimDir(p, eye, 25);
         double len = blockLen(p, eye, dir, 25);
         List<LivingEntity> hits = along(p, eye, dir, len, .8);
-        Location from = eye.clone().add(dir.clone().multiply(.9)).add(0, -.2, 0);
-        projectileFx("rock_arrow", from, dir, .9f, len, 4);
+        Location from = muzzle(p, Job.ARCHER);
+        projectileFx("rock_arrow", from, toward(from, eye, dir, len), .9f, from.distance(eye.clone().add(dir.clone().multiply(len))), 4);
         var stone = Material.STONE.createBlockData();
         var dirt = Material.COARSE_DIRT.createBlockData();
+        Vector vd = toward(from, eye, dir, len);
+        double vk = from.distance(eye.clone().add(dir.clone().multiply(len))) / Math.max(.1, len);
         for (double s = .5; s <= len; s += .7) {
-            Location c = eye.clone().add(dir.clone().multiply(s));
+            Location c = from.clone().add(vd.clone().multiply(s * vk)); // along the line from the phantom bow
             w.spawnParticle(Particle.BLOCK, c, 2, .12, .12, .12, 0, ((int) (s / .7)) % 2 == 0 ? stone : dirt);
             if (((int) (s / .7)) % 3 == 0) w.spawnParticle(Particle.DUST, c, 1, .1, .1, .1, 0, new Particle.DustOptions(Color.fromRGB(125, 105, 85), 1.1f));
         }
@@ -1658,11 +1724,13 @@ final class ClassSkills implements Listener {
         Vector dir = aimDir(p, eye, 25);
         double len = blockLen(p, eye, dir, 25);
         List<LivingEntity> hits = along(p, eye, dir, len, .6);
-        Location from = eye.clone().add(dir.clone().multiply(.9)).add(0, -.2, 0);
-        projectileFx("water_arrow", from, dir, .8f, len, 1);
+        Location from = muzzle(p, Job.ARCHER);
+        projectileFx("water_arrow", from, toward(from, eye, dir, len), .8f, from.distance(eye.clone().add(dir.clone().multiply(len))), 1);
         Particle.DustOptions blue = new Particle.DustOptions(Color.fromRGB(70, 160, 255), 1.1f);
+        Vector vd = toward(from, eye, dir, len);
+        double vk = from.distance(eye.clone().add(dir.clone().multiply(len))) / Math.max(.1, len);
         for (double s = .5; s <= len; s += .6) {
-            Location c = eye.clone().add(dir.clone().multiply(s));
+            Location c = from.clone().add(vd.clone().multiply(s * vk)); // along the line from the phantom bow
             w.spawnParticle(Particle.SPLASH, c, 3, .12, .12, .12, 0);
             w.spawnParticle(Particle.DUST, c, 1, .06, .06, .06, 0, blue);
             if (((int) (s / .6)) % 2 == 0) w.spawnParticle(Particle.BUBBLE_POP, c, 1, .1, .1, .1, 0);
@@ -1688,7 +1756,7 @@ final class ClassSkills implements Listener {
         Vector center = aimDir(p, eye, 25);
         double dmg = power(p, Job.ARCHER) * .25;
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
-        Location from = eye.clone().add(center.clone().multiply(.9)).add(0, -.2, 0);
+        Location from = muzzle(p, Job.ARCHER);
         for (int n = 0; n < 20; n++) {
             double ang = Math.toRadians(18) * Math.sqrt(rnd.nextDouble()), phi = rnd.nextDouble() * Math.PI * 2;
             Vector d = center.clone().rotateAroundY(Math.cos(phi) * ang);
@@ -1721,10 +1789,11 @@ final class ClassSkills implements Listener {
         Location eye = p.getEyeLocation();
         Vector dir = aimDir(p, eye, 25);
         List<LivingEntity> hits = beam(p, eye, dir, 25, 1.1, 0, Particle.CLOUD, Color.fromRGB(150, 240, 255));
-        Location pstart = eye.clone().add(dir.clone().multiply(.9)).add(0, -.2, 0);
-        bigArrow(pstart, dir, .9f, beamLen, 5);
-        ItemDisplay wind = fx("wind_spiral", pstart, facing(dir, 0), vec(1.0f), null, 16);
-        tween(wind, 1, 4, new Vector3f(), facing(dir, 2.4f), vec(1.3f));
+        Location pstart = muzzle(p, Job.ARCHER);
+        Vector vdir = toward(pstart, eye, dir, beamLen);
+        bigArrow(pstart, vdir, .9f, pstart.distance(eye.clone().add(dir.clone().multiply(beamLen))), 5);
+        ItemDisplay wind = fx("wind_spiral", pstart, facing(vdir, 0), vec(1.0f), null, 16);
+        tween(wind, 1, 4, new Vector3f(), facing(vdir, 2.4f), vec(1.3f));
         if (wind != null) flyFx(wind, eye.clone().add(dir.clone().multiply(beamLen * .85)), 4);
         snd(p.getWorld(), eye, Sound.ENTITY_BREEZE_SHOOT, 1f, 1.1f);
         double dmg = power(p, Job.ARCHER) * 3.8;
@@ -1790,9 +1859,14 @@ final class ClassSkills implements Listener {
             if (bows[k] != null) bows[k].setTeleportDuration(4);
         }
         snd(w, p.getLocation(), Sound.ENTITY_BREEZE_WIND_BURST, 1.2f, .9f);
+        snd(w, p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, .8f, 1.6f);
+        // green web sigil under the archer for the whole storm, plus a light pillar on cast
+        ItemDisplay web = sigil("ult_sigil_green", p.getLocation().add(0, .06, 0), 2.6f, 100, .6f);
+        lightPillar(p.getLocation(), 1.4f, 22f, 14);
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
         run(5, 20, i -> {
             if (!ready(p, w)) return true;
+            if (web != null && web.isValid()) { web.setTeleportDuration(5); moveFx(web, p.getLocation().add(0, .06, 0)); }
             Location eye = p.getEyeLocation();
             Vector look = eye.getDirection().normalize();
             Vector back = look.clone().setY(0);
@@ -1818,10 +1892,26 @@ final class ClassSkills implements Listener {
                 }
                 if (lock != null) d = lock.getBoundingBox().getCenter().subtract(from.toVector()).normalize();
                 volleyArrow(p, from, d, 25, .6, dmg, .42f, 3);
+                if (lock != null && n == 0 && i % 2 == 0) skyArrow(w, lock.getLocation()); // visual: a big arrow drops from the sky onto the target
             }
             snd(w, eye, Sound.ENTITY_ARROW_SHOOT, .5f, 1.5f + rnd.nextFloat() * .3f);
             return false;
         }, () -> { for (ItemDisplay b : bows) kill(b); });
+    }
+
+    /** 화살 폭풍 decoration: a big arrow falls steeply onto the spot with a green trail and a green ring flash on landing (no damage). */
+    private void skyArrow(World w, Location ground) {
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        Location land = ground.clone().add(rnd.nextDouble(-.6, .6), .3, rnd.nextDouble(-.6, .6));
+        Location from = land.clone().add(rnd.nextDouble(-2, 2), 14, rnd.nextDouble(-2, 2));
+        Vector dir = land.toVector().subtract(from.toVector()).normalize();
+        ItemDisplay a = fx("arrow_big", from, facing(dir, 0), vec(1.1f), new ItemStack(Material.ARROW), 14);
+        Particle.DustOptions green = new Particle.DustOptions(Color.fromRGB(121, 255, 87), 1.2f);
+        fall(a, from, land, 5, at -> w.spawnParticle(Particle.DUST, at, 2, .08, .08, .08, 0, green), () -> {
+            ring(land.clone().add(0, .1, 0), 1.3, 18, at -> w.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, green));
+            w.spawnParticle(Particle.END_ROD, land, 6, .2, .4, .2, .06);
+            snd(w, land, Sound.ENTITY_ARROW_HIT, .5f, 1.3f);
+        });
     }
 
     /** 피닉스의 강림: a phoenix hovers at the right shoulder for 12 s shooting fireballs (120%, 1 s) while basic attacks become fire arrows. */
@@ -1868,11 +1958,11 @@ final class ClassSkills implements Listener {
         });
     }
 
-    /** Behind the right shoulder (1.4 right, 1.3 above, 0.4 back) with a slow, smooth bob. */
+    /** 피닉스의 현현: high above the head and a little behind (out of the line of sight), with a slow, smooth bob. */
     private Location phoenixSpot(Player p, Vector look, int tick) {
-        Vector right = new Vector(-look.getZ(), 0, look.getX());
-        if (right.lengthSquared() < 1e-6) right = new Vector(1, 0, 0); else right.normalize();
-        return p.getLocation().add(0, 2.6 + Math.sin(tick * .1) * .12, 0).add(right.multiply(1.4)).add(new Vector(-right.getZ(), 0, right.getX()).multiply(.4 / 1.4));
+        Vector back = look.clone().setY(0);
+        if (back.lengthSquared() < 1e-6) back = new Vector(0, 0, 1); else back.normalize();
+        return p.getLocation().add(0, 3.9 + Math.sin(tick * .1) * .15, 0).add(back.multiply(-.6));
     }
 
     private void phoenixFireball(Player p, Location from, LivingEntity target, double dmg) {
@@ -1901,7 +1991,7 @@ final class ClassSkills implements Listener {
         Location eye = p.getEyeLocation();
         Vector adir = aimDir(p, eye, 25);
         List<LivingEntity> hits = beam(p, eye, adir, 25, .5, 1, Particle.FLAME, Color.fromRGB(255, 140, 40));
-        bigArrow(eye.clone().add(adir.clone().multiply(.9)).add(0, -.2, 0), adir, .3f, beamLen, 4);
+        bowArrow(p, eye, adir, beamLen, .3f, 4);
         snd(w, eye, Sound.ITEM_FIRECHARGE_USE, .5f, 1.6f);
         double dmg = power(p, Job.ARCHER) * BASIC_ARCHER * 1.6;
         for (LivingEntity t : hits) {
@@ -1922,7 +2012,7 @@ final class ClassSkills implements Listener {
         if (flat.lengthSquared() < .01) flat = new Vector(0, 0, 1);
         flat.normalize();
         Vector fl = flat;
-        Location start = eye.clone().add(0, -.5, 0);
+        Location start = muzzle(p, Job.MAGE);
         double dmg = power(p, Job.MAGE) * 2.0;
         Set<LivingEntity> done = new HashSet<>();
         Color purple = Color.fromRGB(170, 70, 235);
@@ -2030,7 +2120,7 @@ final class ClassSkills implements Listener {
         LivingEntity[] lock = {aimTarget(p, eye, look, 30, false)};
         Vector rside = new Vector(-look.getZ(), 0, look.getX());
         if (rside.lengthSquared() < 1e-6) rside = new Vector(1, 0, 0); else rside.normalize();
-        Location[] cur = {eye.clone().add(look.clone().multiply(2.0)).add(rside.multiply(.9)).add(0, -1.0, 0)};
+        Location[] cur = {bowSpot(eye, look)}; // from the giant mana bow drawn during the wind-up
         Vector[] dv = {look.clone()};
         ItemDisplay arrow = fx("arrow_big", cur[0], facing(look, 0), vec(.9f), new ItemStack(Material.ARROW), 60);
         snd(w, eye, Sound.ENTITY_ENDER_DRAGON_SHOOT, 1f, 1.5f);
@@ -2117,13 +2207,8 @@ final class ClassSkills implements Listener {
         }, null);
     }
 
-    private Location staffTip(Player p) {
-        Location eye = p.getEyeLocation();
-        Vector d = eye.getDirection().normalize();
-        Vector side = new Vector(-d.getZ(), 0, d.getX());
-        if (side.lengthSquared() < 1e-6) side = new Vector(1, 0, 0); else side.normalize();
-        return eye.clone().add(d.clone().multiply(1.6)).add(side.multiply(-.25)).add(0, -.35, 0);
-    }
+    /** The orb of the phantom staff beside the mage: every staff effect (charges, beams, shells) starts here. */
+    private Location staffTip(Player p) { return muzzle(p, Job.MAGE); }
 
     /** Position on the beam axis `off` blocks in front of the staff tip (low / right of the eye so the view stays clear). */
     private Location cannonSpot(Player p, double off) {
@@ -2191,20 +2276,30 @@ final class ClassSkills implements Listener {
         final Vector dir = p.getEyeLocation().getDirection().normalize();
         final Location tip = cannonMuzzle(p.getLocation(), dir);
         // beam model: 32 px (2 blocks at scale 1) along model Z, centred; stretched to the beam length with scale z = length / 2
-        ItemDisplay beam = fx("mana_beam", tip, facing(dir, 0), new Vector3f(1.6f, 1.6f, .05f), null, 110);
+        final Location root = tip.clone().add(dir.clone().multiply(-.45)); // the beam grows out of the circle itself
+        ItemDisplay beam = fx("mana_beam", root, facing(dir, 0), new Vector3f(1.6f, 1.6f, .05f), null, 110);
         ItemDisplay c1 = fx("mana_circle", tip, facing(dir, 0), vec(1.5f), null, 110);
-        ItemDisplay c2 = fx("mana_circle", tip.clone().add(dir.clone().multiply(1.0)), facing(dir, 0), vec(.9f), null, 110);
+        ItemDisplay c2 = fx("mana_circle", tip.clone().add(dir.clone().multiply(.6)), facing(dir, 0), vec(.9f), null, 110);
         final boolean model = beam != null;
         run(1, 100, i -> {
             if (!ready(p, w)) return true;
-            double len = blockLen(p, tip, dir, 20);
+            double len = blockLen(p, tip, dir, 20) + .45;
             double grow = Math.min(1, (i + 1) / 4.0), fade = i >= 95 ? Math.max(.04, (99 - i) / 5.0) : 1;
             if (model) {
                 double vis = Math.max(.1, len * grow * fade);
                 float th = (float) (1.6 * (1 + .1 * Math.sin(i * .9)) * (.3 + .7 * fade));
-                poseFx(beam, tip.clone().add(dir.clone().multiply(vis / 2)), facing(dir, (float) (i * .1)), new Vector3f(th, th, (float) (vis / 2)), 2);
+                poseFx(beam, root.clone().add(dir.clone().multiply(vis / 2)), facing(dir, (float) (i * 1.1)), new Vector3f(th, th, (float) (vis / 2)), 1); // fast spin
+                // three helix strands of raw mana whirl around the beam out of the circle
+                Vector bs = new Vector(-dir.getZ(), 0, dir.getX());
+                if (bs.lengthSquared() < 1e-6) bs = new Vector(1, 0, 0); else bs.normalize();
+                Vector bu = bs.clone().crossProduct(dir).normalize();
+                for (int strand = 0; strand < 3; strand++) for (double s = 0; s <= Math.min(len, 12); s += .6) {
+                    double a = i * .9 + s * 1.4 + strand * 2.094, rr = .95 + .15 * Math.sin(s + i);
+                    w.spawnParticle(Particle.DUST, root.clone().add(dir.clone().multiply(s)).add(bs.clone().multiply(Math.cos(a) * rr)).add(bu.clone().multiply(Math.sin(a) * rr)), 1, 0, 0, 0, 0,
+                        new Particle.DustOptions(strand == 0 ? Color.fromRGB(245, 225, 255) : purple, 1.1f));
+                }
                 if (i % 2 == 0) {
-                    for (double s = 1; s <= len; s += 1.8) w.spawnParticle(Particle.END_ROD, tip.clone().add(dir.clone().multiply(s)), 1, .35, .35, .35, .01);
+                    for (double s = 1; s <= len; s += 1.8) w.spawnParticle(Particle.END_ROD, tip.clone().add(dir.clone().multiply(s)), 1, .35, .35, .35, .02);
                 }
             } else {
                 for (double s = 0; s <= len; s += .6) {
@@ -2214,8 +2309,8 @@ final class ClassSkills implements Listener {
                 }
             }
             float cs = (float) (Math.min(1, (i + 1) / 6.0) * fade);
-            poseFx(c1, tip, facing(dir, (float) (i * .35)), vec(Math.max(.05f, 1.5f * cs)), 2);
-            poseFx(c2, tip.clone().add(dir.clone().multiply(1.0)), facing(dir, (float) (-i * .5)), vec(Math.max(.05f, .9f * cs)), 2);
+            poseFx(c1, tip, facing(dir, (float) (i * .9)), vec(Math.max(.05f, 1.5f * cs)), 1);
+            poseFx(c2, tip.clone().add(dir.clone().multiply(.6)), facing(dir, (float) (-i * 1.3)), vec(Math.max(.05f, .9f * cs)), 1);
             if (i % 2 == 0) w.spawnParticle(Particle.DUST, tip, 2, .3, .3, .3, 0, new Particle.DustOptions(Color.fromRGB(240, 220, 255), 1.6f));
             if (i % 10 == 0) snd(w, tip, Sound.BLOCK_BEACON_AMBIENT, .6f, 1.8f);
             if (i % 5 == 0) {
@@ -2241,10 +2336,10 @@ final class ClassSkills implements Listener {
         return v.lengthSquared() < 1e-6 ? dir.clone() : v.normalize();
     }
 
-    /** 청룡의 숨결: after the 3 s charge a dragon head appears above the cast spot (fixed, faces the cast direction) and breathes blue flame in a 16 block 60 degree cone for 5 s (45% / 0.25 s + burning). */
-    private void dragon(Player p) {
+    /** 청룡의 진노: after the 3 s charge a dragon head appears above the cast spot (fixed, faces the cast direction) and breathes blue flame in a 16 block 60 degree cone for 5 s (45% / 0.25 s + burning). */
+    private void dragon(Player p, Job job) {
         World w = p.getWorld();
-        double dmg = power(p, Job.MAGE) * .45;
+        double dmg = power(p, job) * .45;
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
         Location eye0 = p.getEyeLocation();
         Vector d0 = eye0.getDirection().normalize();
@@ -2279,7 +2374,7 @@ final class ClassSkills implements Listener {
                 Vector right = d.clone().crossProduct(new Vector(0, 1, 0));
                 if (right.lengthSquared() > 1e-6) d.rotateAroundAxis(right.normalize(), Math.toRadians(rnd.nextDouble(-20, 20)));
                 Location at = mouth.clone().add(d.multiply(.8 + rnd.nextDouble() * 15));
-                if (n % 2 == 0) w.spawnParticle(Particle.SOUL_FIRE_FLAME, at, 1, .1, .1, .1, .01);
+                if (n % 2 == 0) w.spawnParticle(job == Job.ARCHER ? Particle.ELECTRIC_SPARK : Particle.SOUL_FIRE_FLAME, at, 1, .1, .1, .1, .01);
                 else w.spawnParticle(Particle.DUST, at, 1, .1, .1, .1, 0, new Particle.DustOptions(n % 4 == 1 ? blue : cyan, 1.4f));
             }
             if (i % 10 == 0) snd(w, mouth, Sound.ENTITY_BLAZE_SHOOT, .6f, .6f);
@@ -2301,6 +2396,498 @@ final class ClassSkills implements Listener {
         if (d == null) return;
         Vector t = aim.clone().multiply(4.0 * (base - sz) / 16.0);
         tween(d, after, dur, new Vector3f((float) t.getX(), (float) t.getY(), (float) t.getZ()), facing(aim, roll), new Vector3f(sx, sy, sz));
+    }
+
+    // ---------------------------------------------------------------- 2026-11-20 skill rework (user's sheet)
+
+    /**
+     * 만월의 추억 (m_moon): after the 1 s charge a round full moon (fx_full_moon) appears high above the aimed point and plunges onto
+     * it like a meteor (7 ticks); the impact flashes, throws a pale shockwave and hits everything within 4.5 blocks 3 times (140%).
+     */
+    private void moon(Player p) {
+        World w = p.getWorld();
+        Location c = aimPoint(p, 24);
+        Vector back = p.getEyeLocation().getDirection().setY(0);
+        if (back.lengthSquared() < 1e-6) back = new Vector(0, 0, 1);
+        back.normalize().multiply(-6);
+        Location from = c.clone().add(back).add(0, 22, 0), land = c.clone().add(0, 1.6, 0);
+        double dmg = power(p, Job.MAGE) * 1.4;
+        Color pale = Color.fromRGB(255, 244, 200), lav = Color.fromRGB(200, 170, 255);
+        ItemDisplay moon = fx("full_moon", from, new Quaternionf(), vec(.2f), null, 30);
+        if (moon != null) { moon.setGlowing(true); moon.setGlowColorOverride(Color.fromRGB(255, 246, 210)); }
+        tween(moon, 1, 2, new Vector3f(), new Quaternionf(), vec(3.4f));
+        snd(w, c, Sound.BLOCK_BEACON_POWER_SELECT, 1.2f, 1.8f);
+        snd(w, c, Sound.ENTITY_WITHER_SHOOT, .6f, .6f);
+        ring(c.clone().add(0, .1, 0), 4.5, 36, at -> w.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(lav, 1.2f))); // where it lands
+        Bukkit.getScheduler().runTaskLater(plugin, () -> fall(moon, from, land, 7, at -> {
+            w.spawnParticle(Particle.DUST, at, 6, .9, .9, .9, 0, new Particle.DustOptions(pale, 1.8f));
+            w.spawnParticle(Particle.END_ROD, at, 3, .7, .7, .7, .02);
+            w.spawnParticle(Particle.DUST, at.clone().add(0, 1.5, 0), 4, .5, .8, .5, 0, new Particle.DustOptions(lav, 1.4f));
+        }, () -> {
+            kill(moon);
+            snd(w, c, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, .8f);
+            snd(w, c, Sound.BLOCK_AMETHYST_BLOCK_BREAK, 1.2f, .6f);
+            w.spawnParticle(Particle.EXPLOSION_EMITTER, c.clone().add(0, .5, 0), 1, 0, 0, 0, 0);
+            w.spawnParticle(Particle.DUST, c.clone().add(0, .6, 0), 60, 2.2, .5, 2.2, 0, new Particle.DustOptions(pale, 1.8f));
+            shockwave(c, lav, pale, false);
+            run(3, 3, k -> {
+                for (LivingEntity t : near(p, c.clone().add(0, 1, 0), 4.5)) {
+                    hit(p, t, dmg);
+                    w.spawnParticle(Particle.END_ROD, t.getBoundingBox().getCenter().toLocation(w), 6, .3, .3, .3, .05);
+                }
+                return !p.isOnline();
+            }, null);
+        }), 3);
+    }
+
+    /** 광속 찌르기 (w_thrust, boss): an instant lunge that rips through everything in a 9 block line (45% x 5). */
+    private void thrust(Player p) {
+        World w = p.getWorld();
+        Location eye = p.getEyeLocation();
+        Vector dir = eye.getDirection().normalize();
+        double len = blockLen(p, eye, dir, 9);
+        List<LivingEntity> hits = along(p, eye, dir, len, 1.3);
+        phantomAct(p, Job.WARRIOR, true);
+        for (double s = .8; s <= len; s += .22) {
+            Location c = eye.clone().add(dir.clone().multiply(s)).add(0, -.3, 0);
+            w.spawnParticle(Particle.DUST, c, 1, 0, 0, 0, 0, new Particle.DustOptions(s > len - 1.5 ? Color.fromRGB(255, 90, 80) : Color.fromRGB(255, 246, 236), .5f));
+        }
+        Location tipAt = eye.clone().add(dir.clone().multiply(Math.max(1, len - .3))).add(0, -.3, 0);
+        w.spawnParticle(Particle.CRIT, tipAt, 6, .1, .1, .1, .35);
+        snd(w, eye, Sound.ENTITY_PLAYER_ATTACK_SWEEP, 1f, 1.8f);
+        snd(w, eye, Sound.ITEM_TRIDENT_THROW, .9f, 1.6f);
+        Vector lunge = dir.clone().setY(0);
+        if (lunge.lengthSquared() > 1e-4) { fallImmune.put(p.getUniqueId(), System.currentTimeMillis() + 1_500); p.setVelocity(lunge.normalize().multiply(1.1).setY(.12)); }
+        double dmg = power(p, Job.WARRIOR) * .45;
+        for (LivingEntity t : hits) {
+            burst(p, t, dmg, 5);
+            w.spawnParticle(Particle.SWEEP_ATTACK, t.getBoundingBox().getCenter().toLocation(w), 2, .2, .2, .2, 0);
+        }
+    }
+
+    /** 유성우 (w_meteor, boss ult): for 5 s sword-energy meteors rain around the aimed point (radius 6), 70% in radius 2.5 per impact. */
+    private void meteorShower(Player p) {
+        Location c = aimPoint(p, 20);
+        World w = c.getWorld();
+        double dmg = power(p, Job.WARRIOR) * .7;
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        snd(w, c, Sound.ENTITY_WITHER_SHOOT, .7f, 1.4f);
+        snd(w, c, Sound.BLOCK_BEACON_POWER_SELECT, 1f, .7f);
+        // judgement circle: golden octagon sigil on the ground (radius ~6), a counter-turning halo above, and one great sword planted in the middle
+        sigil("ult_sigil_gold", c.clone().add(0, .06, 0), 4.1f, 104, .35f);
+        ItemDisplay halo = sigil("ult_halo_gold", c.clone().add(0, 5.2, 0), 2.4f, 104, -.7f);
+        Location top = c.clone().add(0, 12, 0), low = c.clone().add(0, .7, 0); // like 대검 꽂기: origin above ground so the point is buried
+        ItemDisplay great = fx("giant_sword", top, new Quaternionf(), vec(1.4f), null, 110);
+        if (great != null) { great.setTeleportDuration(4); Bukkit.getScheduler().runTaskLater(plugin, () -> moveFx(great, low), 1); }
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            snd(w, c, Sound.ITEM_MACE_SMASH_GROUND, 1.2f, .7f);
+            w.spawnParticle(Particle.FLASH, c.clone().add(0, .5, 0), 1, 0, 0, 0, 0);
+            ring(c.clone().add(0, .2, 0), 2.5, 28, at -> w.spawnParticle(Particle.DUST, at, 1, 0, .05, 0, 0, new Particle.DustOptions(Color.fromRGB(255, 220, 120), 1.4f)));
+        }, 5);
+        Particle.DustOptions gold = new Particle.DustOptions(Color.fromRGB(255, 200, 60), 1.5f), pale = new Particle.DustOptions(Color.fromRGB(255, 241, 184), 1.1f);
+        run(5, 20, i -> {
+            if (!p.isOnline()) return true;
+            if (halo != null && halo.isValid()) w.spawnParticle(Particle.DUST, c.clone().add(rnd.nextDouble(-2.5, 2.5), 5.2, rnd.nextDouble(-2.5, 2.5)), 1, 0, 0, 0, 0, pale);
+            for (int s = 0; s < 3; s++) w.spawnParticle(Particle.DUST, c.clone().add(rnd.nextDouble(-1, 1), 1 + rnd.nextDouble() * 4, rnd.nextDouble(-1, 1)), 1, 0, .2, 0, 0, s == 0 ? pale : gold);
+            for (int k = 0; k < 2; k++) {
+                double a = rnd.nextDouble() * Math.PI * 2, r = Math.sqrt(rnd.nextDouble()) * 6;
+                Location land = c.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r);
+                Location from = land.clone().add(-3, 13, -3);
+                Vector fallDir = land.toVector().subtract(from.toVector()).normalize();
+                // 검기 유성: a red sword-aura crescent standing along its fall line, trailing red streaks
+                ItemDisplay sword = fx("slash_red", from, facing(fallDir, (float) (Math.PI / 2)), new Vector3f(.8f, .35f, 1.3f), null, 12);
+                fall(sword, from, land, 6, at -> {
+                    w.spawnParticle(Particle.DUST, at, 3, .15, .15, .15, 0, new Particle.DustOptions(Color.fromRGB(255, 70, 60), 1.4f));
+                    w.spawnParticle(Particle.DUST, at, 1, .05, .05, .05, 0, new Particle.DustOptions(Color.fromRGB(255, 220, 210), .9f));
+                }, () -> {
+                    kill(sword);
+                    w.spawnParticle(Particle.EXPLOSION, land.clone().add(0, .4, 0), 1, 0, 0, 0, 0);
+                    w.spawnParticle(Particle.DUST, land.clone().add(0, .3, 0), 24, 1.2, .2, 1.2, 0, new Particle.DustOptions(Color.fromRGB(255, 80, 60), 1.4f));
+                    shockwave(land, Color.fromRGB(255, 90, 70), Color.fromRGB(255, 220, 200));
+                    ring(land.clone().add(0, .15, 0), 1.6, 16, at -> w.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, pale));
+                    snd(w, land, Sound.ENTITY_GENERIC_EXPLODE, .5f, 1.4f);
+                    for (LivingEntity t : near(p, land, 2.5)) hit(p, t, dmg);
+                });
+            }
+            return false;
+        }, () -> kill(great));
+    }
+
+    /** 마력비 (m_mrain, boss): thin mana droplets rain on the aimed area (radius 4.5) for 3 s, 35% every 0.4 s. */
+    private void manaRain(Player p) {
+        Location c = aimPoint(p, 20);
+        World w = c.getWorld();
+        double dmg = power(p, Job.MAGE) * .35;
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        Color purple = Color.fromRGB(176, 100, 255), pink = Color.fromRGB(230, 160, 255);
+        run(2, 30, i -> {
+            if (!p.isOnline()) return true;
+            w.spawnParticle(Particle.DUST, c.clone().add(0, 8, 0), 10, 3, .2, 3, 0, new Particle.DustOptions(purple, 2f));
+            for (int k = 0; k < 8; k++) {
+                double a = rnd.nextDouble() * Math.PI * 2, r = Math.sqrt(rnd.nextDouble()) * 4.5;
+                Location top = c.clone().add(Math.cos(a) * r, 8, Math.sin(a) * r);
+                for (double y = 0; y < 8; y += .5) w.spawnParticle(Particle.DUST, top.clone().add(0, -y, 0), 1, 0, 0, 0, 0, new Particle.DustOptions(k % 2 == 0 ? purple : pink, .7f));
+            }
+            if (i % 4 == 0) {
+                snd(w, c, Sound.BLOCK_AMETHYST_BLOCK_STEP, .7f, 1.5f);
+                for (LivingEntity t : near(p, c, 4.5)) hit(p, t, dmg);
+            }
+            return false;
+        }, null);
+    }
+
+    /**
+     * 마력창 (m_spear, boss): purple mana lances (fx_mana_lance) burst out of the ground one after another along a 24 block line
+     * (90% each, knocks up). The line homes: every next lance steps toward the enemy nearest the crosshair (turning up to 35 degrees).
+     */
+    private void manaSpear(Player p) {
+        World w = p.getWorld();
+        Vector dir = p.getEyeLocation().getDirection().setY(0);
+        if (dir.lengthSquared() < 1e-6) dir = new Vector(0, 0, 1);
+        dir.normalize();
+        Location base = p.getLocation();
+        double dmg = power(p, Job.MAGE) * .9;
+        Location eye = p.getEyeLocation();
+        LivingEntity lock = aimTarget(p, eye, eye.getDirection().normalize(), 24, true);
+        Location[] at0 = {base.clone()};
+        Vector[] dv = {dir.clone()};
+        final double maxTurn = Math.toRadians(35);
+        run(2, 12, i -> {
+            if (!p.isOnline()) return true;
+            if (lock != null && lock.isValid() && !lock.isDead()) { // steer toward the target
+                Vector want = lock.getLocation().toVector().subtract(at0[0].toVector()).setY(0);
+                if (want.lengthSquared() > 1) {
+                    want.normalize();
+                    double ang = dv[0].angle(want);
+                    if (ang <= maxTurn) dv[0] = want;
+                    else { double sgn = Math.signum(dv[0].getX() * want.getZ() - dv[0].getZ() * want.getX()); dv[0] = dv[0].clone().rotateAroundY(-sgn * maxTurn).normalize(); }
+                }
+            }
+            Location at = at0[0].clone().add(dv[0].clone().multiply(2));
+            at0[0] = at.clone();
+            at.setY(w.getHighestBlockYAt(at) + 1);
+            if (Math.abs(at.getY() - base.getY()) > 4) at.setY(base.getY());
+            ItemDisplay spear = fx("mana_lance", at.clone().add(0, -1, 0), facing(new Vector(0, 1, 0), 0), vec(1.4f), new ItemStack(Material.AMETHYST_SHARD), 14);
+            tween(spear, 1, 3, new Vector3f(0, 1.8f, 0), facing(new Vector(0, 1, 0), 0), vec(1.6f));
+            tween(spear, 10, 3, new Vector3f(0, -.5f, 0), facing(new Vector(0, 1, 0), 0), vec(.2f));
+            w.spawnParticle(Particle.DUST, at.clone().add(0, .8, 0), 16, .3, .8, .3, 0, new Particle.DustOptions(Color.fromRGB(176, 100, 255), 1.4f));
+            w.spawnParticle(Particle.BLOCK, at, 10, .4, .1, .4, 0, Material.AMETHYST_BLOCK.createBlockData());
+            snd(w, at, Sound.BLOCK_AMETHYST_CLUSTER_BREAK, .9f, .8f);
+            for (LivingEntity t : near(p, at.clone().add(0, 1, 0), 1.9)) {
+                hit(p, t, dmg);
+                if (t.isValid()) t.setVelocity(t.getVelocity().setY(.55));
+            }
+            return false;
+        }, null);
+    }
+
+    /** 백호 강림 (a_tiger, boss buff): for 15 s a white tiger spirit adds an extra claw-arrow hit (60% x 2) to every basic attack. */
+    private final Map<UUID, Long> tigerUntil = new HashMap<>();
+    private void whiteTiger(Player p) {
+        long until = System.currentTimeMillis() + CombatStats.duration(p, 15_000);
+        tigerUntil.put(p.getUniqueId(), until);
+        World w = p.getWorld();
+        snd(w, p.getLocation(), Sound.ENTITY_POLAR_BEAR_WARNING, 1.2f, .7f); // 어흥: a deep growl (the ravager roar sounded like a villager)
+        snd(w, p.getLocation(), Sound.ENTITY_WARDEN_ROAR, .25f, 1.6f);
+        buffBurst(p, Color.fromRGB(235, 245, 255), Particle.END_ROD);
+        run(10, 30, i -> {
+            if (!p.isOnline() || p.isDead() || tigerUntil.getOrDefault(p.getUniqueId(), 0L) != until) return true;
+            ring(p.getLocation().add(0, .15, 0), .9, 8, at -> w.spawnParticle(Particle.DUST, at.add(0, Math.random() * 1.6, 0), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(220, 240, 255), 1f)));
+            return false;
+        }, null);
+    }
+    private void tigerExtra(Player p) {
+        World w = p.getWorld();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (!ready(p, w)) return;
+            Location eye = p.getEyeLocation();
+            Vector d = eye.getDirection().normalize(); // part of the basic attack: straight, no homing
+            List<LivingEntity> hits = beam(p, eye, d, 25, .5, 1, Particle.END_ROD, Color.fromRGB(235, 245, 255));
+            Location from = muzzle(p, Job.ARCHER);
+            for (double s = 0; s <= Math.min(beamLen, 25); s += .5)
+                w.spawnParticle(Particle.DUST, from.clone().add(toward(from, eye, d, beamLen).multiply(s)), 1, .04, .04, .04, 0, new Particle.DustOptions(Color.fromRGB(255, 255, 255), .9f));
+            w.spawnParticle(Particle.END_ROD, from, 6, .15, .15, .15, .05);
+            snd(w, eye, Sound.ENTITY_POLAR_BEAR_WARNING, .45f, .85f); // 어흥 (growl)
+            for (LivingEntity t : hits) burst(p, t, power(p, Job.ARCHER) * .6, 2);
+        }, 3);
+    }
+
+    /** 현무의 가오 (a_turtle, boss buff): 30 s of speed, +20% attack, -10% damage taken and regeneration. */
+    private void blackTortoise(Player p) {
+        long ms = CombatStats.duration(p, 30_000), until = System.currentTimeMillis() + ms;
+        atkBuff.put(p.getUniqueId(), until);
+        will.put(p.getUniqueId(), until);
+        int ticks = (int) (ms / 50);
+        p.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, ticks, 0, false, true));
+        p.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, ticks, 0, false, true));
+        World w = p.getWorld();
+        snd(w, p.getLocation(), Sound.ITEM_ARMOR_EQUIP_TURTLE, 1f, .8f);
+        snd(w, p.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, .6f, 1.3f);
+        buffBurst(p, Color.fromRGB(40, 90, 70), Particle.HAPPY_VILLAGER);
+        Color shell = Color.fromRGB(60, 120, 90);
+        run(10, (int) Math.max(1, ms / 500), i -> {
+            if (!p.isOnline() || p.isDead() || atkBuff.getOrDefault(p.getUniqueId(), 0L) != until) return true;
+            Location c = p.getLocation();
+            for (int k = 0; k < 6; k++) { double a = i * .4 + k * Math.PI / 3; w.spawnParticle(Particle.DUST, c.clone().add(Math.cos(a) * 1, 1.2, Math.sin(a) * 1), 1, 0, 0, 0, 0, new Particle.DustOptions(shell, 1.1f)); }
+            return false;
+        }, null);
+    }
+
+    /**
+     * 분신 무기 (every class's basic attack): a small glowing phantom weapon (fx_phantom_sword / bow / staff - its own model, not the
+     * held item) floats in front of the player's right side and does the basic attack from there: warrior red sword chops, archer
+     * green bow shoots a green arrow, mage purple staff shoots a purple orb. It stays while the player keeps attacking (follows the
+     * view every tick) and vanishes 2.5 s after the last basic attack. Returns the display (null when none could spawn).
+     */
+    private final Map<UUID, ItemDisplay> phantoms = new HashMap<>();
+    private final Map<UUID, Long> phantomLast = new HashMap<>(), phantomSwing = new HashMap<>();
+    private static final float PHANTOM_SCALE = .95f;
+    private ItemDisplay phantom(Player p, Job job, Vector look) {
+        UUID id = p.getUniqueId();
+        phantomLast.put(id, System.currentTimeMillis());
+        String model = switch (job) { case WARRIOR -> "phantom_sword"; case ARCHER -> "phantom_bow"; case MAGE -> "phantom_staff"; };
+        ItemDisplay d = phantoms.get(id);
+        if (d != null && d.isValid() && model.equals(d.getScoreboardTags().stream().filter(t -> t.startsWith("pipi_ph_")).map(t -> t.substring(8)).findFirst().orElse(""))) return d;
+        kill(phantoms.remove(id));
+        Location at = phantomSide(p, look);
+        d = fx(model, at, phantomRot(job, look, 0), vec(.05f), new ItemStack(Material.AMETHYST_SHARD), 260);
+        if (d == null) return null;
+        d.addScoreboardTag("pipi_ph_" + model);
+        tween(d, 0, 3, new Vector3f(), phantomRot(job, look, 0), vec(PHANTOM_SCALE)); // pop in
+        Color col = phantomColor(job);
+        p.getWorld().spawnParticle(Particle.DUST, at, 8, .2, .2, .2, 0, new Particle.DustOptions(col, 1f));
+        phantoms.put(id, d);
+        final ItemDisplay shown = d;
+        new org.bukkit.scheduler.BukkitRunnable() {
+            @Override public void run() {
+                long now = System.currentTimeMillis();
+                if (!p.isOnline() || p.isDead() || !shown.isValid() || phantoms.get(id) != shown || now > phantomSwing.getOrDefault(id, 0L) + 150 && now - phantomLast.getOrDefault(id, 0L) > 300 || !p.getWorld().equals(shown.getWorld())) {
+                    if (phantoms.get(id) == shown) phantoms.remove(id);
+                    kill(shown); cancel(); return;
+                }
+                Vector lk = p.getEyeLocation().getDirection().normalize();
+                shown.teleport(flat(phantomSide(p, lk)));
+                if (now > phantomSwing.getOrDefault(id, 0L)) {
+                    shown.setInterpolationDelay(0); shown.setInterpolationDuration(2);
+                    shown.setTransformation(new Transformation(new Vector3f(), phantomRot(job, lk, 0), vec(PHANTOM_SCALE), new Quaternionf()));
+                }
+                if (now % 400 < 50) shown.getWorld().spawnParticle(Particle.DUST, shown.getLocation(), 1, .1, .15, .1, 0, new Particle.DustOptions(col, .6f));
+            }
+        }.runTaskTimer(plugin, 1, 1);
+        return d;
+    }
+
+    /**
+     * The phantom weapon beside the player swings (basic attacks and skills): the red sword chops diagonally (alternating sides),
+     * the green bow kicks back with the shot, the purple staff thrusts forward with a twist. The follow-the-view tick waits until
+     * the swing is over.
+     */
+    private boolean phantomFlip;
+    private void phantomAct(Player p, Job job) { phantomAct(p, job, phantomFlip = !phantomFlip); }
+
+    private void phantomAct(Player p, Job job, boolean flip) {
+        Vector look = p.getEyeLocation().getDirection().normalize();
+        ItemDisplay g = phantom(p, job, look);
+        if (g == null) return;
+        phantomSwing.put(p.getUniqueId(), System.currentTimeMillis() + 420);
+        Vector f = look.clone().setY(0);
+        if (f.lengthSquared() < 1e-6) f = new Vector(0, 0, 1); else f.normalize();
+        Vector r = new Vector(-f.getZ(), 0, f.getX());
+        java.util.function.BiFunction<Double, Double, Vector3f> off = (side, up) -> new Vector3f((float) (r.getX() * side), (float) (double) up, (float) (r.getZ() * side));
+        Vector3f back = new Vector3f((float) -look.getX(), (float) -look.getY(), (float) -look.getZ());
+        switch (job) {
+            case WARRIOR -> {
+                // the sword (anchored on the left) is raised on one side, then travels across the front along the cut to the other
+                // side, blade leading, and floats back. flip = from upper-left to lower-right, else upper-right to lower-left.
+                double from = flip ? -.2 : 2.5, to = flip ? 2.5 : -.2;
+                float roll = flip ? .9f : -.9f;
+                tween(g, 0, 1, new Vector3f(off.apply(from, .75)).add(new Vector3f(back).mul(.2f)), phantomRot(job, look, roll).rotateX(-1.1f), vec(PHANTOM_SCALE));
+                tween(g, 2, 3, new Vector3f(off.apply(to, -.55)).add(new Vector3f(back).mul(-.6f)), phantomRot(job, look, -roll).rotateX(1.5f), vec(PHANTOM_SCALE * 1.1f));
+                tween(g, 6, 4, new Vector3f(), phantomRot(job, look, 0), vec(PHANTOM_SCALE));
+            }
+            case ARCHER -> {
+                tween(g, 0, 1, new Vector3f(back).mul(.35f), phantomRot(job, look, 0).rotateX(.25f), vec(PHANTOM_SCALE * 1.05f));
+                tween(g, 2, 3, new Vector3f(), phantomRot(job, look, 0), vec(PHANTOM_SCALE));
+            }
+            case MAGE -> {
+                tween(g, 0, 1, new Vector3f(back).mul(.25f), phantomRot(job, look, .25f).rotateX(-.15f), vec(PHANTOM_SCALE));      // draw back
+                tween(g, 2, 2, new Vector3f(back).mul(-.55f), phantomRot(job, look, -.25f).rotateX(.12f), vec(PHANTOM_SCALE * 1.08f)); // orb-first thrust
+                tween(g, 5, 3, new Vector3f(), phantomRot(job, look, 0), vec(PHANTOM_SCALE));
+            }
+        }
+    }
+
+    /** Wind-up: the phantom weapon appears, draws back and glows in the class colour until the cast (then the cast's own act plays). */
+    private void phantomHold(Player p, Job job, int ticks) {
+        Vector look = p.getEyeLocation().getDirection().normalize();
+        ItemDisplay g = phantom(p, job, look);
+        if (g == null) return;
+        phantomSwing.put(p.getUniqueId(), System.currentTimeMillis() + ticks * 50L + 150);
+        Vector3f back = new Vector3f((float) -look.getX(), (float) -look.getY(), (float) -look.getZ());
+        tween(g, 0, Math.max(1, ticks), new Vector3f(back).mul(.3f), phantomRot(job, look, 0), vec(PHANTOM_SCALE * 1.06f));
+        g.setGlowing(true);
+        g.setGlowColorOverride(phantomColor(job));
+        Bukkit.getScheduler().runTaskLater(plugin, () -> { if (g.isValid()) g.setGlowing(false); }, Math.max(1, ticks));
+        if (job == Job.MAGE) { // motes spiral into the orb
+            run(1, ticks, i -> {
+                if (!g.isValid() || !p.isOnline()) return true;
+                Location c = muzzle(p, Job.MAGE);
+                double rad = .8 * (1 - i / (double) ticks) + .1;
+                for (int k = 0; k < 3; k++) {
+                    double b = i * .9 + k * 2.094;
+                    p.getWorld().spawnParticle(Particle.DUST, c.clone().add(Math.cos(b) * rad, Math.sin(b * 1.3) * rad * .6, Math.sin(b) * rad), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(190, 120, 255), .8f));
+                }
+                return false;
+            }, null);
+        }
+    }
+
+    /** Archer basic charge: the phantom bow draws back and glows while green motes gather on it. */
+    private void phantomDraw(Player p, int ticks) {
+        Vector look = p.getEyeLocation().getDirection().normalize();
+        ItemDisplay g = phantom(p, Job.ARCHER, look);
+        if (g == null) return;
+        phantomSwing.put(p.getUniqueId(), System.currentTimeMillis() + ticks * 50L + 100);
+        Vector3f back = new Vector3f((float) -look.getX(), (float) -look.getY(), (float) -look.getZ());
+        tween(g, 0, ticks, new Vector3f(back).mul(.3f), phantomRot(Job.ARCHER, look, 0), vec(PHANTOM_SCALE * 1.08f));
+        g.setGlowing(true);
+        g.setGlowColorOverride(Color.fromRGB(120, 255, 140));
+        run(1, ticks, i -> {
+            if (!g.isValid()) return true;
+            Location c = g.getLocation();
+            double a = i * .9, rad = .7 * (1 - i / (double) ticks) + .1;
+            for (int k = 0; k < 3; k++) {
+                double b = a + k * 2.094;
+                p.getWorld().spawnParticle(Particle.DUST, c.clone().add(Math.cos(b) * rad, Math.sin(b) * rad * .6, Math.sin(b) * rad), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(120, 255, 140), .7f));
+            }
+            if (i == ticks - 1) g.setGlowing(false);
+            return false;
+        }, null);
+    }
+
+    /** Visual launch point of archer / mage attacks: the tip of the phantom weapon beside the player (the bow's arrow rest, the staff's orb). */
+    private static Location muzzle(Player p, Job job) {
+        Vector look = p.getEyeLocation().getDirection().normalize();
+        Location a = phantomSide(p, look);
+        return job == Job.MAGE ? a.add(look.clone().multiply(.38)).add(0, .17, 0) : a.add(look.clone().multiply(.25));
+    }
+
+    /** Unit direction from {@code from} to the end of the eye ray (eye + dir * len). */
+    private static Vector toward(Location from, Location eye, Vector dir, double len) {
+        Vector v = eye.toVector().add(dir.clone().multiply(len)).subtract(from.toVector());
+        return v.lengthSquared() < 1e-6 ? dir.clone() : v.normalize();
+    }
+
+    /** A skill arrow leaving the phantom bow toward the end of the eye ray (visual; hits are traced from the eye). */
+    private void bowArrow(Player p, Location eye, Vector dir, double len, float scale, int ticks) {
+        phantomAct(p, Job.ARCHER, false);
+        Location from = muzzle(p, Job.ARCHER);
+        bigArrow(from, toward(from, eye, dir, len), scale, from.distance(eye.clone().add(dir.clone().multiply(len))), ticks);
+    }
+
+    private static Quaternionf phantomRot(Job job, Vector look, float roll) {
+        Quaternionf q = facing(look, roll);
+        return job == Job.ARCHER ? q.rotateY((float) Math.PI) : job == Job.MAGE ? q.rotateX(1.15f) : q;
+    }
+
+    private static Color phantomColor(Job job) {
+        return switch (job) { case WARRIOR -> Color.fromRGB(255, 60, 60); case ARCHER -> Color.fromRGB(90, 230, 110); case MAGE -> Color.fromRGB(176, 90, 255); };
+    }
+
+    /** Where the phantom weapon floats: in front of the player's left side, near eye level (clear of the held weapon on the right). */
+    private static Location phantomSide(Player p, Vector look) {
+        Vector f = look.clone().setY(0);
+        if (f.lengthSquared() < 1e-6) f = new Vector(0, 0, 1); else f.normalize();
+        Vector right = new Vector(-f.getZ(), 0, f.getX());
+        return p.getEyeLocation().add(right.multiply(-1.15)).add(f.multiply(1.6)).add(0, -.2, 0);
+    }
+
+    /** Archer basic: the green phantom bow beside the archer shoots a green arrow at the aimed point (45% x 2, 25 blocks). */
+    private static final int ARCHER_CHARGE = 8;
+    private void phantomArrow(Player p) {
+        phantomDraw(p, ARCHER_CHARGE);
+        snd(p.getWorld(), p.getLocation(), Sound.ITEM_CROSSBOW_LOADING_MIDDLE, .6f, 1.4f);
+        World startWorld = p.getWorld();
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            if (p.isOnline() && !p.isDead() && p.getWorld().equals(startWorld) && combatJob(p) == Job.ARCHER) looseArrow(p);
+        }, ARCHER_CHARGE);
+    }
+
+    private void looseArrow(Player p) {
+        World w = p.getWorld();
+        Location eye = p.getEyeLocation();
+        Vector look = eye.getDirection().normalize();
+        Location from = muzzle(p, Job.ARCHER);
+        var hitPos = w.rayTraceBlocks(eye, look, 25, FluidCollisionMode.NEVER, true);
+        Location goal = hitPos == null ? eye.clone().add(look.clone().multiply(25)) : hitPos.getHitPosition().toLocation(w); // basic: straight, no homing
+        Vector d = goal.toVector().subtract(from.toVector());
+        if (d.lengthSquared() < 1e-6) d = look.clone(); else d.normalize();
+        phantomAct(p, Job.ARCHER, false);
+        List<LivingEntity> hits = beam(p, from, d, 26, .5, 1, Particle.HAPPY_VILLAGER, Color.fromRGB(90, 230, 110));
+        bigArrow(from.clone().add(d.clone().multiply(.5)), d, .3f, beamLen, 4);
+        snd(w, from, Sound.ENTITY_ARROW_SHOOT, .7f, 1.3f);
+        double dmg = power(p, Job.ARCHER) * BASIC_ARCHER;
+        for (LivingEntity t : hits) burst(p, t, dmg, 2);
+    }
+
+    /** Mage basic: the purple phantom staff beside the mage shoots a purple orb (40% x 3). */
+    private void phantomOrb(Player p) {
+        World w = p.getWorld();
+        Location eye = p.getEyeLocation();
+        Vector look = eye.getDirection().normalize();
+        Location from = muzzle(p, Job.MAGE);
+        var hitPos = w.rayTraceBlocks(eye, look, 20, FluidCollisionMode.NEVER, true);
+        Location goal = hitPos == null ? eye.clone().add(look.clone().multiply(20)) : hitPos.getHitPosition().toLocation(w); // basic: straight, no homing
+        Vector d = goal.toVector().subtract(from.toVector());
+        if (d.lengthSquared() < 1e-6) d = look.clone(); else d.normalize();
+        phantomAct(p, Job.MAGE);
+        w.spawnParticle(Particle.WITCH, from, 5, .1, .1, .1, 0);
+        snd(w, from, Sound.BLOCK_AMETHYST_BLOCK_CHIME, .6f, 1.6f);
+        snd(w, from, Sound.ENTITY_EVOKER_CAST_SPELL, .3f, 1.7f);
+        orb(p, from.clone().add(d.clone().multiply(.5)), d, 1.5, 14, power(p, Job.MAGE) * BASIC_MAGE, null, null, .7f);
+    }
+
+    /**
+     * 청룡의 진노 (a_dragon, archer boss ult): after the 3 s charge, blue lightning bolts (fx_blue_bolt: glowing orb, jagged bolt,
+     * spark splash) strike all around the archer for 5 s - 2 bolts every 0.2 s within 9 blocks, aimed at enemies when there are any
+     * (45% in radius 1.8 per bolt).
+     */
+    private void blueThunder(Player p) {
+        World w = p.getWorld();
+        double dmg = power(p, Job.ARCHER) * .45;
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        Color cyan = Color.fromRGB(98, 214, 255), pale = Color.fromRGB(200, 246, 255);
+        snd(w, p.getLocation(), Sound.ITEM_TRIDENT_THUNDER, .7f, 1.4f);
+        snd(w, p.getLocation(), Sound.ENTITY_ENDER_DRAGON_GROWL, .3f, 1.8f);
+        run(4, 25, i -> {
+            if (!ready(p, w)) return true;
+            Location c = p.getLocation();
+            List<LivingEntity> foes = near(p, c, 11.7);
+            for (int k = 0; k < 2; k++) {
+                Location at;
+                if (!foes.isEmpty()) at = foes.get(rnd.nextInt(foes.size())).getLocation(); // homing: an enemy nearby is always struck
+                else { double a = rnd.nextDouble() * Math.PI * 2, r = 3.2 + rnd.nextDouble() * 8.5; at = c.clone().add(Math.cos(a) * r, 0, Math.sin(a) * r); }
+                int gy = w.getHighestBlockYAt(at);
+                if (Math.abs(gy + 1 - c.getY()) <= 5) at.setY(gy + 1);
+                // a long bolt straight out of the sky (~12 blocks: model foot y -8 sits on the ground at y-scale ys), full size at once,
+                // one flicker, gone after 4 ticks
+                float ys = 4.9f + rnd.nextFloat() * .6f, xs = 1.5f + rnd.nextFloat() * .3f;
+                Quaternionf yaw = new Quaternionf().rotateY((float) (rnd.nextDouble() * Math.PI * 2));
+                ItemDisplay bolt = fx("blue_bolt", at.clone().add(0, ys, 0), yaw, new Vector3f(xs, ys, xs), null, 3); // removed the tick it has shrunk
+                tween(bolt, 1, 1, new Vector3f(), new Quaternionf(yaw).rotateY(.5f), new Vector3f(xs * 1.2f, ys, xs * 1.2f)); // flicker
+                tween(bolt, 2, 1, new Vector3f(), yaw, new Vector3f(xs * .15f, ys, xs * .15f));                                // snap out, then gone
+                Bukkit.getScheduler().runTaskLater(plugin, () -> kill(bolt), 3); // fx() keeps displays at least 10 ticks - remove it right away
+                float s = 2.4f;
+                Location foot = at.clone().add(0, .2, 0);
+                w.spawnParticle(Particle.ELECTRIC_SPARK, foot, 20, .6, .2, .6, .25);
+                w.spawnParticle(Particle.DUST, foot, 14, .7, .15, .7, 0, new Particle.DustOptions(cyan, 1.6f));
+                w.spawnParticle(Particle.DUST, at.clone().add(0, s * 2.4, 0), 6, .2, .2, .2, 0, new Particle.DustOptions(pale, 2f));
+                w.spawnParticle(Particle.FLASH, at.clone().add(0, 1, 0), 1, 0, 0, 0, 0);
+                for (LivingEntity t : near(p, at, 1.8)) hit(p, t, dmg);
+            }
+            if (i % 2 == 0) snd(w, c, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, .45f, 1.5f + rnd.nextFloat() * .4f);
+            return false;
+        }, null);
     }
 
     // ---------------------------------------------------------------- dash jump
@@ -2438,8 +3025,14 @@ final class ClassSkills implements Listener {
             len = Math.min(len, hits.get(max - 1).getBoundingBox().getCenter().distance(start.toVector()) + .5);
         beamLen = len;
         World w = start.getWorld();
-        for (double s = .5; s <= len; s += .5) {
-            Location c = start.clone().add(dir.clone().multiply(s));
+        // archer / mage: the trail is drawn from the phantom weapon to where the eye ray ends (hits are still traced from the eye)
+        Job job = combatJob(p);
+        Location vis = job == Job.ARCHER || job == Job.MAGE ? muzzle(p, job) : start;
+        Location end = start.clone().add(dir.clone().multiply(len));
+        Vector vdir = toward(vis, start, dir, len);
+        double vlen = vis.distance(end);
+        for (double s = .5; s <= vlen; s += .5) {
+            Location c = vis.clone().add(vdir.clone().multiply(s));
             w.spawnParticle(particle, c, 1, 0, 0, 0, 0);
             w.spawnParticle(Particle.DUST, c, 1, .05, .05, .05, 0, new Particle.DustOptions(dust, 1f));
         }
@@ -2450,7 +3043,7 @@ final class ClassSkills implements Listener {
 
     /** Valid auto-aim candidate: an enemy that is not one of the caster's own entities. */
     private boolean aimable(Player p, Entity e) {
-        if (!enemy(p, e) || e.getScoreboardTags().contains("pipi_pet_worker")) return false;
+        if (!enemy(p, e) || e.getScoreboardTags().contains("pipi_pet_worker") || e.getScoreboardTags().contains("pipi_noaim")) return false; // raid vessels / orbs / crystals are never homed onto
         if (e instanceof org.bukkit.entity.Tameable t && t.isTamed() && p.equals(t.getOwner())) return false;
         return !p.getPassengers().contains(e) && !e.equals(p.getVehicle());
     }
@@ -2617,7 +3210,90 @@ final class ClassSkills implements Listener {
         tween(d, 5, 3, new Vector3f(), new Quaternionf(base).rotateY(sweep), new Vector3f(scale * 1.05f, scale * .2f, scale * 1.05f));
     }
 
+    /** Flat yaw rotation (plus a roll around the facing axis) for the horizontal fx_ult_* planes; texture top points along the yaw. */
+    private static Quaternionf flatRot(float yaw, float roll) { return new Quaternionf().rotateY(yaw).rotateZ(roll); }
+
+    /**
+     * Ultimate crescent: a flat gradient crescent (fx_ult_crescent) lying around {@code at}, swinging ~75 degrees in {@code spin}
+     * direction while it grows to {@code scale} (scale 1 = outer radius ~1.4 blocks), then flares wider and is gone (~8 ticks).
+     */
+    private void crescentSweep(Location at, float yaw, float roll, float spin, float scale) {
+        ItemDisplay d = fx("ult_crescent", at, flatRot(yaw - .75f * spin, roll), new Vector3f(scale * .55f, 1f, scale * .55f), null, 8);
+        tween(d, 1, 3, new Vector3f(), flatRot(yaw + .25f * spin, roll), new Vector3f(scale, 1f, scale));
+        tween(d, 4, 3, new Vector3f(), flatRot(yaw + .6f * spin, roll), new Vector3f(scale * 1.12f, 1f, scale * 1.12f));
+    }
+
+    /**
+     * Ground sigil (fx_ult_sigil_gold / ult_sigil_green, scale 1 = 3 blocks across): unfolds from small in 4 ticks, turns slowly
+     * for {@code life} ticks, then folds away. Returns the display (may be null) so callers can move it.
+     */
+    private ItemDisplay sigil(String id, Location at, float scale, int life, float turnPerSec) {
+        ItemDisplay d = fx(id, at, flatRot(0, 0), vec(scale * .2f), null, life + 6);
+        if (d == null) return null;
+        tween(d, 1, 4, new Vector3f(), flatRot(.4f * Math.signum(turnPerSec), 0), vec(scale));
+        int steps = Math.max(0, (life - 6) / 20);
+        for (int s = 1; s <= steps; s++) tween(d, 5 + (s - 1) * 20, 20, new Vector3f(), flatRot(.4f * Math.signum(turnPerSec) + turnPerSec * s, 0), vec(scale));
+        tween(d, life, 5, new Vector3f(), flatRot(.4f * Math.signum(turnPerSec) + turnPerSec * (steps + .3f), 0), vec(scale * .05f));
+        return d;
+    }
+
+    /** Light pillar (fx_ult_beam_green) shooting up from {@code at} to {@code height} blocks, held for {@code hold} ticks, then thinning out. */
+    private void lightPillar(Location at, float width, float height, int hold) {
+        ItemDisplay d = fx("ult_beam_green", at, new Quaternionf(), new Vector3f(width * .3f, .1f, width * .3f), null, hold + 12);
+        float sy = height / 1.5f;
+        tween(d, 1, 3, new Vector3f(), new Quaternionf(), new Vector3f(width, sy, width));
+        tween(d, 4 + hold, 6, new Vector3f(), new Quaternionf().rotateY(.8f), new Vector3f(.02f, sy * 1.1f, .02f));
+    }
+
     /** Short-lived slash (gone after ~6 ticks) for the basic attack. */
+    /**
+     * Warrior basic cut: a single razor-thin red line (~4 blocks, diagonal, alternating direction) that snaps across at the far end
+     * of the reach, with a few sparks. No wide arc.
+     */
+    private void lineSlash(Location at, Vector dir, Vector side, boolean flip) {
+        World w = at.getWorld();
+        float tilt = flip ? .55f : -.55f;
+        ItemDisplay d = fx("slash_red", at, facing(dir, tilt).rotateY(flip ? -.25f : .25f), new Vector3f(.35f, .07f, .06f), null, 6);
+        tween(d, 1, 2, new Vector3f(), facing(dir, tilt), new Vector3f(1.45f, .085f, .08f));
+        tween(d, 3, 3, new Vector3f(), facing(dir, tilt).rotateY(flip ? .15f : -.15f), new Vector3f(1.6f, .03f, .05f));
+        Vector up = new Vector(0, 1, 0);
+        for (double k = -1; k <= 1.001; k += .5) {
+            Vector off = side.clone().multiply(k * 1.9 * (flip ? 1 : -1)).add(up.clone().multiply(-k * 1.1));
+            w.spawnParticle(Particle.DUST, at.clone().add(off), 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(255, 90, 90), .5f));
+        }
+        w.spawnParticle(Particle.CRIT, at, 4, .4, .25, .4, .12);
+    }
+
+/**
+     * Impact shockwave: a flat ring (fx_shockwave) bursts out along the ground and fades, a dust ring races outward in 3 steps,
+     * ground chunks are thrown up and a short flash at the centre.
+     */
+    private void shockwave(Location land, Color main, Color pale) { shockwave(land, main, pale, true); }
+
+    private void shockwave(Location land, Color main, Color pale, boolean flash) {
+        World w = land.getWorld();
+        Location g = land.clone().add(0, .12, 0);
+        ItemDisplay ring = fx("shockwave", g, new Quaternionf(), new Vector3f(.3f, .3f, .3f), null, 8);
+        tween(ring, 1, 3, new Vector3f(), new Quaternionf().rotateY(.6f), new Vector3f(1.6f, .5f, 1.6f));
+        tween(ring, 4, 3, new Vector3f(), new Quaternionf().rotateY(1f), new Vector3f(2.2f, .1f, 2.2f));
+        for (int k = 0; k < 3; k++) {
+            final double rr = .8 + k * .9;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> ring(g, rr, 18 + (int) (rr * 6), at -> w.spawnParticle(Particle.DUST, at, 1, 0, .04, 0, 0, new Particle.DustOptions(rr < 2 ? pale : main, 1.5f))), k + 1L);
+        }
+        var under = g.clone().add(0, -1, 0).getBlock().getBlockData();
+        if (!under.getMaterial().isAir()) w.spawnParticle(Particle.BLOCK, g, 22, .9, .15, .9, .2, under);
+        if (flash) w.spawnParticle(Particle.FLASH, g.clone().add(0, .3, 0), 1, 0, 0, 0, 0);
+        w.spawnParticle(Particle.CLOUD, g, 8, .6, .05, .6, .06);
+    }
+
+    /** Warrior basic cut: a wide, razor-thin red blade arc (thin height, long width), swept across in ~5 ticks. */
+    private void thinSlash(Location at, Vector dir, float scale, float roll, float sweep) {
+        Quaternionf base = facing(dir, roll);
+        ItemDisplay d = fx("slash_red", at, new Quaternionf(base).rotateY(-sweep), new Vector3f(scale * .5f, scale * .05f, scale * .5f), null, 6);
+        tween(d, 1, 2, new Vector3f(), new Quaternionf(base).rotateY(sweep * .6f), new Vector3f(scale, scale * .09f, scale * 1.1f));
+        tween(d, 3, 2, new Vector3f(), new Quaternionf(base).rotateY(sweep), new Vector3f(scale * 1.1f, scale * .03f, scale * 1.2f));
+    }
+
     private void slashQuick(String id, Location at, Vector dir, float scale, float roll, float sweep) {
         Quaternionf base = facing(dir, roll);
         ItemDisplay d = fx(id, at, new Quaternionf(base).rotateY(-sweep), new Vector3f(scale * .45f, scale * .45f, scale * .45f), null, 6);
