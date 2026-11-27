@@ -351,6 +351,10 @@ final class WarpScreen extends ContainerScreen {
     private static final ResourceLocation HOUSE_OWNED = ResourceLocation.fromNamespaceAndPath("pipitravel", "textures/gui/house_owned.png");
     private static final ResourceLocation HOUSE_EMPTY = ResourceLocation.fromNamespaceAndPath("pipitravel", "textures/gui/house_empty.png");
 
+    /** 촌장의 집 on the town map (pipi_town, house centre 0 / -38; icon by dev/art/town/chief_house.mjs). */
+    private static final ResourceLocation CHIEF_HOUSE = ResourceLocation.fromNamespaceAndPath("pipitravel", "textures/gui/chief_house.png");
+    private static final double CHIEF_X = .5, CHIEF_Z = -37.5;
+
     private static void house(GuiGraphics g, int cx, int cy, boolean owned, boolean hover) {
         int x = cx - 8, y = cy - 9 - (hover ? 1 : 0); // hovered house hops up one pixel
         com.mojang.blaze3d.systems.RenderSystem.enableBlend();
@@ -448,6 +452,14 @@ final class WarpScreen extends ContainerScreen {
                 }
                 house(g, hc[i][0], hc[i][1], !h.owner.isEmpty(), hov);
             }
+            // 촌장의 집: a fixed icon on the town map, its name on hover
+            int[] chiefAt = TOWN_WORLD.equals(mapWorld()) && mapMode() ? worldToMap(CHIEF_X, CHIEF_Z) : null;
+            boolean chiefHover = chiefAt != null && hover == null && houseHover == null && !dropdown && hit(x, y, chiefAt[0] - 9, chiefAt[1] - 10, 18, 18);
+            if (chiefAt != null) {
+                com.mojang.blaze3d.systems.RenderSystem.enableBlend();
+                g.blit(CHIEF_HOUSE, chiefAt[0] - 8, chiefAt[1] - 9 - (chiefHover ? 1 : 0), 0f, 0f, 16, 16, 16, 16);
+                com.mojang.blaze3d.systems.RenderSystem.disableBlend();
+            }
             for (Wp w : here) {
                 int[] p = pos(here, w);
                 crystal(g, p[0], p[1], w.open, w.here, w == hover, w.id.equals(selected));
@@ -461,6 +473,14 @@ final class WarpScreen extends ContainerScreen {
                 int lx = Math.max(MAP_X + 6, Math.min(MAP_X + MAP_W - 6 - tw, mp[0] - tw / 2));
                 g.fill(lx, mp[1] - 20, lx + tw, mp[1] - 8, 0xdd101820);
                 g.drawCenteredString(font, "내 위치", lx + tw / 2, mp[1] - 17, 0xffffa0a0);
+            }
+            if (chiefHover) {
+                String tip = "촌장의 집";
+                int tw = font.width(tip) + 10;
+                int lx = Math.max(MAP_X + 6, Math.min(MAP_X + MAP_W - 6 - tw, chiefAt[0] - tw / 2));
+                int ty = Math.max(MAP_Y + 4, chiefAt[1] - 25);
+                g.fill(lx, ty, lx + tw, ty + 13, 0xdd101820);
+                g.drawCenteredString(font, tip, lx + tw / 2, ty + 3, GOLD);
             }
             if (houseHover != null) {
                 String tip = houseHover.owner.isEmpty() ? "비어있는 거주지" : houseHover.owner + "의 거주지";

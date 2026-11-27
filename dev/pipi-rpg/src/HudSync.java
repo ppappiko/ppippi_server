@@ -62,6 +62,10 @@ final class HudSync {
         if (tutorial != null && !tutorial.isEmpty()) {
             title = tutorial.getFirst();
             lines.addAll(tutorial.subList(1, tutorial.size()));
+        } else if (plugin.questHud(p) != null) {
+            List<String> q = plugin.questHud(p);
+            title = q.getFirst();
+            lines.addAll(q.subList(1, q.size()));
         } else if (plugin.tutorialComplete(p)) {
             var data = plugin.data();
             int storage = Math.clamp(data.getInt("pet-storage." + p.getUniqueId() + ".level", 1), 1, 5);

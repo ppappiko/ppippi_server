@@ -994,3 +994,6 @@ const noisy2 = (c, n = 10, a) => ({ c, noise: n, a });
   m.box([7.3, 7.3, 7.5], [8.7, 8.7, 8.5], 0, { axis: "z", angle: 45 });
   m.write();
 }
+
+// The lighter skill FX are rebuilt in high detail by make-fx-hq.mjs (same size / facing); run it last so those always win.
+await import("./make-fx-hq.mjs");

@@ -54,8 +54,9 @@ final class Mounts implements Listener {
 
     /** config mounts.allowed 가 비어 있으면 모든 펫, 아니면 적힌 펫(명령어 이름)만 탈 수 있다. */
     private boolean allowed(PipiLife.Pet pet) {
+        if (pet.rideLevel() > 0) return true;   // 탑승 적성 (PipiLife.Pet.rideLevel); config mounts.allowed can add more
         List<String> list = plugin.getConfig().getStringList("mounts.allowed");
-        return list.isEmpty() || list.contains(skin(pet));
+        return list.contains(skin(pet));
     }
 
     private float value(String field, PipiLife.Pet pet, double fallback) {
@@ -143,11 +144,14 @@ final class Mounts implements Listener {
         Location at = player.getLocation();
         LivingEntity mount = pets.spawnMount(at, skin(pet));
         if (mount == null) { player.sendMessage("탈것 펫을 부르지 못했어요."); return true; }
-        double scale = value("scale", pet, 1);
+        double scale = value("scale", pet, pet == PipiLife.Pet.REDPANDA ? 1.5 : 1);
         var scaleAttr = mount.getAttribute(org.bukkit.attribute.Attribute.GENERIC_SCALE);
         if (scaleAttr != null && scale > 0 && scale != 1) scaleAttr.setBaseValue(scale);
-        if (!bridge(mount, value("speed", pet, cfg().getDouble("default-speed", .3)),
-                value("seat", pet, 0), value("jump", pet, cfg().getDouble("default-jump", .5)))
+        // 탑승 적성 레벨이 높을수록 빠르고 높이 뛴다 (config mounts.speed / jump .<pet> overrides)
+        double lvSpeed = switch (pet.rideLevel()) { case 1 -> .26; case 2 -> .32; case 3 -> .38; default -> cfg().getDouble("default-speed", .3); };
+        double lvJump = switch (pet.rideLevel()) { case 1 -> .45; case 2 -> .55; case 3 -> .7; default -> cfg().getDouble("default-jump", .5); };
+        if (!bridge(mount, value("speed", pet, lvSpeed),
+                value("seat", pet, 0), value("jump", pet, lvJump))
             || !mount.addPassenger(player)) {
             mount.remove();
             player.sendMessage("탈것에 오르지 못했어요. (서버·클라이언트 PipiFacilities 버전을 확인하세요)");

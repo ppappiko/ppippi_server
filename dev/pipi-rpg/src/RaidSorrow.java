@@ -202,6 +202,9 @@ final class RaidSorrow implements Listener {
         c.addDefault(P + "g3.reward.gold", 300000);
         c.addDefault(P + "g3.reward.steel", 60);
         c.addDefault(P + "g3.reward.level-vouchers", 4);
+        c.addDefault(P + "g3.reward.soul-stone", 1);          // 비탄의 군주 영혼석 (3관문만)
+        c.addDefault(P + "auction.start", 55);                // 3관문 클리어 전리품 경매(스킬북) 최소 입찰가: 파티
+        c.addDefault(P + "auction.solo-start", 1000000);      //   혼자 클리어
         c.addDefault(P + "g1.time-limit-minutes", 25);
         c.addDefault(P + "g1.blessing-seconds", 60);        // 비탄의 가호 지속 시간
         c.addDefault(P + "g1.curse-seconds", 15);           // 가호가 끝난 뒤 저주 (끝나면 사망)
@@ -456,6 +459,8 @@ final class RaidSorrow implements Listener {
         rewards.add(plugin.statusIcon(Material.GOLD_INGOT, "§6골드 " + fmt(Math.max(0, ci(g + "reward.gold"))), "§7" + gate + "관문 클리어 보상 (하루 1회)"));
         try { rewards.add(town.raidItem("plate", Math.max(1, ci(g + "reward.steel")))); } catch (RuntimeException ignored) { }
         try { rewards.add(town.levelVoucher(Math.max(1, ci(g + "reward.level-vouchers")))); } catch (RuntimeException ignored) { }
+        if (ci(g + "reward.soul-stone") > 0) try { rewards.add(town.raidItem("sorrow_soul", ci(g + "reward.soul-stone"))); } catch (RuntimeException ignored) { }
+        if (gate == 3) rewards.add(ClassSkills.skillBook(plugin, "sorrow"));
         for (int i = 0; i < rewards.size() && i < 9; i++) menu.inv.setItem(GATE_REWARDS + i, rewards.get(i));
         String why = gateBlocked(p);
         menu.inv.setItem(GATE_ENTER, why == null ? plugin.statusIcon(Material.LIME_DYE, "§a" + gate + "관문 입장", "§7파티원 전원이 찬성하면 경기장으로 이동합니다",
@@ -796,6 +801,14 @@ final class RaidSorrow implements Listener {
         for (Player p : online(s)) { unGhost(p); p.setGlowing(false); }
         if (s.solo) { for (Player p : online(s)) say(p, "§e[혼자 테스트] §7보상과 클리어 기록은 없습니다."); return; }
         Bukkit.getScheduler().runTaskLater(plugin, () -> { if (session == s) rewardGate(s, gate); }, 40L);
+        if (gate == 3) Bukkit.getScheduler().runTaskLater(plugin, () -> {   // 전리품 경매: 통곡의 왕좌 스킬북 (딥 다크 경매 창 · 타이머 공유)
+            RaidDeepDark dd = plugin.deepDarkRaid();
+            List<Player> on = online(s);
+            if (dd == null || on.isEmpty()) return;
+            long start = Math.max(1, ci(on.size() < 2 ? "auction.solo-start" : "auction.start"));
+            try { dd.startLootAuction(RAID_NAME, on, new ArrayList<>(List.of(new RaidAuction.Lot("스킬북 · 통곡의 왕좌", ClassSkills.skillBook(plugin, "sorrow"), start))), 0); }
+            catch (RuntimeException ex) { plugin.getLogger().severe("sorrow auction start failed: " + ex); }
+        }, 70L);
     }
 
     private void rewardGate(Session s, int gate) {
@@ -810,7 +823,10 @@ final class RaidSorrow implements Listener {
                 sc.setScore((int) Math.min(Integer.MAX_VALUE, sc.getScore() + gold));
                 give(p, town.raidItem("plate", Math.max(1, ci(g + "reward.steel"))));
                 give(p, town.levelVoucher(Math.max(1, ci(g + "reward.level-vouchers"))));
-                say(p, "§6[" + gate + "관문 보상] §f골드 " + fmt(gold) + " · 강철 " + ci(g + "reward.steel") + " · 레벨 +1 교환권 " + ci(g + "reward.level-vouchers"));
+                int souls = ci(g + "reward.soul-stone");
+                if (souls > 0) give(p, town.raidItem("sorrow_soul", souls));
+                say(p, "§6[" + gate + "관문 보상] §f골드 " + fmt(gold) + " · 강철 " + ci(g + "reward.steel") + " · 레벨 +1 교환권 " + ci(g + "reward.level-vouchers")
+                    + (souls > 0 ? " · 비탄의 군주 영혼석 " + souls : ""));
             } catch (RuntimeException ex) {
                 plugin.getLogger().severe("sorrow reward failed for " + p.getName() + ": " + ex);
                 say(p, "§c보상 지급 중 오류가 발생했습니다. 관리자에게 문의하세요.");

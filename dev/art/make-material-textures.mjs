@@ -103,21 +103,8 @@ if (process.argv.includes("--food")) {
   const food = path.join(here, "food"), modDst = path.resolve(here, "../pipi-facilities/assets/pipifacilities/textures/item");
   for (const n of ["straw", "pet_carrot"]) convert(n + ".png", n, food, modDst);
 } else if (process.argv.includes("--tier4")) {
-  // tier 4 items: dev/art/tier4/*.png -> mod texture dir, plus a drawn placeholder for warden_soul_stone
+  // tier 4 items: dev/art/tier4/*.png -> mod texture dir, plus the drawn 워든의 영혼석 (spawn-egg style)
   const t4 = path.join(here, "tier4"), modDst = path.resolve(here, "../pipi-facilities/assets/pipifacilities/textures/item");
   for (const n of ["amber", "amber_ingot", "redwood_log", "redwood_plank", "cabbage", "ranch_blueprint", "vitality_crystal"]) convert(n + ".png", n, t4, modDst);
-  const c = new Canvas(SIZE, SIZE), O = [6, 24, 30, 255], B = [11, 61, 71, 255], L = [24, 110, 124, 255], G = [41, 223, 235, 255], W = [190, 255, 255, 255];
-  // gem silhouette (hexagon-ish): rows of [x0,x1]
-  const rows = { 4: [12, 19], 5: [10, 21], 6: [8, 23], 7: [7, 24], 8: [6, 25], 9: [6, 25], 10: [6, 25], 11: [6, 25], 12: [6, 25], 13: [6, 25], 14: [6, 25], 15: [6, 25], 16: [6, 25], 17: [6, 25], 18: [7, 24], 19: [7, 24], 20: [8, 23], 21: [9, 22], 22: [10, 21], 23: [11, 20], 24: [13, 18], 25: [14, 17] };
-  for (const [y, [a, b]] of Object.entries(rows)) for (let x = a; x <= b; x++) {
-    const edge = x === a || x === b || +y === 4 || +y === 25;
-    c.pixel(x, +y, edge ? O : (x < 10 || +y > 20) ? B : L);
-  }
-  // fill interior shading: dark body with lighter upper-left facets
-  for (const [y, [a, b]] of Object.entries(rows)) for (let x = a + 1; x < b; x++) if (+y > 4 && +y < 25) c.pixel(x, +y, x - a < 3 && +y < 16 ? L : B);
-  // glowing core
-  for (let y = 11; y <= 18; y++) for (let x = 12; x <= 19; x++) { const d = Math.abs(x - 15.5) + Math.abs(y - 14.5); if (d < 5) c.pixel(x, y, d < 2 ? W : G); }
-  for (const [x, y] of [[15, 9], [16, 9], [15, 20], [16, 20], [10, 14], [10, 15], [21, 14], [21, 15]]) c.pixel(x, y, G);
-  fs.writeFileSync(path.join(modDst, "warden_soul_stone.png"), encodePNG(c));
-  console.log("warden_soul_stone placeholder");
+  await import("./make-soul-eggs.mjs");   // 워든 / 비탄의 군주 영혼석 (face spawn eggs)
 } else for (const n of ["plank", "plate", "reinforced_plank", "coated_plank", "repair_kit"]) convert(n + ".png", n);

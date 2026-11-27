@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { Model, fur, flat, edge, faces, mix, shade, hash } from "./lib-petmodel.mjs";
 import { MORE } from "./pal-style-more.mjs";
 import { NEW } from "./pal-style-new.mjs";
+import { EXTRA } from "./pal-style-extra.mjs";
 const here = path.dirname(fileURLToPath(import.meta.url));
 const OUT = s => path.resolve(here, `../pipi-facilities/assets/pipifacilities/pets/${s}.bbmodel`);
 const K = "#15131a", W = "#ffffff";
@@ -99,7 +100,7 @@ const PETS = {
   },
 };
 
-Object.assign(PETS, MORE, NEW);
+Object.assign(PETS, MORE, NEW, EXTRA);
 const only = process.argv.slice(2);
 for (const [skin, build] of Object.entries(PETS)) {
   if (only.length && !only.includes(skin)) continue;

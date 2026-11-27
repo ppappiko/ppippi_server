@@ -557,6 +557,15 @@ final class WildRegions implements Listener {
         int[] start; // byte offset of each column (z * w + x)
     }
 
+    /** Wild region id (nw / ne / se) whose 330 x 330 area holds the spot in the given world, or null. */
+    static String regionAt(Location l, String wildWorld) {
+        if (l.getWorld() == null || !l.getWorld().getName().equals(wildWorld)) return null;
+        for (Def d : DEFS) if (Math.abs(l.getBlockX() - d.cx()) <= 165 && Math.abs(l.getBlockZ() - d.cz()) <= 165) return d.id();
+        return null;
+    }
+
+    static String regionName(String id) { Def d = def(id); return d == null ? id : d.name(); }
+
     private static Def def(String id) {
         for (Def d : DEFS) if (d.id().equalsIgnoreCase(id)) return d;
         return null;

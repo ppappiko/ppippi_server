@@ -1,0 +1,302 @@
+version: 3   # 번들 파일이 서버의 quests.yml보다 새 버전이면 서버 파일을 .bak으로 남기고 교체합니다
+# 삐삐서버 퀘스트 (PipiLife QuestSystem). 서버 폴더 plugins/PipiLife/quests.yml 로 복사되어 쓰이므로 거기서 고치고 /pipilife quest reload.
+#
+# lines: 퀘스트 라인(탭)마다 순서대로 진행. main / class / life 는 앞 퀘스트를 끝내야 다음이 열린다.
+# daily: 매일 이 목록에서 3개가 골라진다.
+# chapters: 메인 라인의 장. 그 장의 첫 퀘스트가 열릴 때 intro 대사를 촌장이 들려준다.
+#
+# 목표(objectives) 한 줄 = "<종류> <값...> | <화면에 보일 글>"
+#   talk <chief|npc|merchant|alchemist|armory>   해당 NPC와 이야기 (npc = 대장장이)
+#   tutorial                                      튜토리얼 완료
+#   plot                                          거주지 보유
+#   worker                                        제작 담당 펫 배정
+#   petstorage <레벨>                             펫 창고 레벨
+#   wild                                          야생 월드 방문
+#   gold <골드>                                   골드 보유
+#   weapon <티어>                                 대장간에서 만든 그 티어 이상의 무기 보유
+#   boss <ender_dragon|warden>                    보스 처치 기록
+#   sorrow <관문>                                 통곡의 왕좌 관문 돌파 기록
+#   blueprint                                     시설 청사진을 가방에 가지고 있기 (도면으로 제작)
+#   upgrade <FARM|LUMBER|MINE|PET_STORAGE|...>    그 시설을 한 번 이상 업그레이드 (Lv.2 이상)
+#   capture <수> / kill <수> / mine <수> / fish <수> / research <수> / assign <수>
+#                                                 퀘스트를 받은 뒤 펫 포획 / 몬스터 처치 / 광석 채굴 / 낚시 / 연구 / 펫 배치 횟수
+#   kill <수> class                               직업 무기(검·활·지팡이)를 든 채로 처치
+# rewards: gold, steel(강철), vouchers(레벨 +1 교환권)
+
+chapters:
+  c1:
+    name: "1장 · 첫걸음"
+    intro:
+      - "어서 오게, 바다 건너 온 젊은이. 여기는 삐삐섬, 모험가들이 머무는 작은 섬마을이라네."
+      - "요즘 섬 곳곳이 어수선하다네. 우선 이 섬에서 지내는 법부터 차근차근 익혀 보게나."
+  c2:
+    name: "2장 · 펫과 함께하는 삶"
+    intro:
+      - "이 섬의 살림은 펫들이 꾸려 간다네. 잡고, 맡기고, 연구하고, 짓고, 고치는 법을 익혀 두게."
+      - "하나하나 해 보다 보면 집이 금세 북적이는 작업장이 될 걸세."
+  c3:
+    name: "3장 · 마을의 일꾼들"
+    intro:
+      - "살림이 자리를 잡았으니 이제 마을 사람들과 인사를 나눌 차례로군."
+      - "대장장이, 연금술사, 상인, 무기 관리인… 모두 자네 모험에 든든한 힘이 되어 줄 걸세."
+  c4:
+    name: "4장 · 야생의 부름"
+    intro:
+      - "요즘 야생에 괴물들이 부쩍 늘었다네. 섬을 지키던 봉인이 약해지고 있다는 증거지."
+      - "선착장에서 배를 타고 숲과 평원과 사막으로 나가 보게. 이 섬의 진짜 모습은 바다 건너에 있다네."
+  c6:
+    name: "5장 · 깊은 어둠의 울음"
+    intro:
+      - "이제 들려줄 때가 되었군. 이 섬에는 오래전 두 개의 봉인이 있었다네."
+      - "그 첫 번째, 소리를 삼키는 어둠의 봉인이 깨어나 땅이 울리기 시작했네."
+      - "그곳의 파수꾼은 눈이 없지만 발소리 하나 놓치지 않지. 꼭 동료들과 함께 가게."
+      - "파수꾼을 잠재우면 그 힘으로 대장장이가 한층 강한 장비를 벼려 줄 걸세."
+  c7:
+    name: "6장 · 통곡의 왕좌"
+    intro:
+      - "마지막 봉인… 통곡의 왕좌일세. 슬픔을 왕관 삼아 쓴 망령 군주가 그 안에서 울고 있다네."
+      - "통곡의 비석을 찾아 관문을 하나씩 넘어 가게. 이 섬의 운명이 자네 손에 달렸네."
+
+lines:
+  main:
+    # ---- 1장: 섬에 도착
+    - id: m_meet
+      chapter: c1
+      title: "촌장과의 만남"
+      giver: "촌장"
+      desc: "마을 광장 북쪽, 촌장의 집을 찾아가 촌장에게 인사하자. 지도(M)의 마을 탭에 촌장의 집이 표시되어 있다."
+      objectives: ["talk chief | 촌장과 이야기하기"]
+      rewards: { gold: 1000 }
+    - id: m_tutorial
+      chapter: c1
+      title: "섬에서 사는 법"
+      giver: "촌장"
+      desc: "튜토리얼을 따라 직업을 고르고 부지를 잡고 첫 펫을 받자. 지금 해야 할 단계는 화면 왼쪽 목표 패널에 보인다."
+      objectives: ["tutorial | 튜토리얼 마치기"]
+      rewards: { gold: 3000 }
+    - id: m_home
+      chapter: c1
+      title: "나의 터전"
+      giver: "촌장"
+      desc: "거주 구역에 나만의 부지를 가지고 있어야 펫 일꾼과 시설을 둘 수 있다."
+      objectives: ["plot | 거주지 마련하기"]
+      rewards: { gold: 2000 }
+    # ---- 2장: 펫 잡기 · 배치 · 연구 · 청사진 · 업그레이드
+    - id: m_capture1
+      chapter: c2
+      title: "야생의 친구"
+      giver: "촌장"
+      desc: "이동 나침반으로 야생에 가서 펫을 잡아 보자. 몽둥이로 펫의 체력을 깎은 뒤, 포획틀을 길게 눌러 던지면 잡힌다. 잡은 펫은 펫 창고에 들어간다."
+      objectives: ["capture 1 | 펫 1마리 포획하기"]
+      rewards: { gold: 2000 }
+    - id: m_assign
+      chapter: c2
+      title: "일하는 펫"
+      giver: "촌장"
+      desc: "작업대나 농장·벌목장·채석장 같은 시설을 우클릭하고 펫을 골라 배치하자. 배치된 펫은 먹이가 있는 동안 쉬지 않고 일한다."
+      objectives: ["assign 1 | 펫을 작업에 배치하기"]
+      rewards: { gold: 2000 }
+    - id: m_research
+      chapter: c2
+      title: "연구소의 첫 연구"
+      giver: "촌장"
+      desc: "부지의 연구소를 우클릭해 연구를 진행하자. 연구를 하면 새 제작법과 시설 청사진이 하나씩 열린다."
+      objectives: ["research 1 | 연구 1번 하기"]
+      rewards: { gold: 3000 }
+    - id: m_blueprint
+      chapter: c2
+      title: "도면에서 청사진으로"
+      giver: "촌장"
+      desc: "상점에서 하급 도면을 사고, 작업대에서 도면으로 시설 청사진을 만들자. 완성된 청사진을 들고 내 부지 바닥을 우클릭하면 시설이 세워진다."
+      objectives: ["blueprint | 시설 청사진 만들기"]
+      rewards: { steel: 2 }
+    - id: m_upgrade
+      chapter: c2
+      title: "작업장 손보기"
+      giver: "촌장"
+      desc: "시설을 우클릭해 업그레이드하면 더 빨리, 더 많이 만든다. 밀 농장·벌목장·철광석 채석장·펫 창고를 한 번씩 업그레이드하자. 아직 없는 시설은 청사진부터 만들어 세우면 된다."
+      objectives: ["upgrade FARM | 밀 농장 업그레이드", "upgrade LUMBER | 벌목장 업그레이드", "upgrade MINE | 철광석 채석장 업그레이드", "upgrade PET_STORAGE | 펫 창고 업그레이드"]
+      rewards: { gold: 8000, vouchers: 1 }
+    # ---- 3장: 마을 사람들
+    - id: m_smith
+      chapter: c3
+      title: "대장장이의 망치"
+      giver: "대장장이"
+      desc: "광장 남서쪽 대장간의 대장장이를 만나 첫 무기를 맞추자. 무기는 직업을 정하고 스킬을 쓰는 데 꼭 필요하다."
+      objectives: ["talk npc | 대장장이와 이야기하기", "weapon 0 | 0티어 무기 만들기"]
+      rewards: { steel: 3 }
+    - id: m_alchemist
+      chapter: c3
+      title: "탑의 연금술사"
+      giver: "연금술사"
+      desc: "광장 서쪽 연금술사의 탑을 찾아가자. 장비에 힘을 불어넣는 인챈트를 다룬다."
+      objectives: ["talk alchemist | 연금술사와 이야기하기"]
+      rewards: { gold: 2000 }
+    - id: m_merchant
+      chapter: c3
+      title: "떠돌이 상인의 장부"
+      giver: "상인"
+      desc: "광장 동쪽 상점의 떠돌이 상인은 무엇이든 사고판다. 장사 밑천부터 모아 보자."
+      objectives: ["talk merchant | 상인과 이야기하기", "gold 10000 | 골드 10,000 모으기"]
+      rewards: { vouchers: 1 }
+    - id: m_armory
+      chapter: c3
+      title: "무기고의 관리인"
+      giver: "무기 관리인"
+      desc: "광장 남쪽 무기고의 관리인은 쓰지 않는 장비를 맡아 주고 꺼내 준다."
+      objectives: ["talk armory | 무기 관리인과 이야기하기"]
+      rewards: { gold: 2000 }
+    # ---- 4장: 야생
+    - id: m_wild
+      chapter: c4
+      title: "바다 건너로"
+      giver: "촌장"
+      desc: "마을의 선착장에서 배를 타고 야생으로 나가 보자."
+      objectives: ["wild | 야생으로 나가기"]
+      rewards: { gold: 3000 }
+    - id: m_capture
+      chapter: c4
+      title: "낯선 발자국"
+      giver: "촌장"
+      desc: "야생에는 길들일 수 있는 동물들이 더 많이 산다. 새 친구들을 데려오자."
+      objectives: ["capture 3 | 펫 3마리 포획하기"]
+      rewards: { steel: 4 }
+    - id: m_hunt
+      chapter: c4
+      title: "밤을 지키는 자"
+      giver: "무기 관리인"
+      desc: "밤마다 몰려드는 괴물들을 물리쳐 마을로 가는 길을 지키자."
+      objectives: ["kill 30 | 몬스터 30마리 처치하기"]
+      rewards: { gold: 8000 }
+    - id: m_mine
+      chapter: c4
+      title: "깊은 광맥"
+      giver: "대장장이"
+      desc: "더 좋은 장비에는 더 좋은 광석이 필요하다. 동굴로 내려가 광맥을 찾자."
+      objectives: ["mine 40 | 광석 40개 캐기"]
+      rewards: { steel: 5 }
+    - id: m_storage
+      chapter: c4
+      title: "북적이는 펫 창고"
+      giver: "촌장"
+      desc: "펫이 늘어나면 창고도 넓혀야 한다. 펫 창고를 3레벨까지 키우자."
+      objectives: ["petstorage 3 | 펫 창고 Lv.3 만들기"]
+      rewards: { vouchers: 1 }
+    # ---- 5장: 워든 (1티어 해금) — 엔더 드래곤 장은 삭제됨
+    - id: m_warden
+      chapter: c6
+      title: "소리를 삼키는 자"
+      giver: "촌장"
+      desc: "딥 다크 시티의 봉인된 비석에서 파티와 함께 입장해, 깊은 어둠의 파수꾼(워든)을 쓰러뜨리자. 첫 번째 봉인의 주인이다."
+      objectives: ["boss warden | 깊은 어둠의 파수꾼 처치하기"]
+      rewards: { gold: 100000, vouchers: 2, steel: 20 }
+    - id: m_tier1
+      chapter: c6
+      title: "파수꾼의 힘으로 벼린 칼날"
+      giver: "대장장이"
+      desc: "워든을 쓰러뜨린 힘으로 대장장이가 1티어 장비를 만들 수 있게 되었다. 새 무기를 맞추자."
+      objectives: ["weapon 1 | 1티어 무기 만들기"]
+      rewards: { steel: 10 }
+    # ---- 6장: 통곡의 왕좌
+    - id: m_sorrow1
+      chapter: c7
+      title: "군체 저지"
+      giver: "촌장"
+      desc: "통곡의 비석에서 통곡의 왕좌에 들어가, 몰려드는 군체를 막아 1관문을 넘자."
+      objectives: ["sorrow 1 | 통곡의 왕좌 1관문 돌파하기"]
+      rewards: { gold: 50000 }
+    - id: m_sorrow2
+      chapter: c7
+      title: "비탄의 허상"
+      giver: "촌장"
+      desc: "군주는 허상 뒤에 숨어 있다. 진짜를 가려내 2관문을 넘자."
+      objectives: ["sorrow 2 | 통곡의 왕좌 2관문 돌파하기"]
+      rewards: { gold: 80000, vouchers: 2 }
+    - id: m_sorrow3
+      chapter: c7
+      title: "비탄의 왕관"
+      giver: "촌장"
+      desc: "망령 군주를 쓰러뜨려 마지막 봉인을 되찾자."
+      objectives: ["sorrow 3 | 통곡의 왕좌 3관문 돌파하기"]
+      rewards: { gold: 150000, vouchers: 3, steel: 30 }
+      outro:
+        - "해냈군… 두 봉인의 주인이 모두 잠들었네."
+        - "섬은 다시 평온을 되찾을 걸세. 고맙네, 삐삐섬의 영웅이여."
+
+  class:
+    - id: j_basic
+      title: "기본기"
+      giver: "무기 관리인"
+      desc: "직업 무기(검·활·지팡이)를 들고 싸우며 손에 익히자. 스킬은 1~5번 키로 쓴다."
+      objectives: ["kill 20 class | 직업 무기로 몬스터 20마리 처치"]
+      rewards: { gold: 3000 }
+    - id: j_skilled
+      title: "숙련"
+      giver: "무기 관리인"
+      desc: "실전에서 더 많은 적을 상대해 보자."
+      objectives: ["kill 100 class | 직업 무기로 몬스터 100마리 처치"]
+      rewards: { steel: 5 }
+    - id: j_master
+      title: "달인의 무기"
+      giver: "대장장이"
+      desc: "솜씨에 걸맞은 무기를 손에 넣자."
+      objectives: ["weapon 1 | 1티어 무기 갖기"]
+      rewards: { vouchers: 1 }
+
+  life:
+    - id: l_fish
+      title: "한가로운 낚시"
+      giver: "상인"
+      desc: "낚싯대를 들고 물가에서 쉬어 가자."
+      objectives: ["fish 10 | 물고기 10마리 낚기"]
+      rewards: { gold: 3000 }
+    - id: l_ore
+      title: "광맥 탐사"
+      giver: "대장장이"
+      desc: "곳곳의 광맥을 더 깊이 파 보자."
+      objectives: ["mine 100 | 광석 100개 캐기"]
+      rewards: { steel: 6 }
+    - id: l_pets
+      title: "펫 수집가"
+      giver: "촌장"
+      desc: "다양한 펫을 모아 섬을 북적이게 하자."
+      objectives: ["capture 10 | 펫 10마리 포획하기"]
+      rewards: { vouchers: 1 }
+    - id: l_rich
+      title: "삐삐섬 갑부"
+      giver: "상인"
+      desc: "장사와 모험으로 큰돈을 모아 보자."
+      objectives: ["gold 100000 | 골드 100,000 모으기"]
+      rewards: { vouchers: 2 }
+
+daily:
+  - id: d_hunt
+    title: "오늘의 사냥"
+    giver: "무기 관리인"
+    desc: "오늘도 마을 길을 지켜 주게."
+    objectives: ["kill 25 | 몬스터 25마리 처치"]
+    rewards: { gold: 3000 }
+  - id: d_hunt2
+    title: "괴물 소탕"
+    giver: "무기 관리인"
+    desc: "괴물이 유난히 많은 날이다."
+    objectives: ["kill 50 | 몬스터 50마리 처치"]
+    rewards: { steel: 3 }
+  - id: d_fish
+    title: "오늘의 낚시"
+    giver: "상인"
+    desc: "신선한 생선을 찾는 손님이 있다."
+    objectives: ["fish 8 | 물고기 8마리 낚기"]
+    rewards: { gold: 2500 }
+  - id: d_mine
+    title: "오늘의 광석"
+    giver: "대장장이"
+    desc: "대장간에 광석이 모자라다."
+    objectives: ["mine 30 | 광석 30개 캐기"]
+    rewards: { gold: 2500 }
+  - id: d_capture
+    title: "오늘의 포획"
+    giver: "촌장"
+    desc: "새로운 펫 소식을 기다리고 있다네."
+    objectives: ["capture 2 | 펫 2마리 포획"]
+    rewards: { gold: 3000 }

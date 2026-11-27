@@ -24,7 +24,7 @@ final class ModItems {
         Map.entry("blueprint_paper", "blueprint_paper"), Map.entry("club", "club"), Map.entry("ironclub", "iron_club"),
         Map.entry("diamondclub", "diamond_club"), Map.entry("hammer", "hammer"), Map.entry("feed", "fish_feed"),
         Map.entry("raw_salmon", "raw_salmon"), Map.entry("straw", "straw"), Map.entry("pet_carrot", "pet_carrot"),
-        Map.entry("warden_soul_stone", "warden_soul_stone"), Map.entry("vitality_crystal", "vitality_crystal"),
+        Map.entry("warden_soul_stone", "warden_soul_stone"), Map.entry("sorrow_soul_stone", "sorrow_soul_stone"), Map.entry("vitality_crystal", "vitality_crystal"),
         Map.entry("amber_ingot", "amber_ingot"), Map.entry("amber_core", "amber_core"), Map.entry("redwood_plank", "redwood_plank"), Map.entry("amber_club", "amber_club"), Map.entry("cabbage_seed", "cabbage_seed"),
         Map.entry("advanced_blueprint_paper", "advanced_blueprint_paper"),
         Map.entry("salt", "salt"), Map.entry("sugar", "sugar"), Map.entry("pepper", "pepper"), Map.entry("soy_sauce", "soy_sauce"));

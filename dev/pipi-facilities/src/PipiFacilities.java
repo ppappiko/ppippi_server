@@ -22,7 +22,7 @@ public final class PipiFacilities {
         "plank", "steel", "reinforced_plank", "coated_plank", "blue_diamond", "refined_diamond",
         "iron_core", "diamond_core", "gold_core", "blueprint_paper", "repair_kit",
         "basic_trap", "iron_trap", "diamond_trap", "fish_feed", "river_fish", "straw", "pet_carrot", "raw_salmon", "amber_core", "advanced_blueprint_paper",
-        "warden_soul_stone", "amber", "amber_ingot", "redwood_log", "redwood_plank", "cabbage", "vitality_crystal", "amber_trap",
+        "warden_soul_stone", "sorrow_soul_stone", "amber", "amber_ingot", "redwood_log", "redwood_plank", "cabbage", "vitality_crystal", "amber_trap",
         "salt", "sugar", "pepper", "soy_sauce", "hearty_salmon_stew", "hearty_carrot_soup", "hearty_veggie_salad", "failed_dish",
         "station_farm", "station_carrot_farm", "station_potato_farm", "station_cabbage_farm", "station_mine", "station_diamond_mine",
         "station_amber_quarry", "station_gold_mine", "station_lumber", "station_redwood_lumber", "station_ranch",
@@ -43,7 +43,7 @@ public final class PipiFacilities {
         ITEMS.registerSimpleItem("warp_stone_blueprint", new Item.Properties().stacksTo(16));
         ITEMS.registerSimpleItem("hammer", new Item.Properties().stacksTo(1).durability(250));
         // 3D skill-effect models for ItemDisplay (not obtainable, no recipes).
-        for (String fx : new String[]{"slash_arc","slash_red","whirl_ring","shockwave","giant_sword","arrow_big","wind_spiral","leaf","orb","ice_lance","meteor","heal_cross","crystal","tiger_claw","wind_bow","spirit_wolf","mana_hammer","mana_bow","dragon_head","lightning_bolt","rock_arrow","water_arrow","phoenix","dragon_breath","mana_beam","mana_circle","mana_shell","mana_blast","blue_bolt","phantom_bow","phantom_sword","phantom_staff","sorrow_body","sorrow_hand_l","sorrow_hand_r","ult_crescent","ult_sigil_gold","ult_halo_gold","ult_sigil_green","ult_beam_green","full_moon","mana_lance","tear_vessel","sorrow_crystal","soul_shield","soul_ring"})
+        for (String fx : new String[]{"slash_arc","slash_red","whirl_ring","shockwave","giant_sword","arrow_big","wind_spiral","leaf","orb","ice_lance","meteor","heal_cross","crystal","tiger_claw","wind_bow","spirit_wolf","mana_hammer","mana_bow","dragon_head","lightning_bolt","rock_arrow","water_arrow","phoenix","dragon_breath","mana_beam","mana_circle","mana_shell","mana_blast","blue_bolt","phantom_bow","phantom_sword","phantom_staff","sorrow_body","sorrow_hand_l","sorrow_hand_r","ult_crescent","ult_sigil_gold","ult_halo_gold","ult_sigil_green","ult_beam_green","full_moon","mana_lance","tear_vessel","sorrow_crystal","soul_shield","soul_ring","village_chief","npc_smith","npc_merchant","npc_armory","npc_alchemist","moon_blue"})
             ITEMS.registerSimpleItem("fx_" + fx, new Item.Properties().stacksTo(1));
         // Tier-4 region blocks: placeable by builders, no loot (the plugin handles drops/respawn).
         regionBlock("amber_rock", () -> new Block(BlockBehaviour.Properties.of().mapColor(MapColor.STONE).strength(3.0f).requiresCorrectToolForDrops().sound(SoundType.STONE).noLootTable()));

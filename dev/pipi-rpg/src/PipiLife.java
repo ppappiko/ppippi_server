@@ -43,7 +43,25 @@ public final class PipiLife extends JavaPlugin implements Listener {
         FROG(EntityType.FROG, "가마", Facility.LUMBER, 2, "mangrove_swamp"),
         SUNLIZARD(EntityType.AXOLOTL, "파로", Facility.FARM, 3, "stony_peaks"),
         VAMPBAT(EntityType.BAT, "블벳", Facility.TRANSPORT, 1, "fortress"),
-        COW(EntityType.COW, "젖소", Facility.RANCH, 2, "meadow");
+        COW(EntityType.COW, "젖소", Facility.RANCH, 2, "meadow"),
+        // ---- 적성 기획 (2026-11-27): 1레벨 = 흔한 바이옴 + 채집지, 2레벨 = 채집지 3곳, 3레벨 = 남동(농사·가공) / 북동(벌목·채광)
+        SQUIRREL(EntityType.FOX, "도토리", Facility.FARM, 1, "birch_forest"),
+        BEAVER(EntityType.RABBIT, "댐돌이", Facility.LUMBER, 1, "river"),
+        WOODPECKER(EntityType.PARROT, "딱따구", Facility.LUMBER, 1, "taiga"),
+        HEDGEHOG(EntityType.ARMADILLO, "뾰족", Facility.MINE, 1, "plains"),
+        HERMITCRAB(EntityType.TURTLE, "집게", Facility.MINE, 1, "beach"),
+        MONKEY(EntityType.OCELOT, "망고", Facility.CRAFT, 1, "savanna"),
+        HAMSTER(EntityType.RABBIT, "토실", Facility.CRAFT, 1, "plains"),
+        OSTRICH(EntityType.CHICKEN, "깃털이", Facility.FARM, 2, "savanna"),
+        BEE(EntityType.BEE, "꿀벌찌", Facility.FARM, 2, "flower_forest"),
+        BEETLE(EntityType.SILVERFISH, "기사단장", Facility.LUMBER, 2, "forest"),
+        PENGUIN(EntityType.CHICKEN, "펭이", Facility.MINE, 2, "snowy_plains"),
+        OWL(EntityType.PARROT, "밤눈", Facility.CRAFT, 2, "dark_forest"),
+        CLOCKFOX(EntityType.FOX, "톱니", Facility.CRAFT, 2, "plains"),
+        CLOUDSHEEP(EntityType.SHEEP, "뭉게", Facility.FARM, 3, "meadow"),
+        DEER(EntityType.GOAT, "하얀뿔", Facility.LUMBER, 3, "forest"),
+        RHINO(EntityType.RAVAGER, "뿔소", Facility.MINE, 3, "savanna"),
+        FAIRY(EntityType.ALLAY, "포포", Facility.CRAFT, 3, "meadow");
 
         final EntityType type;
         final String label;
@@ -71,6 +89,20 @@ public final class PipiLife extends JavaPlugin implements Listener {
         int captureRate() { return new int[]{120, 3, 1}[level - 1]; }
         int salePrice() { return new int[]{3000, 8000, 20000}[level - 1]; }
         boolean transport() { return aptitude == Facility.TRANSPORT; }
+        /** 운반 적성 (second aptitude): 블벳 and the flying 2·3레벨 pets (천사픽; new flyers join here). */
+        boolean carries() { return aptitude == Facility.TRANSPORT || switch (this) { case ANGELPIG, BEE, BEETLE, OWL, CLOUDSHEEP, FAIRY -> true; default -> false; }; }
+        /** 탑승 적성 레벨, 0 = cannot be ridden: 바라 1 (튜토리얼 펫) · 썬더쉽 / 딱지 / 젖소 2 · 달투 / 파로 3. */
+        int rideLevel() { return switch (this) { case REDPANDA -> 1; case THUNDERSHEEP, TORTOISE, COW -> 2; case MOONBEAR, SUNLIZARD -> 3; default -> 0; }; }
+        /**
+         * Where it spawns besides its 1레벨 biome ({@link #place}, outside the regions): the wild regions nw (중세 판타지) / ne (기계화) /
+         * se (천상계), or "deepdark" (딥 다크 시티). 1·2레벨 in all three regions; 3레벨 농사·가공 in se, 벌목·채광 in ne; 두류 only in the 딥 다크 시티.
+         */
+        java.util.Set<String> spawnRegions() {
+            if (this == MOLE) return java.util.Set.of("deepdark");
+            if (aptitude == Facility.TRANSPORT) return java.util.Set.of();
+            if (level <= 2) return java.util.Set.of("nw", "ne", "se");
+            return aptitude == Facility.FARM || aptitude == Facility.CRAFT ? java.util.Set.of("se") : java.util.Set.of("ne");
+        }
         /** 방목 적성: can graze in a ranch (as a second aptitude for 썬더쉽 / 해달수). */
         /** Name used in commands and tab completion (바라 keeps the internal id REDPANDA for saved data). */
         String cmd() { return this == REDPANDA ? "capybara" : name().toLowerCase(Locale.ROOT); }
@@ -82,7 +114,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             return null;
         }
 
-        boolean grazes() { return this == THUNDERSHEEP || this == OTTER || this == COW; }
+        boolean grazes() { return this == THUNDERSHEEP || this == OTTER || this == COW || this == CLOUDSHEEP; }
         /** Mod item id this pet produces in a ranch. */
         String ranchProduct() { return this == OTTER ? "hide" : this == COW ? "milk" : "wool"; }
         boolean netherPlace() { return place.equals("bastion") || place.equals("fortress"); }
@@ -169,6 +201,13 @@ public final class PipiLife extends JavaPlugin implements Listener {
         town = new TownSystems(this);
         armory = new Armory(this, town.npcs());
         getServer().getPluginManager().registerEvents(armory, this);
+        chief = new VillageChief(this);
+        chief.house(chiefHouse = new ChiefHouse(this));
+        getServer().getPluginManager().registerEvents(chief, this);
+        npcModels = new TownNpcModels(this, town.npcs());
+        getServer().getPluginManager().registerEvents(npcModels, this);
+        try { quests = new QuestSystem(this, town); getServer().getPluginManager().registerEvents(quests, this); }
+        catch (RuntimeException ex) { quests = null; getLogger().warning("퀘스트를 시작하지 못했습니다: " + ex); }
         combat =new CombatStats(this, town);
         combat.startHpSync();
         new HudSync(this, town).start();
@@ -500,6 +539,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
 
     boolean canUseTrap(Player player) {
         if (inWild(player)) return true;
+        if (player.getWorld().getName().equals(DeepDarkMap.WORLD) && player.getGameMode() == GameMode.SURVIVAL) return true; // 두류 lives in the 딥 다크 시티
         String world = getConfig().getString("wild-world", WILD);
         if (!isWildWorld(player.getWorld().getName()))
             player.sendMessage("포획은 야생 월드(" + world + ")에서만 가능합니다.");
@@ -545,6 +585,12 @@ public final class PipiLife extends JavaPlugin implements Listener {
     String entryLabel(OfflinePlayer player, String entry) { Pet pet = entryPet(entry); return pet == null ? "" : (shinyEntry(player, entry) ? "§e✦ " : "") + pet.label; }
 
     boolean completeCapture(Player player, LivingEntity entity) {
+        boolean ok = completeCapture0(player, entity);
+        if (ok && quests != null) quests.count(player, "capture", 1);
+        return ok;
+    }
+
+    private boolean completeCapture0(Player player, LivingEntity entity) {
         Pet pet = eligible(entity);
         if (pet == null) return false;
         boolean shiny = CustomPets.isShiny(entity);
@@ -661,7 +707,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     @Override public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            out.addAll(List.of("capture", "pets", "petstorage", "skill", "workstation", "warp", "raid", "party", "auction"));
+            out.addAll(List.of("capture", "pets", "petstorage", "skill", "workstation", "warp", "raid", "party", "auction", "quest"));
             out.add("tutorial");
             out.add("mount");
             out.add("escape");
@@ -754,6 +800,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         if (args.length > 0 && args[0].equals("combat")) return armory.combatCommand(player, args);
         if (args.length > 0 && args[0].equals("skill")) {
             if (args.length >= 2 && args[1].equals("loadout")) return skills.loadoutCommand(player, args);
+            if (args.length >= 3 && (args[1].equals("learn") || args[1].equals("book")) && player.isOp()) return skills.adminCommand(player, args);
             if (args.length == 2 && args[1].equals("basic")) return skills.cast(player, 5);
             if (args.length == 2 && args[1].equals("dodge")) { skills.dashInput(player, 0, 0); return skills.cast(player, 6); }
             if (args.length == 4 && args[1].equals("dodge")) {
@@ -772,6 +819,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             return true;
         }
         if (args.length > 0 && args[0].equalsIgnoreCase("bossclear")) return town.bossClearCommand(player, args);
+        if (args.length > 0 && args[0].equalsIgnoreCase("quest") && quests != null) return quests.command(player, args);
         if (args.length > 0 && args[0].equalsIgnoreCase("item")) return itemCommand(player, args);
         if (args.length > 0 && args[0].equals("testgive")) return town.testGive(player, args);
         if (args.length > 0 && args[0].equals("workstation")) return workstation(player, args);
@@ -854,6 +902,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 data.set(path + ".facility-bound", true);
                 next = state.active() ? state : new Workshop(state.food(), state.stock(), now, true);
                 message = pet.label + "를 작업에 배치했습니다.";
+                questCount(player, "assign");
             }
             case "stop" -> {
                 if (pet.aptitude.isProducer()) { player.sendMessage("생산 시설 화면에서 작업을 중단하세요."); return true; }
@@ -2317,6 +2366,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
         }
         if (store(craftWorkerKey(player), assign ? pet.name() : null))
             player.sendMessage(assign ? pet.label + "를 기본 작업대에 배치했습니다." : "가공 배치를 해제했습니다.");
+            if (assign) questCount(player, "assign");
         else player.sendMessage("가공 배치를 저장하지 못했습니다.");
     }
 
@@ -2631,6 +2681,9 @@ public final class PipiLife extends JavaPlugin implements Listener {
             if (pet == null) continue;
             List<String> details = new ArrayList<>();
             details.add(aptitudeLabel(pet.aptitude) + (pet.aptitude == Facility.RANCH ? " 적성" : " 적성 Lv." + pet.level));
+            if (pet.rideLevel() > 0) details.add("탑승 적성 Lv." + pet.rideLevel());
+            if (pet.carries() && pet.aptitude != Facility.TRANSPORT) details.add("운반 적성");
+            if (pet.grazes() && pet.aptitude != Facility.RANCH) details.add("방목 적성");
             if (pet.grazes() && pet.aptitude != Facility.RANCH) details.add("방목 적성");
             if (rideable(pet)) details.add("탑승 적성");
             if (levelBonusText(pet.level, pet.aptitude) != null) details.add(levelBonusText(pet.level, pet.aptitude));
@@ -3659,6 +3712,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 });
             } else if (args.length == 2 && args[1].equalsIgnoreCase("repairtown")) {
                 townMap.repair(player);
+            } else if (args.length == 2 && args[1].equalsIgnoreCase("chiefhouse")) {
+                World world = townMap.open();
+                if (world == null || chiefHouse == null) player.sendMessage("먼저 /pipilife maps buildtown을 실행하세요.");
+                else { player.sendMessage(chiefHouse.build(world, true)); if (chief != null) chief.schedule(world, 0); }
             } else if (args.length == 2 && args[1].equalsIgnoreCase("npcstown")) {
                 World world = townMap.open();
                 player.sendMessage(world == null ? "먼저 /pipilife maps buildtown을 실행하세요." : setupTown(world));
@@ -4029,6 +4086,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
     ReturnStone returnStone;
     EmergencyEscape escape;
     /** Boss clear record (TownSystems), e.g. for boss skills unlocked by the first warden clear. */
+    RaidDeepDark deepDarkRaid() { return raid; }
     boolean bossCleared(UUID id, String boss) { return town != null && town.bossCleared(id, boss); }
     /** 탑승 적성: listed in config mounts.allowed (empty list = every pet). */
     boolean rideable(Pet pet) {
@@ -4101,12 +4159,28 @@ public final class PipiLife extends JavaPlugin implements Listener {
     }
 
     boolean townReady() { return data != null && data.getBoolean("maps-town-ready"); }
+    private VillageChief chief;
+    private ChiefHouse chiefHouse;
+    boolean saveData() { return persist(); }
+    private TownNpcModels npcModels;
+    private QuestSystem quests;
+    QuestSystem quests() { return quests; }
+    void questCount(Player player, String type) { if (quests != null) quests.count(player, type, 1); }
+    /** Upgrade level of a producer facility (or the pet storage) of the player, 1 = not upgraded. */
+    int facilityLevelOf(Player player, Facility facility) {
+        return facility == Facility.PET_STORAGE ? Math.clamp(data.getInt("pet-storage." + player.getUniqueId() + ".level", 1), 1, 99) : lumberLevel(player, facility);
+    }
+    /** Objective panel lines (title first) of the tracked quest, or null. */
+    List<String> questHud(Player player) { return quests == null ? null : quests.hud(player); }
 
     /** Town NPCs (market, smith, alchemist, armory) live in pipi_town once it is built; the temporary village2 plaza NPCs are removed then. */
     String setupTown(World world) {
         if (world == null) return "마을 월드를 찾지 못했습니다.";
         int added = 0;
         for (TownMap.Npc n : townMap.npcSpots()) if (town.spawnTownNpc(world, n.role(), n.x(), n.y(), n.z(), n.yaw())) added++;
+        if (chiefHouse != null) { String built = chiefHouse.build(world, false); if (built != null) getLogger().info(built); }   // 촌장의 집 (once)
+        if (chief != null) chief.schedule(world, 0);   // 촌장 (in the house, a few seconds later)
+        if (npcModels != null) npcModels.schedule(world, 0);   // 3D looks for the town NPCs
         World v2 = Bukkit.getWorld(Village2.WORLD);
         String removed = v2 != null ? " / " + removeV2Npcs(v2) : "";
         scheduleTownStones(0);

@@ -25,6 +25,18 @@ PAPER:
   pipi_blueprints:blueprint_paper: 48120
   pipi_station:research_shelf: 10023
   pipi_station:research_tower: 10024
+  pipi_gear:bow_t0_0_asset: 10025
+  pipi_gear:bow_t0_1_asset: 10026
+  pipi_gear:bow_t0_2_asset: 10027
+  pipi_gear:bow_t1_0_asset: 10028
+  pipi_gear:bow_t1_1_asset: 10029
+  pipi_gear:bow_t1_2_asset: 10030
+  pipi_gear:bow_t2_0_asset: 10031
+  pipi_gear:bow_t2_1_asset: 10032
+  pipi_gear:bow_t2_2_asset: 10033
+  pipi_gear:bow_t3_0_asset: 10034
+  pipi_gear:bow_t3_1_asset: 10035
+  pipi_gear:bow_t3_2_asset: 10036
 PLAYER_HEAD:
   __manually_handled:_iainternal__player_phead_0: 10000
   __manually_handled:_iainternal__player_parm_left_3: 10001
@@ -41,15 +53,27 @@ PLAYER_HEAD:
 IRON_SWORD:
   pipi_gear:iron_sword: 10000
   pipi_materials:iron_club: 48113
+  pipi_gear:sword_t0: 10001
+  pipi_gear:sword_t1: 10002
 DIAMOND_SWORD:
   pipi_gear:diamond_sword: 10000
   pipi_materials:diamond_club: 48114
+  pipi_gear:sword_t2: 10001
+  pipi_gear:sword_t3: 10002
 NETHERITE_SWORD:
   pipi_gear:netherite_sword: 10000
 BOW:
   pipi_gear:bow: 10000
+  pipi_gear:bow_t0: 10001
+  pipi_gear:bow_t1: 10002
+  pipi_gear:bow_t2: 10003
+  pipi_gear:bow_t3: 10004
 BLAZE_ROD:
   pipi_gear:staff: 10000
+  pipi_gear:staff_t0: 10001
+  pipi_gear:staff_t1: 10002
+  pipi_gear:staff_t2: 10003
+  pipi_gear:staff_t3: 10004
 IRON_PICKAXE:
   pipi_gear:iron_pickaxe: 10000
 DIAMOND_PICKAXE:

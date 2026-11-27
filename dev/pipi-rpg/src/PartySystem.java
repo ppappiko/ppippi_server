@@ -21,7 +21,8 @@ import org.bukkit.persistence.PersistentDataType;
  * In-memory parties (max 4). The inviter becomes the leader (a new party is created when the inviter had none).
  * Client protocol (hidden chat, PipiTravel cancels these lines):
  *   PIPI_PINVITE:&lt;inviter&gt;:&lt;seconds&gt;  / PIPI_PINVITE_END   - invite popup (Y = accept, N = decline)
- *   PIPI_PARTY:name,cls,hp,max,same,leader,online;...      - party list HUD (cls w|a|m|-, same = same world as the viewer), empty = hide
+ *   PIPI_PARTY:name,cls,hp,max,same,leader,online,area,dist;... - party list HUD + P window (cls w|a|m|-, same = same world as the viewer,
+ *                                                            area = where the member is, dist = blocks from the viewer or -1), empty = hide
  *   PIPI_CHATMODE:party|all                                - chat mode tag shown above the chat input
  * Commands: /pipilife party invite &lt;name&gt; | accept | decline | leave | kick &lt;name&gt; | promote &lt;name&gt; | list
  * Party chat: /p (switch to party chat) · /p &lt;msg&gt; (one party message) · /a (switch back to all) · /a &lt;msg&gt; (one public message)
@@ -361,6 +362,19 @@ final class PartySystem implements Listener {
         for (Party party : byMember.values()) if (seen.add(party)) push(party);
     }
 
+    /** Where a player is, for the party window. */
+    static String areaName(org.bukkit.World w) {
+        String n = w.getName();
+        return switch (n) {
+            case "pipi_town" -> "마을";
+            case "pipi_village2" -> "거주지";
+            case "world" -> "야생";
+            case "world_nether" -> "네더";
+            case "world_the_end" -> "엔드";
+            default -> n.startsWith("pipi_sorrow") ? "통곡의 왕좌" : n.contains("deep") ? "깊은 어둠" : n.startsWith("pipi_tutorial") ? "튜토리얼" : n.startsWith("pipi_wild") || n.startsWith("wild") ? "야생" : n.replace(",", "").replace(";", "");
+        };
+    }
+
     /** Class of the equipped (or held) weapon: w / a / m, "-" when none. */
     static String classOf(Player p) {
         ItemStack it = Armory.weaponFor(p);
@@ -386,12 +400,13 @@ final class PartySystem implements Listener {
                 if (!first) sb.append(';');
                 first = false;
                 String n = name(id).replace(",", "").replace(";", "");
-                if (m == null || !m.isOnline()) { sb.append(n).append(",-,0,1,0,").append(id.equals(party.leader) ? 1 : 0).append(",0"); continue; }
+                if (m == null || !m.isOnline()) { sb.append(n).append(",-,0,1,0,").append(id.equals(party.leader) ? 1 : 0).append(",0,-,-1"); continue; }
                 var attr = m.getAttribute(Attribute.GENERIC_MAX_HEALTH);
                 long max = Math.max(1, Math.round(attr == null ? 20 : attr.getValue()));
                 long hp = m.isDead() ? 0 : Math.max(1, (long) Math.ceil(m.getHealth() - 1e-9));
                 sb.append(n).append(',').append(classOf(m)).append(',').append(Math.min(hp, max)).append(',').append(max).append(',')
-                    .append(m.getWorld().equals(viewer.getWorld()) ? 1 : 0).append(',').append(id.equals(party.leader) ? 1 : 0).append(",1");
+                    .append(m.getWorld().equals(viewer.getWorld()) ? 1 : 0).append(',').append(id.equals(party.leader) ? 1 : 0).append(",1,")
+                    .append(areaName(m.getWorld())).append(',').append(m.getWorld().equals(viewer.getWorld()) ? Math.round(m.getLocation().distance(viewer.getLocation())) : -1);
             }
             viewer.sendMessage(sb.toString());
             hudShown.add(viewer.getUniqueId());

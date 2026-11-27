@@ -36,10 +36,10 @@ public final class CombatBar {
     /** Buff choices (key 4, one equipped) and ultimate choices (key 5, one equipped) per class. */
     static final String[][] BUFF = {{"w_heal", "w_rage", "w_fort"}, {"a_heal", "a_focus", "a_spirit", "a_tiger", "a_turtle"}, {"m_heal", "m_focus", "m_reset"}};
     static final String[][] ULT = {{"w_ult", "w_tiger", "w_meteor"}, {"a_ult", "a_wolf", "a_dragon"}, {"m_cannon", "m_moon"}};
-    /** Boss skills (server PIPI_BOSSSKILL:0|1 says whether the player has cleared the warden and may equip them). */
-    static final java.util.Set<String> BOSS = java.util.Set.of("w_thrust", "w_meteor", "m_mrain", "m_spear", "a_dragon", "a_tiger", "a_turtle");
-    private static boolean bossUnlocked;
-    static boolean bossLocked(String id) { return BOSS.contains(id) && !bossUnlocked; }
+    /** Skills not learned yet (server PIPI_SKILLLOCK:id=where,...: raid skill books / later raids); locked in the skill window. */
+    private static java.util.Map<String, String> locked = java.util.Map.of();
+    static boolean bossLocked(String id) { return locked.containsKey(id); }
+    static String lockSource(String id) { return locked.getOrDefault(id, ""); }
     private static final String LOADOUT_PREFIX = "PIPI_LOADOUT:";
     private static final String[][] loadouts = {
         {"w_rush", "w_whirl", "w_split", "w_heal", "w_ult"}, {"a_triple", "a_rain", "a_pierce", "a_heal", "a_ult"}, {"m_seek", "m_frost", "m_thunder", "m_heal", "m_cannon"}};
@@ -179,11 +179,17 @@ public final class CombatBar {
             receiveLoadout(text);
             return;
         }
-        if (text.startsWith("PIPI_BOSSSKILL:")) {
+        if (text.startsWith("PIPI_SKILLLOCK:")) {
             event.setCanceled(true);
-            bossUnlocked = text.endsWith("1");
+            var map = new java.util.HashMap<String, String>();
+            for (String part : text.substring("PIPI_SKILLLOCK:".length()).split(",")) {
+                int eq = part.indexOf('=');
+                if (eq > 0) map.put(part.substring(0, eq).trim(), part.substring(eq + 1).trim());
+            }
+            locked = map;
             return;
         }
+        if (text.startsWith("PIPI_BOSSSKILL:")) { event.setCanceled(true); return; } // old server
         if (text.startsWith(MSG_START) || text.equals(MSG_BASIC) || text.equals(MSG_END)) {
             event.setCanceled(true);
             var client = client();

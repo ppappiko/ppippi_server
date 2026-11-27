@@ -164,6 +164,27 @@ const NEW_PETS = {
     walkExtra: { gear: { rot: p => [360 * p, 0, 0], n: 20, lin: true }, key: { rot: p => [180 * p, 0, 0], n: 20, lin: true } },
     work: { key: { rot: p => [720 * p, 0, 0], n: 40, lin: true }, gear: { rot: p => [-720 * p, 0, 0], n: 40, lin: true }, body: { rot: p => [0, 0, 3 * sin(p, 8)], n: 40 }, eyes_glow: { scl: p => { const s = 1 + .4 * Math.abs(sin(p, 4)); return [s, s, 1]; }, n: 40 } },
     eat: { head: { rot: p => [35 + 5 * sin(p, 6), 0, 0], n: 24 }, gear: { rot: p => [360 * p, 0, 0], n: 24, lin: true } } }),
+  // 꿀벌찌: hovers with buzzing wings, work = flits between flowers (bobs + spins), eat = sips from the honey pot
+  bee: () => biped({ amp: 10, walk: .6, bounce: .6, flap: 70,
+    idle: { root: { pos: p => [0, 1.5 + .6 * sin(p, 2), 0], n: 40 }, wing_l: { rot: p => [0, 0, -30 * sin(p, 16)], n: 80 }, wing_r: { rot: p => [0, 0, 30 * sin(p, 16)], n: 80 } },
+    walkExtra: { root: { pos: p => [0, 1.5 + .4 * sin(p, 4), 0], n: 20 }, wing_l: { rot: p => [0, 0, -35 * sin(p, 8)], n: 40 }, wing_r: { rot: p => [0, 0, 35 * sin(p, 8)], n: 40 } },
+    work: { root: { pos: p => [1.5 * sin(p, 1), 2 + sin(p, 2), 0], n: 40 }, body: { rot: p => [0, 30 * sin(p, 1), 0], n: 40 }, wing_l: { rot: p => [0, 0, -35 * sin(p, 20)], n: 80 }, wing_r: { rot: p => [0, 0, 35 * sin(p, 20)], n: 80 } },
+    eat: { head: { rot: p => [30 + 6 * sin(p, 6), 0, 0], n: 24 }, wing_l: { rot: p => [0, 0, -20 * sin(p, 10)], n: 24 }, wing_r: { rot: p => [0, 0, 20 * sin(p, 10)], n: 24 } } }),
+  // 딱따구: hops, crest bobs, work = rapid pecking at the trunk, eat = pecks a grub
+  woodpecker: () => biped({ amp: 18, walk: .55, bounce: 1.4, flap: 30,
+    work: { head: { rot: p => [-10 + 35 * Math.max(0, sin(p, 12)), 0, 0], n: 80 }, body: { rot: p => [8 * Math.max(0, sin(p, 12)), 0, 0], n: 80 }, tail: { rot: () => [35, 0, 0], n: 2 } },
+    eat: { head: { rot: p => [40 * bump(p, .1, .3) + 40 * bump(p, .5, .7), 0, 0], n: 24 } } }),
+  // 토실: scurries, cheeks puff, work = hammers busily with its front paws, eat = nibbles the seed
+  hamster: () => quad({ amp: 32, walk: .45, bounce: .9, tail: 0,
+    idle: { head: { rot: p => [6 * sin(p, 8) * hold(p, .2, .35), 0, 0], n: 80 } },
+    work: { body: { rot: () => [-20, 0, 0], n: 2 }, leg_fl: { rot: p => [-70 + 35 * Math.max(0, sin(p, 6)), 0, 0], n: 60 }, leg_fr: { rot: p => [-70 + 35 * Math.max(0, sin(p, 6, .5)), 0, 0], n: 60 }, head: { rot: p => [10, 8 * sin(p, 1), 0], n: 40 } },
+    eat: { body: { rot: () => [-25, 0, 0], n: 2 }, head: { rot: p => [12 + 5 * sin(p, 10), 0, 0], n: 40 }, leg_fl: { rot: () => [-75, 0, 0], n: 2 }, leg_fr: { rot: () => [-75, 0, 0], n: 2 } } }),
+  // 포포: floats and twirls, wings shimmer, work = waves the star wand, eat = holds a star crumb and nibbles
+  fairy: () => biped({ amp: 8, walk: .8, bounce: .4, flap: 50,
+    idle: { root: { pos: p => [0, 2 + .8 * sin(p, 1), 0], n: 40 }, wing_l: { rot: p => [0, 25 + 18 * sin(p, 2), 0], n: 60 }, wing_r: { rot: p => [0, -25 - 18 * sin(p, 2), 0], n: 60 }, eyes_glow: { rot: p => [0, 360 * p, 0], n: 40, lin: true } },
+    walkExtra: { root: { pos: p => [0, 2 + .5 * sin(p, 2), 0], n: 20 }, wing_l: { rot: p => [0, 30 + 28 * sin(p, 1), 0], n: 40 }, wing_r: { rot: p => [0, -30 - 28 * sin(p, 1), 0], n: 40 } },
+    work: { root: { pos: p => [0, 2.5 + sin(p, 2), 0], n: 40 }, body: { rot: p => [0, 360 * p, 0], n: 60, lin: true }, wand_glow: { rot: p => [0, 0, 40 * sin(p, 4)], scl: p => { const s = 1 + .4 * Math.max(0, sin(p, 4)); return [s, s, s]; }, n: 60 } },
+    eat: { root: { pos: () => [0, 1.5, 0], n: 2 }, head: { rot: p => [20 + 5 * sin(p, 6), 0, 0], n: 24 } } }),
   // 기사단장: marching tripod gait, cape sways, work = salutes and strikes with the great horn, eat = bows head
   beetle: () => [
     A("idle", 4, { body: { ...breathe(.02, 2), n: 30 }, head: { rot: p => [-8 * hold(p, .4, .6), 0, 0], n: 60 }, cape: { rot: p => [6 + 4 * sin(p, 2), 0, 0], n: 40 }, ...sixIdle() }),
