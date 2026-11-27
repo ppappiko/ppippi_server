@@ -303,6 +303,11 @@ final class TownSystems implements Listener {
                 player.getWorld().dropItemNaturally(player.getLocation(), extra).setOwner(player.getUniqueId());
             return tell(player, "워든의 영혼석 5개를 지급했습니다.");
         }
+        if (args.length == 2 && args[1].equals("sorrow_soul_stone")) {
+            for (ItemStack extra : player.getInventory().addItem(raidItem("sorrow_soul", 5)).values())
+                player.getWorld().dropItemNaturally(player.getLocation(), extra).setOwner(player.getUniqueId());
+            return tell(player, "비탄의 군주 영혼석 5개를 지급했습니다.");
+        }
         if (args.length == 2 && args[1].equals("warp_stone_blueprint")) {
             ItemStack bp = plugin.warpBlueprint();
             if (bp == null) return tell(player, "워프석 청사진 아이템을 불러오지 못했습니다.");
@@ -1414,6 +1419,18 @@ final class TownSystems implements Listener {
         return item;
     }
 
+    /** 비탄의 군주 영혼석 (mod item, 통곡의 왕좌 3관문 보상) with the plugin tag. */
+    private ItemStack sorrowSoulStoneItem(int count) {
+        Material mod = ModItems.byIdOrNull("sorrow_soul_stone");
+        ItemStack item = plugin.statusIcon(mod != null ? mod : Material.PAPER, "비탄의 군주 영혼석",
+            "비탄의 군주를 처치하면 얻는 영혼석", "상위 연구 재료");
+        var meta = item.getItemMeta();
+        meta.getPersistentDataContainer().set(processed, PersistentDataType.STRING, "sorrow_soul_stone");
+        item.setItemMeta(meta);
+        item.setAmount(count);
+        return item;
+    }
+
     /** Extra items required to unlock a stage (the real item stacks shown on the locked panel). */
     private static List<Ingredient> unlockRequirements(int stage) {
         return stage == 4 ? List.of(wardenSoulStone(5)) : List.of();
@@ -1524,7 +1541,7 @@ final class TownSystems implements Listener {
         return true;
     }
 
-    /** tier = boss tier group in the 장비 제작 screen (0 워든 · 1 엔더 드래곤 · 2~5 future bosses); group = weapon | melee | ranged | magic | tool. */
+    /** tier = boss tier group in the 장비 제작 screen (0 엔더 드래곤 · 1 워든 · 2~5 future bosses); group = weapon | melee | ranged | magic | tool. */
     private record ForgeRecipe(Material material, String label, int plates, int diamonds, int gold, int tier, String group) {}
     /** Chest slots carrying the visible forge recipes (22 preview · 31 result · 40 craft · 41 confirm · 49 back are reserved). */
     private static final int[] FORGE_SLOTS = java.util.stream.IntStream.range(0, 54)
@@ -1590,8 +1607,7 @@ final class TownSystems implements Listener {
 
     /** Boss clear a forge recipe needs: null = always open; "future" = boss not implemented yet (never shown). */
     private static String forgeBoss(ForgeRecipe recipe) {
-        if (recipe.label().startsWith("호박석")) return "ender_dragon"; // 호박석 곡괭이 · 호박석 낚싯대
-        return switch (recipe.tier()) { case 0 -> null; case 1 -> "ender_dragon"; default -> "future"; };
+        return switch (recipe.tier()) { case 0 -> null; case 1 -> "warden"; default -> "future"; }; // 1티어 = 워든 처치 (엔더 드래곤 관문은 삭제됨)
     }
 
     private boolean forgeUnlocked(Player player, ForgeRecipe recipe) {
@@ -1627,8 +1643,6 @@ final class TownSystems implements Listener {
             }
             Player player = Bukkit.getPlayer(id);
             if (player == null || !player.isOnline()) continue;
-            player.sendMessage(boss.equals("ender_dragon") ? "§6엔더 드래곤 처치! 1티어 장비와 호박석 도구 제작이 해금되었습니다."
-                : "§6워든 처치! 보스 처치 기록이 저장되었습니다.");
             refreshForgeDesk(player);
         }
     }
@@ -2077,6 +2091,7 @@ final class TownSystems implements Listener {
         int cost=researchPrice(stage)*5;Score score=gold(player);
         if(lacks(player,cost,List.of(),false))return;
         if(!plugin.store(user(player)+".research."+key,true)){tell(player,"연구 저장에 실패했습니다.");return;}
+        plugin.questCount(player,"research");
         score.setScore(score.getScore()-cost);tell(player,"선택 연구 완료");
     }
     private String researchStatus(Player player, String key, int stage, int opened) {
@@ -2090,6 +2105,9 @@ final class TownSystems implements Listener {
         Score score = gold(player);
         if (stage > opened) {
             if (stage != opened + 1) { tell(player, "이전 단계를 먼저 개방하세요."); return; }
+            if (stage == 4 && !bossCleared(player.getUniqueId(), "warden")) { // 호박석 도구 (포획틀 · 몽둥이) 등 4단계 = 워든 처치 후
+                tell(player, "§c워든을 처치해야 4단계(호박석) 연구를 개방할 수 있습니다."); return;
+            }
             int cost = openingPrice(stage);
             List<Ingredient> requirements = unlockRequirements(stage);
             if (lacks(player, cost, requirements, true)) return; // bag + residence chests
@@ -2109,6 +2127,7 @@ final class TownSystems implements Listener {
         if (!plugin.store(user(player) + ".research." + key, true)) {
             tell(player, "연구를 저장하지 못했습니다."); return;
         }
+        plugin.questCount(player, "research");
         score.setScore(score.getScore() - cost);
         tell(player, "연구 완료 · " + researchIcon(player, key).getItemMeta().getDisplayName());
     }
@@ -2462,7 +2481,7 @@ final class TownSystems implements Listener {
                 ItemStack converted=convertOld(item);
                 if(converted!=null)item=converted;
             }
-            if(gearFor(item)!=null && !item.getItemMeta().hasCustomModelData())GearModels.apply(item);
+            if(gearFor(item)!=null)GearModels.apply(item); // also swaps old looks for the tier model (no-op when already right)
             if (gearFor(item)!=null && (item.getItemMeta().getPersistentDataContainer().has(gearKey("rolls"), PersistentDataType.STRING)
                 || hasVanillaEnchants(item) || CombatStats.needsMigration(item))) updateGear(item,gearFor(item));
             if (!item.equals(before)) player.getInventory().setItem(i,item);
@@ -3145,12 +3164,13 @@ final class TownSystems implements Listener {
             item = switch (kind) {
                 case "plate" -> taggedItem("plate", "강철");
                 case "iron_core" -> taggedItem("iron_core", "철 코어");
+                case "sorrow_soul" -> sorrowSoulStoneItem(1);
                 default -> wardenSoulStoneItem(1);
             };
         } catch (RuntimeException ex) {
-            String tag = kind.equals("soul") ? "warden_soul_stone" : kind;
+            String tag = kind.equals("soul") ? "warden_soul_stone" : kind.equals("sorrow_soul") ? "sorrow_soul_stone" : kind;
             item = plugin.statusIcon(kind.equals("plate") ? Material.IRON_NUGGET : kind.equals("iron_core") ? Material.AMETHYST_SHARD : Material.PAPER,
-                kind.equals("plate") ? "강철" : kind.equals("iron_core") ? "철 코어" : "워든의 영혼석", "삐삐서버 전용 재료");
+                kind.equals("plate") ? "강철" : kind.equals("iron_core") ? "철 코어" : kind.equals("sorrow_soul") ? "비탄의 군주 영혼석" : "워든의 영혼석", "삐삐서버 전용 재료");
             var meta = item.getItemMeta();
             meta.getPersistentDataContainer().set(processed, PersistentDataType.STRING, tag);
             item.setItemMeta(meta);

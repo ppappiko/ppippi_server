@@ -16,7 +16,7 @@ import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 public final class PipiTravel {
     public PipiTravel(IEventBus bus) {
         bus.addListener(this::registerHud);
-        bus.addListener((net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent e) -> { e.register(WarpScreen.VIEW_KEY); e.register(EscapeKey.KEY); e.register(HudInfo.OBJECTIVE_KEY); e.register(RaidHud.YES_KEY); e.register(RaidHud.NO_KEY); e.register(PartyHud.TOGGLE_KEY); e.register(MountKey.KEY); });
+        bus.addListener((net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent e) -> { e.register(WarpScreen.VIEW_KEY); e.register(EscapeKey.KEY); e.register(HudInfo.OBJECTIVE_KEY); e.register(RaidHud.YES_KEY); e.register(RaidHud.NO_KEY); e.register(PartyHud.TOGGLE_KEY); e.register(MountKey.KEY); e.register(QuestScreen.KEY); });
         NeoForge.EVENT_BUS.addListener(WarpScreen::keyTick);
         bus.addListener(ArmorIcons::register);
         bus.addListener(AccessoryLayer::addLayers);
@@ -40,6 +40,8 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(AuctionScreen::clientTick);
         NeoForge.EVENT_BUS.addListener(PartyHud::receive);
         NeoForge.EVENT_BUS.addListener(PartyHud::key);
+        NeoForge.EVENT_BUS.addListener(QuestScreen::key);
+        NeoForge.EVENT_BUS.addListener(QuestScreen::receive);
         NeoForge.EVENT_BUS.addListener(MountKey::key);
         NeoForge.EVENT_BUS.addListener(EscapeKey::key);
         NeoForge.EVENT_BUS.addListener(AccessoryLayer::receive);

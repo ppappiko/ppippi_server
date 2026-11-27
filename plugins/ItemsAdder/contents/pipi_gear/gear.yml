@@ -73,3 +73,147 @@ items:
       material: PAPER
       generate: false
       model_path: item/fishing_rod_cast
+  sword_t0:
+    display_name: sword_t0
+    resource:
+      material: IRON_SWORD
+      generate: false
+      model_path: item/weapon_sword_t0
+  sword_t1:
+    display_name: sword_t1
+    resource:
+      material: IRON_SWORD
+      generate: false
+      model_path: item/weapon_sword_t1
+  sword_t2:
+    display_name: sword_t2
+    resource:
+      material: DIAMOND_SWORD
+      generate: false
+      model_path: item/weapon_sword_t2
+  sword_t3:
+    display_name: sword_t3
+    resource:
+      material: DIAMOND_SWORD
+      generate: false
+      model_path: item/weapon_sword_t3
+  bow_t0:
+    display_name: bow_t0
+    resource:
+      material: BOW
+      generate: false
+      model_path: item/weapon_bow_t0
+  bow_t0_0_asset:
+    display_name: bow_t0_0
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t0_0
+  bow_t0_1_asset:
+    display_name: bow_t0_1
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t0_1
+  bow_t0_2_asset:
+    display_name: bow_t0_2
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t0_2
+  bow_t1:
+    display_name: bow_t1
+    resource:
+      material: BOW
+      generate: false
+      model_path: item/weapon_bow_t1
+  bow_t1_0_asset:
+    display_name: bow_t1_0
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t1_0
+  bow_t1_1_asset:
+    display_name: bow_t1_1
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t1_1
+  bow_t1_2_asset:
+    display_name: bow_t1_2
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t1_2
+  bow_t2:
+    display_name: bow_t2
+    resource:
+      material: BOW
+      generate: false
+      model_path: item/weapon_bow_t2
+  bow_t2_0_asset:
+    display_name: bow_t2_0
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t2_0
+  bow_t2_1_asset:
+    display_name: bow_t2_1
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t2_1
+  bow_t2_2_asset:
+    display_name: bow_t2_2
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t2_2
+  bow_t3:
+    display_name: bow_t3
+    resource:
+      material: BOW
+      generate: false
+      model_path: item/weapon_bow_t3
+  bow_t3_0_asset:
+    display_name: bow_t3_0
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t3_0
+  bow_t3_1_asset:
+    display_name: bow_t3_1
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t3_1
+  bow_t3_2_asset:
+    display_name: bow_t3_2
+    resource:
+      material: PAPER
+      generate: false
+      model_path: item/weapon_bow_t3_2
+  staff_t0:
+    display_name: staff_t0
+    resource:
+      material: BLAZE_ROD
+      generate: false
+      model_path: item/weapon_staff_t0
+  staff_t1:
+    display_name: staff_t1
+    resource:
+      material: BLAZE_ROD
+      generate: false
+      model_path: item/weapon_staff_t1
+  staff_t2:
+    display_name: staff_t2
+    resource:
+      material: BLAZE_ROD
+      generate: false
+      model_path: item/weapon_staff_t2
+  staff_t3:
+    display_name: staff_t3
+    resource:
+      material: BLAZE_ROD
+      generate: false
+      model_path: item/weapon_staff_t3

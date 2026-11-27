@@ -17,7 +17,7 @@ import net.minecraft.world.item.component.ItemLore;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * 대장간 메뉴 + 장비 제작. The craft view is a Lost Ark style window: boss tabs on the far left (워든 = tier 0, 엔더 드래곤 = tier 1),
+ * 대장간 메뉴 + 장비 제작. The craft view is a Lost Ark style window: boss tabs on the far left (엔더 드래곤 = tier 0, 워든 = tier 1),
  * then the recipe list in collapsible tier groups (무기 / 근거리·원거리·마법 방어구 / 도구) with a 전체·전사·궁수·마법사 filter,
  * then the 제작 preview and the 세부 능력치 panel. The server puts every visible recipe in the chest (any slot except
  * 22 preview · 31 result · 40 craft · 41 confirm · 49 back) tagged with PublicBukkitValues["pipilife:forge_group"] = "tier:group".
@@ -34,7 +34,7 @@ final class ForgeScreen extends ContainerScreen {
     private static final String[] GROUP_LABELS={"무기","근거리 방어구","원거리 방어구","마법 방어구","도구"};
     private static final String[] FILTERS={"전체","전사","궁수","마법사"};
     private static final int[] BOSS_TIERS={0,1};
-    private static final String[] BOSS_NAMES={"워든","엔더 드래곤"};
+    private static final String[] BOSS_NAMES={"기본","워든"}; // 0티어 = 기본 장비, 워든 처치 = 1티어 (엔더 드래곤 삭제)
     // UI state survives the server re-opening the chest after every click
     private static int bossTab, classFilter=-1;
     private static double scroll;
@@ -44,7 +44,7 @@ final class ForgeScreen extends ContainerScreen {
     private record Row(boolean header, String key, String label, Entry entry, int y, int h) {}
 
     private final boolean main;
-    private final ItemStack[] bossIcons={new ItemStack(Items.SCULK_SHRIEKER), new ItemStack(Items.DRAGON_HEAD)};
+    private final ItemStack[] bossIcons={new ItemStack(Items.ANVIL), new ItemStack(Items.SCULK_SHRIEKER)};
     private float scale, left, top;
     private boolean pending, filterOpen, draggingBar;
     private ItemStack hoverStack;

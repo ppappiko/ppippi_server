@@ -44,6 +44,9 @@ public final class HudInfo {
         }
     }
 
+    static String questTitle() { return questTitle; }
+    static List<String> questLines() { return questLines; }
+
     static final KeyMapping OBJECTIVE_KEY = new KeyMapping("목표 패널", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "PipiTravel");
 
     static void key(ClientTickEvent.Post event) {
@@ -107,8 +110,7 @@ public final class HudInfo {
             }
             coordTop = top + h + 3;
         }
-        bottom = coordTop + 15;
-        drawCoords(g, coordTop);
+        bottom = coordTop;   // coordinates are no longer drawn here: the map mod already shows them (drawCoords kept for reference)
     }
 
     private static final String[] DIRS = {"남", "남서", "서", "북서", "북", "북동", "동", "남동"};

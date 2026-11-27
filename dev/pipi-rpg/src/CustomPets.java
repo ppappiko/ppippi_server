@@ -16,13 +16,13 @@ import com.ticxo.modelengine.api.model.ActiveModel;
 /** Stable species IDs share existing capture, storage and aptitude data; models are purely visual. */
 final class CustomPets implements Listener {
  private final PipiLife plugin;private final NamespacedKey species;private final Map<UUID,ActiveModel> models=new HashMap<>();private final Map<UUID,String> animations=new HashMap<>();private final Map<String,Worker> workers=new HashMap<>();private boolean warned;
- private static final Map<String,EntityType> TYPES=Map.ofEntries(Map.entry("sparrow",EntityType.CHICKEN),Map.entry("frog",EntityType.FROG),Map.entry("cat",EntityType.CAT),Map.entry("rabbit",EntityType.RABBIT),Map.entry("fox",EntityType.FOX),Map.entry("redpanda",EntityType.PANDA),Map.entry("otter",EntityType.AXOLOTL),Map.entry("tortoise",EntityType.TURTLE),Map.entry("raccoon",EntityType.PANDA),Map.entry("mole",EntityType.SILVERFISH),Map.entry("thundersheep",EntityType.SHEEP),Map.entry("moonbear",EntityType.POLAR_BEAR),Map.entry("ferret",EntityType.FOX),Map.entry("angelpig",EntityType.PIG),Map.entry("sunlizard",EntityType.AXOLOTL),Map.entry("vampbat",EntityType.BAT),Map.entry("cow",EntityType.COW));
+ private static final Map<String,EntityType> TYPES=Map.ofEntries(Map.entry("sparrow",EntityType.CHICKEN),Map.entry("frog",EntityType.FROG),Map.entry("cat",EntityType.CAT),Map.entry("rabbit",EntityType.RABBIT),Map.entry("fox",EntityType.FOX),Map.entry("redpanda",EntityType.PANDA),Map.entry("otter",EntityType.AXOLOTL),Map.entry("tortoise",EntityType.TURTLE),Map.entry("raccoon",EntityType.PANDA),Map.entry("mole",EntityType.SILVERFISH),Map.entry("thundersheep",EntityType.SHEEP),Map.entry("moonbear",EntityType.POLAR_BEAR),Map.entry("ferret",EntityType.FOX),Map.entry("angelpig",EntityType.PIG),Map.entry("sunlizard",EntityType.AXOLOTL),Map.entry("vampbat",EntityType.BAT),Map.entry("cow",EntityType.COW),Map.entry("squirrel",EntityType.FOX),Map.entry("beaver",EntityType.RABBIT),Map.entry("woodpecker",EntityType.PARROT),Map.entry("hedgehog",EntityType.ARMADILLO),Map.entry("hermitcrab",EntityType.TURTLE),Map.entry("monkey",EntityType.OCELOT),Map.entry("hamster",EntityType.RABBIT),Map.entry("ostrich",EntityType.CHICKEN),Map.entry("bee",EntityType.BEE),Map.entry("beetle",EntityType.SILVERFISH),Map.entry("penguin",EntityType.CHICKEN),Map.entry("owl",EntityType.PARROT),Map.entry("clockfox",EntityType.FOX),Map.entry("cloudsheep",EntityType.SHEEP),Map.entry("deer",EntityType.GOAT),Map.entry("rhino",EntityType.RAVAGER),Map.entry("fairy",EntityType.ALLAY));
  /** 빛나는 개체 flag lives on the mod entity (saved in its NBT); these bridge to PipiPets.shiny / isShiny. */
  static void setShiny(LivingEntity e,boolean on){try{Object nms=e.getClass().getMethod("getHandle").invoke(e);Class.forName("dev.pipi.facilities.PipiPets").getMethod("shiny",Object.class,boolean.class).invoke(null,nms,on);}catch(ReflectiveOperationException|LinkageError ignored){}}
  static boolean isShiny(LivingEntity e){try{Object nms=e.getClass().getMethod("getHandle").invoke(e);return (boolean)Class.forName("dev.pipi.facilities.PipiPets").getMethod("isShiny",Object.class).invoke(null,nms);}catch(ReflectiveOperationException|LinkageError ex){return false;}}
  /** 신규 펫 미리보기 (스폰·적성 없이 모델만): skin -> 이름 · 컨셉. */
  static final Map<String,String> PREVIEW=new LinkedHashMap<>();
- static{PREVIEW.put("beaver","댐돌이 · 비버");PREVIEW.put("hermitcrab","집게 · 소라게");PREVIEW.put("penguin","펭이 · 펭귄");PREVIEW.put("deer","하얀뿔 · 사슴");PREVIEW.put("ostrich","깃털이 · 타조");PREVIEW.put("rhino","뿔소 · 코뿔소");PREVIEW.put("monkey","망고 · 원숭이");PREVIEW.put("owl","밤눈 · 부엉이");PREVIEW.put("squirrel","도토리 · 다람쥐");PREVIEW.put("hedgehog","뾰족 · 고슴도치");PREVIEW.put("cloudsheep","뭉게 · 구름 양");PREVIEW.put("clockfox","톱니 · 태엽 여우");PREVIEW.put("beetle","기사단장 · 장수풍뎅이 기사");}
+ static{PREVIEW.put("bee","꿀벌찌 · 꿀벌");PREVIEW.put("woodpecker","딱따구 · 딱따구리");PREVIEW.put("hamster","토실 · 햄스터");PREVIEW.put("fairy","포포 · 별빛 요정");PREVIEW.put("beaver","댐돌이 · 비버");PREVIEW.put("hermitcrab","집게 · 소라게");PREVIEW.put("penguin","펭이 · 펭귄");PREVIEW.put("deer","하얀뿔 · 사슴");PREVIEW.put("ostrich","깃털이 · 타조");PREVIEW.put("rhino","뿔소 · 코뿔소");PREVIEW.put("monkey","망고 · 원숭이");PREVIEW.put("owl","밤눈 · 부엉이");PREVIEW.put("squirrel","도토리 · 다람쥐");PREVIEW.put("hedgehog","뾰족 · 고슴도치");PREVIEW.put("cloudsheep","뭉게 · 구름 양");PREVIEW.put("clockfox","톱니 · 태엽 여우");PREVIEW.put("beetle","기사단장 · 장수풍뎅이 기사");}
  /** /pipilife petpreview <skin|all> [shiny]: OP only. Non-persistent named pets (not capturable, not culled) to look at new models in game. */
  boolean preview(Player p,String[] args){
   if(!p.isOp()){p.sendMessage("관리자 전용 명령어입니다.");return true;}
@@ -101,6 +101,20 @@ final class CustomPets implements Listener {
    boolean nether=world.getEnvironment()==World.Environment.NETHER;
    for(Player player:world.getPlayers()){cull(player,cap);for(int attempt=0;attempt<3;attempt++)trySpawn(world,player,nether,cap,transportUnlocked,transportChance,rnd);}
   }
+  World deep=Bukkit.getWorld(DeepDarkMap.WORLD);   // 딥 다크 시티: only 두류 (채광 2레벨)
+  if(deep!=null)for(Player player:deep.getPlayers()){if(player.getGameMode()!=org.bukkit.GameMode.SURVIVAL)continue;cull(player,cap);trySpawnDeep(deep,player,cap,rnd);}
+ }
+ private void trySpawnDeep(World world,Player player,int cap,ThreadLocalRandom rnd){
+  if(wildPetsNear(player).size()>=cap)return;
+  List<PipiLife.Pet> pool=new ArrayList<>();for(PipiLife.Pet pet:PipiLife.Pet.values())if(pet.spawnRegions().contains("deepdark"))pool.add(pet);
+  if(pool.isEmpty())return;
+  PipiLife.Pet pet=pool.get(rnd.nextInt(pool.size()));
+  if(rnd.nextDouble()>=levelChance(pet.level))return;
+  double angle=rnd.nextDouble()*Math.PI*2,radius=12+rnd.nextDouble()*20;
+  Location spot=undergroundSpot(world,player.getLocation().getBlockX()+(int)Math.round(Math.cos(angle)*radius),player.getLocation().getBlockZ()+(int)Math.round(Math.sin(angle)*radius),player.getLocation().getBlockY());
+  if(spot==null)return;
+  LivingEntity wild=spawn(spot,pet.name().toLowerCase(Locale.ROOT),false);
+  if(wild!=null&&rnd.nextDouble()<plugin.getConfig().getDouble("pet-spawn.shiny-chance",.01))setShiny(wild,true);
  }
  /** Wild pet entities near the player. Counted by entity type too: the species tag of a mod entity may be missing after a chunk reload. */
  private List<LivingEntity> wildPetsNear(Player player){List<LivingEntity> out=new ArrayList<>();for(Entity e:player.getNearbyEntities(64,64,64)){if(!(e instanceof LivingEntity l)||l.getScoreboardTags().contains("pipi_pet_worker")||l.isLeashed()||l.getCustomName()!=null)continue;if(skin(l)!=null||l.getType().name().startsWith("PIPIFACILITIES_PET_"))out.add(l);}return out;}
@@ -120,7 +134,8 @@ final class CustomPets implements Listener {
   Block ground=spot.getBlock().getRelative(0,-1,0);
   Set<String> allowed=null;
   if(plugin.regions!=null){Regions.Region reg=plugin.regions.at(spot);if(reg!=null){allowed=reg.allowedSkins();if(allowed!=null&&allowed.isEmpty())return;}}
-  PipiLife.Pet pet=pick(world,biomeKey(world,x,spot.getBlockY(),z),ground,transportUnlocked,transportChance,rnd,allowed);
+  String region=WildRegions.regionAt(spot,plugin.wildWorldName());
+  PipiLife.Pet pet=pick(world,biomeKey(world,x,spot.getBlockY(),z),ground,transportUnlocked,transportChance,rnd,allowed,region);
   if(pet==null)return;
   if(!pet.transport()&&rnd.nextDouble()>=levelChance(pet.level))return;
   LivingEntity wild=spawn(spot,pet.name().toLowerCase(Locale.ROOT),false);
@@ -129,19 +144,21 @@ final class CustomPets implements Listener {
    for(Player near:spot.getWorld().getPlayers())if(near.getLocation().distanceSquared(spot)<64*64){near.sendTitle("","§e✦ 근처에 빛나는 "+pet.label+"이(가) 나타났다!",5,50,15);near.playSound(near.getLocation(),Sound.BLOCK_AMETHYST_BLOCK_CHIME,1f,1.4f);}
   }
  }
- private PipiLife.Pet pick(World world,String biome,Block ground,boolean transportUnlocked,double transportChance,ThreadLocalRandom rnd,Set<String> allowed){
+ /** In a wild region (nw/ne/se) the pool is every pet listed for that region (1·2레벨 everywhere, 3레벨 by aptitude); elsewhere only 1레벨 pets of this biome. */
+ private PipiLife.Pet pick(World world,String biome,Block ground,boolean transportUnlocked,double transportChance,ThreadLocalRandom rnd,Set<String> allowed,String region){
   List<PipiLife.Pet> normal=new ArrayList<>(),transport=new ArrayList<>();
   boolean fortress=structure(ground,"fortress"),bastion=structure(ground,"bastion");
   for(PipiLife.Pet pet:PipiLife.Pet.values()){
    if(allowed!=null&&!allowed.contains(pet.name().toLowerCase(Locale.ROOT)))continue;
    if(pet.netherPlace()){if(pet.place.equals("fortress")&&!fortress)continue;if(pet.place.equals("bastion")&&!bastion)continue;transport.add(pet);}
-   else if(pet.place.equals(biome))normal.add(pet);
+   else if(region!=null){if(pet.spawnRegions().contains(region))normal.add(pet);}
+   else if(pet.level==1&&pet.place.equals(biome))normal.add(pet);
   }
   if(!transport.isEmpty()&&transportUnlocked&&rnd.nextDouble()<transportChance)return transport.get(rnd.nextInt(transport.size()));
   if(normal.isEmpty())return null;
   return normal.get(rnd.nextInt(normal.size()));
  }
- private static final Map<String,String> BIOME_KO=Map.ofEntries(Map.entry("meadow","초원"),Map.entry("forest","숲"),Map.entry("plains","평원"),Map.entry("cherry_grove","벚나무 숲"),Map.entry("desert","사막"),Map.entry("warm_ocean","따뜻한 바다"),Map.entry("windswept_gravelly_hills","바람이 세찬 자갈투성이 언덕"),Map.entry("mushroom_fields","버섯섬"),Map.entry("ice_spikes","역고드름"),Map.entry("wooded_badlands","나무가 우거진 악지"),Map.entry("sunflower_plains","해바라기 평원"),Map.entry("deep_dark","딥 다크"),Map.entry("flower_forest","꽃 숲"),Map.entry("mangrove_swamp","맹그로브 늪"),Map.entry("stony_peaks","돌 봉우리"),Map.entry("fortress","네더 요새"),Map.entry("bastion","바스티온"));
+ private static final Map<String,String> BIOME_KO=Map.ofEntries(Map.entry("meadow","초원"),Map.entry("birch_forest","자작나무 숲"),Map.entry("river","강"),Map.entry("taiga","타이가"),Map.entry("beach","해변"),Map.entry("savanna","사바나"),Map.entry("snowy_plains","눈 덮인 평원"),Map.entry("dark_forest","어두운 숲"),Map.entry("forest","숲"),Map.entry("plains","평원"),Map.entry("cherry_grove","벚나무 숲"),Map.entry("desert","사막"),Map.entry("warm_ocean","따뜻한 바다"),Map.entry("windswept_gravelly_hills","바람이 세찬 자갈투성이 언덕"),Map.entry("mushroom_fields","버섯섬"),Map.entry("ice_spikes","역고드름"),Map.entry("wooded_badlands","나무가 우거진 악지"),Map.entry("sunflower_plains","해바라기 평원"),Map.entry("deep_dark","딥 다크"),Map.entry("flower_forest","꽃 숲"),Map.entry("mangrove_swamp","맹그로브 늪"),Map.entry("stony_peaks","돌 봉우리"),Map.entry("fortress","네더 요새"),Map.entry("bastion","바스티온"));
  private static String pct(double v){String t=String.format(Locale.ROOT,"%.2f",v*100);t=t.replaceAll("0+$","").replaceAll("\\.$","");return t+"%";}
  private String placeName(String place){String ko=BIOME_KO.get(place);return ko==null?place:ko+"("+place+")";}
  boolean spawnInfo(Player p,String[] args){
@@ -153,7 +170,8 @@ final class CustomPets implements Listener {
    for(PipiLife.Pet pet:PipiLife.Pet.values()){
     int n=0;for(PipiLife.Pet o:PipiLife.Pet.values())if(o.place.equals(pet.place))n++;
     String chance=pet.transport()?transportText:pct(levelChance(pet.level)/n);
-    p.sendMessage("§f"+pet.label+" §7("+pet.cmd()+") §eLv"+pet.level+" §7| §b"+placeName(pet.place)+" §7| §a시도당 "+chance);
+    String where=pet.netherPlace()?placeName(pet.place):String.join(", ",pet.spawnRegions().stream().map(r->r.equals("deepdark")?"딥 다크 시티":WildRegions.regionName(r)).toList())+(pet.level==1?" + "+placeName(pet.place):"");
+    p.sendMessage("§f"+pet.label+" §7("+pet.cmd()+") §eLv"+pet.level+(pet.rideLevel()>0?" §d탑승"+pet.rideLevel():"")+(pet.carries()?" §b운반":"")+(pet.grazes()?" §a방목":"")+" §7| §b"+where+" §7| §a레벨 확률 "+pct(levelChance(pet.level)));
    }
    return true;
   }

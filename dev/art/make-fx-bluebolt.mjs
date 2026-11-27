@@ -51,6 +51,14 @@ box([6, 26, 5.6], [10, 30, 10.4], "pale"); box([6.8, 26.8, 5.3], [8.8, 28.8, 6],
 // spark splash at the foot
 for (const [x, a] of [[4, 45], [12, -45], [6, 22.5], [10, -22.5]]) box([x - .6, -8, 7.4], [x + .6, -4.5, 8.6], "pale", { angle: a, axis: "z", origin: [x, -8, 8] });
 box([3, -8.6, 3], [13, -8, 13], "cyan");
+// --- extra detail: sub-forks off every fork, glow knots at the joints, a rounder orb, a splash ring of sparks
+seg([14, 17], [15.5, 14], .8); seg([14, 17], [13.2, 13.5], .7); seg([3, 12], [1.2, 9.5], .8); seg([3, 12], [3.6, 8.6], .7);
+seg([13.5, 6.5], [15, 3.5], .7); seg([3.5, 0], [1.5, -2.5], .7); seg([8, 27], [5.2, 23.4], 1); seg([9.5, -2.5], [12.5, -5], .9);
+for (const [x, y] of path1.slice(1, -1)) { box([x - 1.1, y - 1.1, 6.9], [x + 1.1, y + 1.1, 9.1], "pale", { angle: 45, axis: "z", origin: [x, y, 8] }); box([6.9, y - 1.1, 16 - x - 1.1], [9.1, y + 1.1, 16 - x + 1.1], "pale", { angle: 45, axis: "x", origin: [8, y, 16 - x] }); }
+for (const [y0, y1, r] of [[23.2, 24.2, 2.6], [30.6, 31.6, 2.6], [24, 31, 3.9]]) { box([8 - r, y0, 8 - r], [8 + r, y1, 8 + r], "blue", { angle: 45, axis: "y", origin: [8, (y0 + y1) / 2, 8] }); }
+box([5.6, 25.4, 5.6], [10.4, 30.2, 10.4], "pale", { angle: 45, axis: "y", origin: [8, 27.8, 8] }); box([7, 27, 6.8], [9, 29, 9.2], "white", { angle: 45, axis: "y", origin: [8, 28, 8] });
+for (let k = 0; k < 12; k++) { const a = k * 30 * Math.PI / 180, x = 8 + 6.2 * Math.cos(a), z = 8 + 6.2 * Math.sin(a); box([x - .3, -8, z - .3], [x + .3, -5.6 + (k % 2) * 1.2, z + .3], k % 2 ? "white" : "pale", { angle: 45, axis: "y", origin: [x, -7, z] }); }
+for (const [x, y, z] of [[2, 20, 8], [14.5, 25, 6], [1.5, 6, 10], [14.5, 1, 8], [4, -6, 4], [12, -6.5, 12]]) box([x - .4, y - .4, z - .4], [x + .4, y + .4, z + .4], "white", { angle: 45, axis: "z", origin: [x, y, z] });
 
 fs.writeFileSync(path.join(A, "models/item/fx_blue_bolt.json"), JSON.stringify({
   textures: { "0": "pipifacilities:item/fx_blue_bolt", particle: "pipifacilities:item/fx_blue_bolt" },

@@ -14,16 +14,17 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Party list on the left (under the top-left info panels): diamond class frame, name, HP bar.
  * HP bar is red when the member is in the same area (world) as you, dark grey when not.
- * Server: PIPI_PARTY:name,cls,hp,max,same,leader,online;...  (empty = not in a party). Key: P = show/hide.
+ * Server: PIPI_PARTY:name,cls,hp,max,same,leader,online[,area,dist];...  (empty = not in a party). Key: P = the party window (PartyScreen),
+ * which also shows / hides this list.
  */
 final class PartyHud {
-    static final KeyMapping TOGGLE_KEY = new KeyMapping("파티 목록", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_P, "PipiTravel");
+    static final KeyMapping TOGGLE_KEY = new KeyMapping("파티 창", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_P, "PipiTravel");
     private static final String PREFIX = "PIPI_PARTY:";
 
-    private record Member(String name, int cls, long hp, long max, boolean same, boolean leader, boolean online) {}
+    record Member(String name, int cls, long hp, long max, boolean same, boolean leader, boolean online, String area, long dist) {}
 
-    private static List<Member> members = List.of();
-    private static boolean shown = true;
+    static List<Member> members = List.of();
+    static boolean shown = true;
     private static Object owner;
 
     private PartyHud() {}
@@ -41,7 +42,8 @@ final class PartyHud {
             if (p.length < 7) continue;
             try {
                 out.add(new Member(p[0], ClassIcons.parse(p[1]), Long.parseLong(p[2].trim()), Math.max(1, Long.parseLong(p[3].trim())),
-                    p[4].trim().equals("1"), p[5].trim().equals("1"), p[6].trim().equals("1")));
+                    p[4].trim().equals("1"), p[5].trim().equals("1"), p[6].trim().equals("1"),
+                    p.length > 7 ? p[7].trim() : "", p.length > 8 ? Long.parseLong(p[8].trim()) : -1));
             } catch (NumberFormatException ignored) { }
         }
         members = out;
@@ -52,10 +54,7 @@ final class PartyHud {
     static void key(ClientTickEvent.Post event) {
         var client = client();
         if (client.player == null || client.screen != null) { while (TOGGLE_KEY.consumeClick()) { } return; }
-        while (TOGGLE_KEY.consumeClick()) {
-            if (members.isEmpty()) client.player.displayClientMessage(net.minecraft.network.chat.Component.literal("§7파티에 속해 있지 않습니다. (플레이어 우클릭 → 파티 초대)"), true);
-            else shown = !shown;
-        }
+        while (TOGGLE_KEY.consumeClick()) client.setScreen(new PartyScreen());
     }
 
     static void draw(GuiGraphics g) {

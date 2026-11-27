@@ -169,7 +169,6 @@ final class RaidDeepDark implements Listener {
         c.addDefault(P + "reward.steel", 60);
         c.addDefault(P + "reward.soul-stone", 1);
         c.addDefault(P + "reward.level-vouchers", 5);
-        c.addDefault(P + "reward.auction-skillbooks", List.of("어둠 가르기", "정적의 화살", "공명 폭발", "심연의 방벽", "고요한 질주"));
         // 1단계 장신구 (전원): count-min~max 개, 각각 부위 랜덤 + 힘/민첩/지능/행운 중 1줄 stat-min~max (모두 동일 확률)
         c.addDefault(P + "reward.accessory-count-min", 2);
         c.addDefault(P + "reward.accessory-count-max", 6);
@@ -458,8 +457,7 @@ final class RaidDeepDark implements Listener {
         int[] stat = accessoryRange("reward.accessory-stat-min", "reward.accessory-stat-max");
         rewards.add(plugin.statusIcon(Material.ECHO_SHARD, "§91단계 장신구 " + acc[0] + "~" + acc[1] + "개",
             "§7클리어 보상 (전원) · 부위 랜덤", "§7힘 / 민첩 / 지능 / 행운 중 1줄 +" + stat[0] + "~" + stat[1]));
-        List<?> books = plugin.getConfig().getList(P + "reward.auction-skillbooks");
-        rewards.add(skillBookPlaceholder(books == null || books.isEmpty() ? "미정" : books.size() + "종 중 1권"));
+        rewards.add(ClassSkills.skillBook(plugin, "deepdark"));
         for (int i = 0; i < rewards.size() && i < 9; i++) menu.inv.setItem(GATE_REWARDS + i, rewards.get(i));
         String why = gateBlocked(p);
         menu.inv.setItem(GATE_ENTER, why == null ? plugin.statusIcon(Material.LIME_DYE, "§a입장하기", "§7파티원 전원이 찬성하면 보스방으로 이동합니다")
@@ -1063,14 +1061,22 @@ final class RaidDeepDark implements Listener {
         List<Player> on = online(s);
         if (on.isEmpty()) return;
         if (auction != null && !auction.done()) auction.abort();
-        List<?> books = plugin.getConfig().getList(P + "reward.auction-skillbooks");
-        String book = books == null || books.isEmpty() ? "미정" : String.valueOf(books.get(ThreadLocalRandom.current().nextInt(books.size())));
         boolean solo = on.size() < 2;
         long first = solo ? ci("auction.solo-start-first") : ci("auction.start"), other = solo ? ci("auction.solo-start-other") : ci("auction.start");
         List<RaidAuction.Lot> lots = new ArrayList<>();
         lots.add(new RaidAuction.Lot("워든의 영혼석", town.raidItem("soul", Math.max(1, ci("reward.soul-stone"))), Math.max(1, first)));
-        lots.add(new RaidAuction.Lot("스킬북 · " + book, skillBookPlaceholder(book), Math.max(1, other)));
+        lots.add(new RaidAuction.Lot("스킬북 · 깊은 어둠", ClassSkills.skillBook(plugin, "deepdark"), Math.max(1, other)));
         auction = new RaidAuction(plugin, RAID_NAME, on, lots, solo, ci("auction.step"), ci("auction.lot-seconds") * 1000L,
+            ci("auction.extend-seconds") * 1000L, ci("auction.gap-seconds") * 1000L);
+        auction.start();
+    }
+
+    /** Another raid's loot auction (통곡의 왕좌) on this auction slot, window and timers; waits while one is still running. */
+    void startLootAuction(String raidName, List<Player> on, List<RaidAuction.Lot> lots, long tries) {
+        List<Player> live = on.stream().filter(Player::isOnline).toList();
+        if (live.isEmpty() || tries > 60) return;
+        if (auction != null && !auction.done()) { Bukkit.getScheduler().runTaskLater(plugin, () -> startLootAuction(raidName, live, lots, tries + 1), 100L); return; }
+        auction = new RaidAuction(plugin, raidName, live, lots, live.size() < 2, ci("auction.step"), ci("auction.lot-seconds") * 1000L,
             ci("auction.extend-seconds") * 1000L, ci("auction.gap-seconds") * 1000L);
         auction.start();
     }
@@ -1108,13 +1114,6 @@ final class RaidDeepDark implements Listener {
         return new int[] { Math.min(a, b), Math.max(a, b) };
     }
 
-    private ItemStack skillBookPlaceholder(String skill) {
-        ItemStack it = plugin.statusIcon(Material.BOOK, "§b[임시] 스킬북 · " + skill, "§7스킬북 시스템 구현 전 임시 아이템입니다.", "§8딥 다크 시티 전리품 경매");
-        var m = it.getItemMeta();
-        m.getPersistentDataContainer().set(KEYS.skillbook, PersistentDataType.STRING, skill);
-        it.setItemMeta(m);
-        return it;
-    }
 
     private void rewards(Session s) {
         List<Player> on = online(s);

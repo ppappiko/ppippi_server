@@ -38,15 +38,15 @@ final class SkillScreen extends Screen {
                 new Skill("w_heavy", "검무", EQUIP, "8초", "55% × 6", "1초 동안 춤추듯 여섯 번 빠르게 베어 전방 6칸 140도 부채꼴의 적에게 연속으로 피해를 줍니다."),
                 new Skill("w_impale", "검막", EQUIP, "9초", "40% × 8", "3초 동안 분신 장검 세 자루가 몸 주위를 빠르게 돌며 반경 6칸 안의 적을 계속 벱니다. 움직이면서 쓸 수 있습니다."),
                 new Skill("w_iai", "더블어택", EQUIP, "5초", "100% × 2 × 2회", "전방 10칸을 순식간에 두 번 연속으로 베어 경로 위의 모든 적에게 피해를 줍니다."),
-                new Skill("w_thrust", "광속 찌르기 [보스]", EQUIP, "7초", "45% × 5", "공기를 찢을 듯이 순식간에 앞으로 찔러 전방 9칸의 적을 찢어발깁니다. 워든 처치 시 해금."),
+                new Skill("w_thrust", "광속 찌르기", EQUIP, "7초", "45% × 5", "공기를 찢을 듯이 순식간에 앞으로 찔러 전방 9칸의 적을 찢어발깁니다."),
                 new Skill("w_heal", "투지", "4", "25초", "", "최대 체력의 25%를 회복하고 5초간 받는 피해가 10% 더 줄어듭니다."),
                 new Skill("w_rage", "전투 함성", "4", "30초", "", "최대 체력의 25%를 회복하고 10초간 공격력이 20% 증가합니다."),
                 new Skill("w_fort", "불굴", "4", "45초", "", "10초간 모든 피해를 받지 않지만 움직일 수 없습니다. 시점 회전은 가능하며 도중에 해제할 수 없습니다."),
                 new Skill("w_shield", "강철 의지", "6", "20초", "", "최대 체력의 20%만큼 보호막을 6초간 얻습니다. 보호막이 체력보다 먼저 피해를 흡수합니다.")),
             List.of(
                 new Skill("w_ult", "검기 난사", "5", "90초", "40% × 20회", "5초 동안 주변 반경 6칸에 검기를 난사해 범위 안의 모든 적을 연속으로 벱니다."),
-                new Skill("w_tiger", "백호참", "5", "90초", "180% × 5", "2초간 자세를 잡은 뒤(이동 불가, 시점 회전은 가능) 전방 8칸을 거대한 발톱으로 한 번에 할퀴어 큰 피해를 줍니다."),
-                new Skill("w_meteor", "유성우 [보스]", "5", "100초", "70% × 40회", "1초 준비 후 검기로 이루어진 유성우를 불러 조준 지점 반경 6칸에 5초간 쏟아붓습니다. 워든 처치 시 해금."))),
+                new Skill("w_tiger", "맹호참", "5", "90초", "180% × 5", "1초간 자세를 잡은 뒤(이동 불가, 시점 회전은 가능) 전방 8칸을 거대한 발톱으로 한 번에 할퀴어 큰 피해를 줍니다."),
+                new Skill("w_meteor", "유성우", "5", "100초", "70% × 40회", "1초 준비 후 검기로 이루어진 유성우를 불러 조준 지점 반경 6칸에 5초간 쏟아붓습니다."))),
         List.of(
             List.of(new Skill("a_basic", "속사", "좌클릭", "0.5초", "45% × 2", "옆에 초록 분신 활이 나타나 초록 화살을 쏘고 사라집니다. 사거리 25칸.")),
             List.of(
@@ -59,13 +59,13 @@ final class SkillScreen extends Screen {
                 new Skill("a_heal", "숲의 숨결", "4", "25초", "", "최대 체력의 25%를 회복하고 6초간 이동 속도가 20% 증가합니다."),
                 new Skill("a_focus", "매의 눈", "4", "30초", "", "최대 체력의 25%를 회복하고 10초간 공격력이 20% 증가합니다."),
                 new Skill("a_spirit", "바람 정령", "4", "45초", "", "10초간 활 모양 바람 정령이 곁을 따라다니며 1초마다 25칸 이내 가장 가까운 적에게 바람 화살(60%)을 쏩니다."),
-                new Skill("a_tiger", "백호 강림 [보스]", "4", "40초", "", "15초간 백호의 기운이 깃들어 평타마다 하얀 기운의 화살(60% × 2)이 한 번 더 나갑니다. 워든 처치 시 해금."),
-                new Skill("a_turtle", "현무의 가오 [보스]", "4", "60초", "", "현무의 힘을 빌려 30초간 이동 속도, 공격력 20%, 받는 피해 10% 감소, 체력 재생을 얻습니다. 워든 처치 시 해금."),
+                new Skill("a_tiger", "백호 강림", "4", "40초", "", "15초간 백호의 기운이 깃들어 평타마다 하얀 기운의 화살(60% × 2)이 한 번 더 나갑니다."),
+                new Skill("a_turtle", "현무의 가오", "4", "60초", "", "현무의 힘을 빌려 30초간 이동 속도, 공격력 20%, 받는 피해 10% 감소, 체력 재생을 얻습니다."),
                 new Skill("a_shield", "바람 장막", "6", "18초", "", "최대 체력의 15%만큼 보호막을 6초간 얻고, 3초간 이동 속도가 증가합니다.")),
             List.of(
                 new Skill("a_ult", "화살 폭풍", "5", "90초", "25% × 40", "바람 활 5개가 뒤에 떠올라 5초간 0.25초마다 2발씩 25칸 이내 적을 쫓는 유도 화살을 연사합니다."),
                 new Skill("a_wolf", "피닉스의 현현", "5", "90초", "60% × 2 / 평타 +60%", "12초간 피닉스를 머리 위에 현현시켜 함께 싸웁니다. 1초마다 가까운 적(25칸)에게 불덩이를 쏘고, 그동안 평타가 불화살(피해 +60%, 3초 화상)로 강화됩니다."),
-                new Skill("a_dragon", "청룡의 진노 [보스]", "5", "100초", "45% × 번개 50회", "1초간 청룡의 기운을 모은 뒤 5초 동안 주위 12칸에 하늘에서 푸른 번개를 연달아 내리칩니다. 근처에 적이 있으면 번개가 적에게 떨어집니다. 워든 처치 시 해금."))),
+                new Skill("a_dragon", "청룡의 진노", "5", "100초", "45% × 번개 50회", "1초간 청룡의 기운을 모은 뒤 5초 동안 주위 12칸에 하늘에서 푸른 번개를 연달아 내리칩니다. 근처에 적이 있으면 번개가 적에게 떨어집니다."))),
         List.of(
             List.of(new Skill("m_basic", "마력탄", "좌클릭", "0.6초", "40% × 3", "옆에 보라 분신 지팡이가 나타나 보라 마력 구체를 쏘고 사라집니다.")),
             List.of(
@@ -75,15 +75,15 @@ final class SkillScreen extends Screen {
                 new Skill("m_wave", "마력 파동", EQUIP, "5초", "50% × 4", "부채꼴(70도) 마력 파동이 전방 14칸까지 퍼져나가며 범위 안의 적을 꿰뚫습니다."),
                 new Skill("m_hammer", "마력 망치", EQUIP, "10초", "95% × 4", "조준 지점(최대 16칸) 옆에 거대한 마력 망치가 세워졌다가 머리를 크게 휘둘러 내려찍어 반경 3.5칸에 피해를 주고 1초간 기절시킵니다."),
                 new Skill("m_bow", "마력 대궁", EQUIP, "14초", "110% × 5", "1.5초간 활을 당긴 뒤 가장 가까운 적을 쫓아가는 유도 마력 화살을 쏩니다. 화살은 30칸을 꿰뚫습니다."),
-                new Skill("m_mrain", "마력비 [보스]", EQUIP, "8초", "35% × 8회", "마력 구체를 비처럼 얇게 만들어 조준 지점 반경 4.5칸에 3초간 내리게 합니다. 워든 처치 시 해금."),
-                new Skill("m_spear", "마력창 [보스]", EQUIP, "9초", "90% × 12", "바닥에서 보라색 마력 창이 차례로 솟구쳐 전방 24칸을 나아가며 적을 찌르고 띄웁니다. 창의 줄은 조준한 적 쪽으로 휘어집니다. 워든 처치 시 해금."),
+                new Skill("m_mrain", "마력비", EQUIP, "8초", "35% × 8회", "마력 구체를 비처럼 얇게 만들어 조준 지점 반경 4.5칸에 3초간 내리게 합니다."),
+                new Skill("m_spear", "마력창", EQUIP, "9초", "90% × 12", "바닥에서 보라색 마력 창이 차례로 솟구쳐 전방 24칸을 나아가며 적을 찌르고 띄웁니다. 창의 줄은 조준한 적 쪽으로 휘어집니다."),
                 new Skill("m_heal", "치유의 빛", "4", "30초", "", "최대 체력의 25%를 회복하고, 8칸 이내 다른 플레이어는 최대 체력의 10%를 회복합니다."),
                 new Skill("m_focus", "마력 집중", "4", "30초", "", "최대 체력의 35%를 회복하고 10초간 공격력이 20% 증가합니다."),
                 new Skill("m_reset", "시간 역행", "4", "90초", "", "장착한 일반 스킬 3종과 보호막의 재사용 대기시간을 초기화하고 10초간 공격력이 20% 증가합니다. 궁극기·대시는 제외."),
                 new Skill("m_shield", "마력 방벽", "6", "22초", "", "최대 체력의 25%만큼 보호막을 6초간 얻습니다.")),
             List.of(
                 new Skill("m_cannon", "마력포", "5", "100초", "50% × 20회", "3초간 마법진을 펼쳐 힘을 모은 뒤, 시전한 자리에서 정면으로 5초간 육각형 마력포를 발사합니다 (20칸, 50% × 20회)."),
-                new Skill("m_moon", "만월의 추억", "5", "100초", "140% × 3회", "1초간 마력을 모은 뒤 조준 지점(24칸) 위에서 둥근 만월이 유성처럼 떨어집니다. 떨어진 자리 반경 4.5칸의 적에게 3번 피해를 줍니다."))),
+                new Skill("m_moon", "만월의 추억", "5", "100초", "100~180% × 3회", "머리 위에 푸른 달이 차오른 뒤 조준한 방향으로 천천히 날아갑니다. 날아갈수록 커지고, 적이나 벽에 닿거나 2.5초가 지나면 달빛을 뿌리며 폭발합니다. 오래 날수록 폭발 범위(2.5~6.5칸)와 피해가 커집니다."))),
         List.of(
             List.of(),
             List.of(new Skill("c_dash", "대시 점프", "공중에서 스페이스 2번", "8초", "", "공중에서 앞으로 돌진하며 2초간 낙하 피해를 받지 않습니다.")),
@@ -166,6 +166,9 @@ final class SkillScreen extends Screen {
         return -1;
     }
 
+    /** Column c of the current tab without the skills not learned yet (raid skill books / later raids): they are not shown at all. */
+    private List<Skill> col(int c) { return DATA.get(tab).get(c).stream().filter(s -> !CombatBar.bossLocked(s.id())).toList(); }
+
     private static boolean boxTakes(int box, int kind) { return kind >= 0 && (box < 3 ? kind == 0 : box - 2 == kind); }
 
     /** Row index under the mouse in column c (1 = skills, 2 = ultimates) for rows that can be equipped, or -1. */
@@ -175,15 +178,15 @@ final class SkillScreen extends Screen {
         if (mx < x || mx >= x + w - 7 || my < top + LIST_Y + 2) return -1;
         int r = (int) (my - top - LIST_Y - 2) / ROW + scroll[c];
         int viewRows = (H - LIST_Y - 6) / ROW;
-        if (r - scroll[c] >= viewRows || r >= DATA.get(tab).get(c).size()) return -1;
-        return kindOf(DATA.get(tab).get(c).get(r).id()) >= 0 ? r : -1;
+        if (r - scroll[c] >= viewRows || r >= col(c).size()) return -1;
+        return kindOf(col(c).get(r).id()) >= 0 ? r : -1;
     }
 
     /** Id of the equippable skill row under the mouse (any column), or null. */
     private String idAt(double mx, double my) {
         for (int c = 1; c < 3; c++) {
             int r = rowAt(c, mx, my);
-            if (r >= 0) return DATA.get(tab).get(c).get(r).id();
+            if (r >= 0) return col(c).get(r).id();
         }
         return null;
     }
@@ -191,7 +194,7 @@ final class SkillScreen extends Screen {
     private void equip(String id, int slot) {
         var client = net.minecraft.client.Minecraft.getInstance();
         if (id == null || locked() || !classTab() || client.getConnection() == null) return;
-        if (CombatBar.bossLocked(id)) return; // 보스 스킬: 워든 처치 전에는 장착 불가
+        if (CombatBar.bossLocked(id)) return; // 아직 못 배운 스킬 (레이드 스킬북)
         int kind = kindOf(id);
         if (!boxTakes(slot, kind)) return;
         int c = tab;
@@ -253,7 +256,7 @@ final class SkillScreen extends Screen {
 
     @Override public boolean mouseScrolled(double mx, double my, double dx, double dy) {
         for (int c = 0; c < 3; c++) {
-            int rows = DATA.get(tab).get(c).size(), viewRows = (H - LIST_Y - 6) / ROW;
+            int rows = col(c).size(), viewRows = (H - LIST_Y - 6) / ROW;
             if (mx >= colX(c) && mx < colX(c) + COLW[c] && rows > viewRows) {
                 scroll[c] = Math.clamp(scroll[c] - (int) Math.signum(dy), 0, rows - viewRows);
                 return true;
@@ -319,7 +322,7 @@ final class SkillScreen extends Screen {
             g.fill(x, headY, x + w, headY + 11, 0xff24456f);
             g.drawCenteredString(font, COLUMNS[c], x + w / 2, headY + 2, TEXT);
             g.fill(x, top + LIST_Y, x + w, top + H - 4, PANEL2);
-            List<Skill> rows = DATA.get(tab).get(c);
+            List<Skill> rows = col(c);
             int viewRows = (H - LIST_Y - 6) / ROW;
             for (int r = 0; r < viewRows && r + scroll[c] < rows.size(); r++) {
                 int index = r + scroll[c];
@@ -342,7 +345,7 @@ final class SkillScreen extends Screen {
                 if (bossLocked) g.fill(x + 2, ry, x + 36, ry + 33, 0xc0101820);
                 g.drawString(font, s.name(), x + 40, ry + 6, dim ? 0xff6f7d90 : TEXT, false);
                 String key = s.key().startsWith("공") ? "[더블 스페이스]" : general || single ? (slot >= 0 ? "장착중" : "미장착") : "[" + s.key() + "]";
-                if (bossLocked) key = "워든 처치 시 해금";
+                if (bossLocked) key = CombatBar.lockSource(s.id());
                 g.drawString(font, key, x + 40, ry + 19, (general || single) && slot >= 0 ? 0xff7bdc8a : dim ? 0xff55627a : MUTED, false);
                 if (general && slot >= 0) {
                     String badge = "[" + (slot + 1) + "]";

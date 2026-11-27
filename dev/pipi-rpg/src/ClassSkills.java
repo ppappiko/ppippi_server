@@ -48,7 +48,7 @@ final class ClassSkills implements Listener {
     private final Map<UUID, Long> atkBuff = new HashMap<>();     // 공격력 버프: +20% damage until
     private final Map<UUID, Long> fortress = new HashMap<>();    // 불굴: invulnerable + frozen until
     private final Map<UUID, Long> spiritUntil = new HashMap<>();  // 바람 정령: running instance per player (own state, never shared with 화살 폭풍)
-    private final Map<UUID, Long> rooted = new HashMap<>();      // 백호참 자세: frozen in place (looking allowed) until
+    private final Map<UUID, Long> rooted = new HashMap<>();      // 맹호참 자세: frozen in place (looking allowed) until
     private final Map<UUID, Long> speedMods = new HashMap<>();     // 숲의 숨결 speed modifier: player -> expiry millis
     private final Map<UUID, Long> fallImmune = new HashMap<>();  // dash: no fall damage until
     private final Map<UUID, Long> lastGround = new HashMap<>();
@@ -62,7 +62,7 @@ final class ClassSkills implements Listener {
     // ---------------------------------------------------------------- loadout (equipped general skills)
 
     // Cooldown / charge array layout: 0-7 fixed slots, 8-25 general (6 per class), 26-34 buffs (3 per class), 35-40 ultimates (2 per class),
-    // 41-47 boss skills (unlocked by the first warden clear). Key per class / ordinal comes from GEN_KEYS / BUFF_KEYS / ULT_KEYS.
+    // 41-47 former boss skills (now raid skill book / reserved, see LOCKED). Key per class / ordinal comes from GEN_KEYS / BUFF_KEYS / ULT_KEYS.
     private static final int KEYS = 48;
     /** General (equippable in keys 1-3) skill ids per class; the index is the skill's ordinal used for cooldown keys. */
     private static final String[][] IDS = {
@@ -74,8 +74,24 @@ final class ClassSkills implements Listener {
         {"w_heal", "w_rage", "w_fort"}, {"a_heal", "a_focus", "a_spirit", "a_tiger", "a_turtle"}, {"m_heal", "m_focus", "m_reset"}};
     /** Ultimate ids per class (key 5, slot 4). m_moon (만월의 추억) replaced m_dragon; 청룡의 진노 moved to the archer as a boss skill. */
     private static final String[][] ULTS = {{"w_ult", "w_tiger", "w_meteor"}, {"a_ult", "a_wolf", "a_dragon"}, {"m_cannon", "m_moon"}};
-    /** Boss skills: equippable only after the player's first warden clear. */
-    static final java.util.Set<String> BOSS_SKILLS = java.util.Set.of("w_thrust", "w_meteor", "m_mrain", "m_spear", "a_dragon", "a_tiger", "a_turtle");
+    /** Raid skill books: raid key -> the 3 skills (warrior / archer / mage) a book can teach; right-click picks one unlearned at random. */
+    static final Map<String, List<String>> RAID_BOOKS = Map.of(
+        "deepdark", List.of("w_heavy", "a_shotgun", "m_hammer"),     // 1보스 워든 (깊은 어둠)
+        "sorrow", List.of("w_iai", "a_gale", "m_bow"));              // 2보스 비탄의 군주 (통곡의 왕좌)
+    static final Map<String, String> RAID_LABEL = Map.of("deepdark", "깊은 어둠", "sorrow", "통곡의 왕좌");
+    /** Strongest skills, kept for raids that do not exist yet (3 more raids x 1 per class). */
+    static final List<String> RESERVED = List.of("w_thrust", "a_tiger", "m_mrain", "w_fort", "a_turtle", "m_spear", "w_meteor", "a_dragon", "m_reset");
+    static final Map<String, String> NAMES = Map.ofEntries(Map.entry("w_heavy", "검무"), Map.entry("a_shotgun", "산탄 사격"), Map.entry("m_hammer", "마력 망치"),
+        Map.entry("w_iai", "더블어택"), Map.entry("a_gale", "질풍 화살"), Map.entry("m_bow", "마력 대궁"), Map.entry("w_thrust", "광속 찌르기"),
+        Map.entry("w_fort", "불굴"), Map.entry("w_meteor", "유성우"), Map.entry("a_tiger", "백호 강림"), Map.entry("a_turtle", "현무의 가오"),
+        Map.entry("a_dragon", "청룡의 진노"), Map.entry("m_mrain", "마력비"), Map.entry("m_spear", "마력창"), Map.entry("m_reset", "시간 역행"));
+    /** Skills that must be learned (id -> where they come from); every other skill is known from the start. */
+    static final Map<String, String> LOCKED = new java.util.LinkedHashMap<>();
+    static {
+        for (String raid : List.of("deepdark", "sorrow")) for (String id : RAID_BOOKS.get(raid)) LOCKED.put(id, RAID_LABEL.get(raid) + " 스킬북");
+        for (String id : RESERVED) LOCKED.put(id, "추후 레이드");
+    }
+    static final NamespacedKey BOOK_KEY = NamespacedKey.fromString("pipilife:raid_skillbook");
     private static final int[][] GEN_KEYS = {{8, 9, 10, 11, 12, 13, 41}, {14, 15, 16, 17, 18, 19}, {20, 21, 22, 23, 24, 25, 42, 43}};
     private static final int[][] BUFF_KEYS = {{26, 27, 28}, {29, 30, 31, 44, 45}, {32, 33, 34}};
     private static final int[][] ULT_KEYS = {{35, 36, 46}, {37, 38, 47}, {39, 40}};
@@ -112,7 +128,95 @@ final class ClassSkills implements Listener {
     private static int gen(Job job, int ord) { return GEN_KEYS[job.ordinal()][ord]; }
     private static int buffKey(Job job, int ord) { return BUFF_KEYS[job.ordinal()][ord]; }
     private static int ultKey(Job job, int ord) { return ULT_KEYS[job.ordinal()][ord]; }
-    private boolean bossUnlocked(Player p) { return plugin.bossCleared(p.getUniqueId(), "warden"); }
+    private Set<String> learned(Player p) { return new HashSet<>(loadoutData.getStringList(p.getUniqueId() + ".learned")); }
+    private boolean knows(Player p, String id) { return !LOCKED.containsKey(id) || learned(p).contains(id); }
+
+    private void setLearned(Player p, Set<String> ids) {
+        loadoutData.set(p.getUniqueId() + ".learned", ids.isEmpty() ? null : new ArrayList<>(ids));
+        try { loadoutData.save(loadoutFile); } catch (java.io.IOException e) { plugin.getLogger().warning("loadouts.yml 저장 실패: " + e.getMessage()); }
+    }
+
+    /** Swaps equipped skills the player has not learned (saves from before the raid skill books) back to free ones. */
+    private boolean sanitize(Player p, int[][] all) {
+        Set<String> known = learned(p);
+        boolean changed = false;
+        for (int j = 0; j < 3; j++) {
+            int[] o = all[j];
+            for (int k = 0; k < 3; k++) {
+                String id = IDS[j][o[k]];
+                if (!LOCKED.containsKey(id) || known.contains(id)) continue;
+                for (int cand = 0; cand < IDS[j].length; cand++) {
+                    if (LOCKED.containsKey(IDS[j][cand]) && !known.contains(IDS[j][cand])) continue;
+                    if (cand == o[0] || cand == o[1] || cand == o[2]) continue;
+                    o[k] = cand; changed = true; break;
+                }
+            }
+            if (LOCKED.containsKey(BUFFS[j][o[3]]) && !known.contains(BUFFS[j][o[3]])) { o[3] = 0; changed = true; }
+            if (LOCKED.containsKey(ULTS[j][o[4]]) && !known.contains(ULTS[j][o[4]])) { o[4] = 0; changed = true; }
+        }
+        return changed;
+    }
+
+    /** Raid skill book (loot auction): right-click teaches one random unlearned skill of the raid's three. */
+    static ItemStack skillBook(PipiLife plugin, String raid) {
+        List<String> pool = RAID_BOOKS.getOrDefault(raid, List.of());
+        String[] cls = {"전사", "궁수", "마법사"};
+        List<String> lore = new ArrayList<>(List.of("§7손에 들고 우클릭하면 아래 3개 중", "§7하나를 랜덤으로 배웁니다 (이미 배운 스킬 제외)"));
+        for (int i = 0; i < pool.size(); i++) lore.add("§f· " + NAMES.get(pool.get(i)) + " §8(" + cls[i] + ")");
+        lore.add("§8" + RAID_LABEL.getOrDefault(raid, raid) + " 전리품 경매");
+        ItemStack it = plugin.statusIcon(Material.ENCHANTED_BOOK, "§b스킬북 · " + RAID_LABEL.getOrDefault(raid, raid), lore.toArray(String[]::new));
+        var m = it.getItemMeta();
+        m.getPersistentDataContainer().set(BOOK_KEY, org.bukkit.persistence.PersistentDataType.STRING, raid);
+        it.setItemMeta(m);
+        return it;
+    }
+
+    @EventHandler(priority = EventPriority.HIGH)
+    public void readBook(org.bukkit.event.player.PlayerInteractEvent e) {
+        if (e.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) return;
+        var act = e.getAction();
+        if (act != org.bukkit.event.block.Action.RIGHT_CLICK_AIR && act != org.bukkit.event.block.Action.RIGHT_CLICK_BLOCK) return;
+        Player p = e.getPlayer();
+        ItemStack hand = p.getInventory().getItemInMainHand();
+        if (!hand.hasItemMeta()) return;
+        String raid = hand.getItemMeta().getPersistentDataContainer().get(BOOK_KEY, org.bukkit.persistence.PersistentDataType.STRING);
+        if (raid == null) return;
+        e.setCancelled(true);
+        if (!RAID_BOOKS.containsKey(raid)) raid = "deepdark"; // old [임시] 스킬북 from the warden auction
+        Set<String> known = learned(p);
+        List<String> left = RAID_BOOKS.get(raid).stream().filter(id -> !known.contains(id)).toList();
+        if (left.isEmpty()) { p.sendMessage("§7이 스킬북의 스킬 3개를 이미 모두 배웠어요. 다른 사람에게 건네줄 수 있어요."); return; }
+        String id = left.get(ThreadLocalRandom.current().nextInt(left.size()));
+        hand.setAmount(hand.getAmount() - 1);
+        known.add(id);
+        setLearned(p, known);
+        String cls = switch (id.charAt(0)) { case 'w' -> "전사"; case 'a' -> "궁수"; default -> "마법사"; };
+        p.sendMessage("§b[스킬북] §f" + cls + " 스킬 §e" + NAMES.get(id) + "§f을(를) 배웠어요! §7스킬 창(K)에서 장착하세요.");
+        p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1f, 1.2f);
+        p.getWorld().spawnParticle(Particle.ENCHANT, p.getLocation().add(0, 1.2, 0), 60, .5, .7, .5, .8);
+        syncLoadouts(p);
+    }
+
+    /** op: /pipilife skill learn &lt;id|all|reset&gt; [player] · /pipilife skill book &lt;deepdark|sorrow&gt; */
+    boolean adminCommand(Player p, String[] args) {
+        if (args[1].equals("book")) {
+            if (!RAID_BOOKS.containsKey(args[2])) { p.sendMessage("레이드: " + String.join(", ", RAID_BOOKS.keySet())); return true; }
+            for (ItemStack extra : p.getInventory().addItem(skillBook(plugin, args[2])).values()) p.getWorld().dropItemNaturally(p.getLocation(), extra);
+            return true;
+        }
+        Player t = args.length > 3 ? Bukkit.getPlayerExact(args[3]) : p;
+        if (t == null) { p.sendMessage("접속 중인 플레이어가 아니에요: " + args[3]); return true; }
+        Set<String> known = learned(t);
+        switch (args[2]) {
+            case "reset" -> known.clear();
+            case "all" -> known.addAll(LOCKED.keySet());
+            default -> { if (!LOCKED.containsKey(args[2])) { p.sendMessage("배워야 하는 스킬: " + String.join(", ", LOCKED.keySet())); return true; } known.add(args[2]); }
+        }
+        setLearned(t, known);
+        syncLoadouts(t);
+        p.sendMessage(t.getName() + " 배운 스킬: " + (known.isEmpty() ? "없음" : String.join(", ", known.stream().map(NAMES::get).toList())));
+        return true;
+    }
 
     private static int[][] defaultLoadout() { return new int[][] {{0, 1, 2, 0, 0}, {0, 1, 2, 0, 0}, {0, 1, 2, 0, 0}}; }
 
@@ -179,7 +283,7 @@ final class ClassSkills implements Listener {
             if (ords[k] < 0) { p.sendMessage("이 직업의 스킬이 아니에요: " + args[3 + k]); return true; }
         }
         if (ords[0] == ords[1] || ords[0] == ords[2] || ords[1] == ords[2]) { p.sendMessage("같은 스킬을 두 번 장착할 수 없어요."); return true; }
-        if (!bossUnlocked(p)) for (int k = 3; k < args.length; k++) if (BOSS_SKILLS.contains(args[k])) { p.sendMessage("§c보스 스킬이에요. 워든을 처치하면 해금돼요."); return true; }
+        for (int k = 3; k < args.length; k++) if (!knows(p, args[k])) { p.sendMessage("§c아직 배우지 않은 스킬이에요: " + NAMES.getOrDefault(args[k], args[k]) + " §7(" + LOCKED.get(args[k]) + ")"); return true; }
         if (args.length == 8) {
             ords[3] = java.util.Arrays.asList(BUFFS[j]).indexOf(args[6]);
             ords[4] = java.util.Arrays.asList(ULTS[j]).indexOf(args[7]);
@@ -195,8 +299,12 @@ final class ClassSkills implements Listener {
     /** Hidden PIPI_LOADOUT messages for all three classes (client cancels them), then the cooldowns of the skills now equipped. */
     void syncLoadouts(Player p) {
         int[][] all = loadouts.computeIfAbsent(p.getUniqueId(), k -> defaultLoadout());
+        if (sanitize(p, all)) saveLoadouts(p);
         for (int j = 0; j < 3; j++) p.sendMessage("PIPI_LOADOUT:" + CLS[j] + ":" + loadoutText(j, all[j]));
-        p.sendMessage("PIPI_BOSSSKILL:" + (bossUnlocked(p) ? 1 : 0));
+        StringBuilder lock = new StringBuilder();   // not learned yet: id=where it comes from
+        Set<String> known = learned(p);
+        for (var e : LOCKED.entrySet()) if (!known.contains(e.getKey())) lock.append(lock.length() > 0 ? "," : "").append(e.getKey()).append('=').append(e.getValue());
+        p.sendMessage("PIPI_SKILLLOCK:" + lock);
         Job job = combatJob(p);
         long[] cd = cooldowns.get(p.getUniqueId());
         if (job == null || cd == null) return;
@@ -267,7 +375,7 @@ final class ClassSkills implements Listener {
         Location from = event.getFrom(), to = event.getTo();
         if (to != null && (fortress.getOrDefault(p.getUniqueId(), 0L) > System.currentTimeMillis()
             || rooted.getOrDefault(p.getUniqueId(), 0L) > System.currentTimeMillis())) {
-            // 불굴 / 백호참 자세: position frozen, looking around still allowed
+            // 불굴 / 맹호참 자세: position frozen, looking around still allowed
             if (from.getX() != to.getX() || from.getY() != to.getY() || from.getZ() != to.getZ())
                 event.setTo(new Location(from.getWorld(), from.getX(), from.getY(), from.getZ(), to.getYaw(), to.getPitch()));
             return;
@@ -346,7 +454,7 @@ final class ClassSkills implements Listener {
             : slot == 0 ? buffKey(job, lo[3]) : slot == 4 ? ultKey(job, lo[4]) : slot;
         long[] cd = cooldowns.computeIfAbsent(player.getUniqueId(), ignored -> new long[KEYS]);
         long now = System.currentTimeMillis();
-        if (rooted.getOrDefault(player.getUniqueId(), 0L) > now && (slot == 6 || key == K_RUSH)) return true; // 백호참 자세 중 이동기 불가
+        if (rooted.getOrDefault(player.getUniqueId(), 0L) > now && (slot == 6 || key == K_RUSH)) return true; // 맹호참 자세 중 이동기 불가
         long remaining = cd[key] - now;
         int maxCharges = job == null ? 1 : maxCharges(job, key);
         int[] charge = null;
@@ -482,7 +590,7 @@ final class ClassSkills implements Listener {
             case K_M_DRAGON: case K_A_DRAGON: return 20;
             case K_M_CANNON: return 60;
             case K_THUNDER: return 12;
-            case K_W_TIGER: return 0; // 백호참: the 2 s stance is handled inside tiger()
+            case K_W_TIGER: return 0; // 맹호참: the 1 s stance is handled inside tiger()
             default: break;
         }
         if (key >= 26 && key < 35 || key == K_A_TIGER || key == K_A_TURTLE) return 4; // buffs
@@ -805,7 +913,7 @@ final class ClassSkills implements Listener {
     private void ultimate(Player p, Job job, int key) {
         String[] banner = switch (key) { // PIPI_ULT banner (PipiTravel UltBanner): colour, name
             case K_W_ULT -> new String[]{"ff4a3a", "검기 난사"};
-            case K_W_TIGER -> new String[]{"e8f0ff", "백호참"};
+            case K_W_TIGER -> new String[]{"e8f0ff", "맹호참"};
             case K_W_METEOR -> new String[]{"ffc83a", "유성우"};
             case K_A_ULT -> new String[]{"79ff57", "화살 폭풍"};
             case K_A_WOLF -> new String[]{"ff8a2a", "피닉스의 현현"};
@@ -1003,14 +1111,6 @@ final class ClassSkills implements Listener {
                 double a = yaw + (n - 2.5) * .35;
                 Location rim = sweepAt.clone().add(Math.sin(a) * 5.6, 0, Math.cos(a) * 5.6);
                 w.spawnParticle(Particle.DUST, rim, 1, .15, .15, .15, 0, new Particle.DustOptions(n % 2 == 0 ? Color.fromRGB(255, 214, 140) : Color.fromRGB(255, 70, 40), 1.1f));
-            }
-            for (int k = 0; k < 1; k++) {
-                double a = rnd.nextDouble() * Math.PI * 2, r = 1.7 + rnd.nextDouble() * 4.0;
-                Vector d = new Vector(Math.cos(a), 0, Math.sin(a));
-                Location at = c.clone().add(d.clone().multiply(r)).add(0, rnd.nextDouble() - .5, 0);
-                slashQuick(k == 0 ? "slash_red" : "slash_arc", at, new Vector(-d.getZ(), 0, d.getX()), 1.2f + rnd.nextFloat() * .5f, (rnd.nextFloat() - .5f) * 1.6f, .8f);
-                w.spawnParticle(Particle.SWEEP_ATTACK, at, 1, 0, 0, 0, 0);
-                w.spawnParticle(Particle.CRIT, at, 2, .3, .2, .3, .05);
             }
             snd(w, c, Sound.ENTITY_PLAYER_ATTACK_SWEEP, .6f, .9f + rnd.nextFloat() * .4f);
             for (LivingEntity t : near(p, c, 6)) hit(p, t, dmg);
@@ -1580,11 +1680,11 @@ final class ClassSkills implements Listener {
         }
     }
 
-    /** 백호참: the warrior is rooted for 2 s (looking allowed), then rakes one huge claw swipe (8 blocks, 160 degree fan, 180% x 5 = 900%). */
+    /** 맹호참: the warrior is rooted for 1 s (looking allowed), then rakes one huge claw swipe (8 blocks, 160 degree fan, 180% x 5 = 900%). */
     private void tiger(Player p) {
         World w = p.getWorld();
         UUID id = p.getUniqueId();
-        long until = System.currentTimeMillis() + 2_000;
+        long until = System.currentTimeMillis() + 1_000;
         rooted.put(id, until);
         p.setVelocity(new Vector(0, 0, 0));
         Location start = p.getLocation();
@@ -1592,9 +1692,9 @@ final class ClassSkills implements Listener {
         snd(w, start, Sound.ENTITY_RAVAGER_ROAR, .8f, 1.2f);
         double dmg = power(p, Job.WARRIOR) * 9.0; // 5 hits x 180%
         boolean[] cancelled = {false};
-        run(1, 40, i -> {
+        run(1, 20, i -> {
             if (!ready(p, w) || !Long.valueOf(until).equals(rooted.get(id))) { cancelled[0] = true; return true; }
-            double frac = (i + 1) / 40.0;
+            double frac = (i + 1) / 20.0;
             Location c = p.getLocation().add(0, 1, 0);
             Vector look = p.getEyeLocation().getDirection().setY(0);
             if (look.lengthSquared() < 1e-6) look = new Vector(0, 0, 1); else look.normalize();
@@ -1607,8 +1707,8 @@ final class ClassSkills implements Listener {
             }
             for (int lane = -1; lane <= 1; lane++) // three-line glint building up in front
                 w.spawnParticle(Particle.CRIT, c.clone().add(look.clone().multiply(1.4)).add(side.clone().multiply(lane * .7 * frac)).add(0, .6 * frac, 0), 1, .02, .02, .02, 0);
-            if (i % 8 == 0) snd(w, c, Sound.ITEM_ARMOR_EQUIP_IRON, .5f, (float) (.6 + frac * 1.0));
-            if (i % 10 == 5) w.spawnParticle(Particle.DUST, p.getLocation().add(0, .15, 0), 8, .8, .05, .8, 0, new Particle.DustOptions(Color.fromRGB(230, 230, 240), 1.2f));
+            if (i % 4 == 0) snd(w, c, Sound.ITEM_ARMOR_EQUIP_IRON, .5f, (float) (.6 + frac * 1.0));
+            if (i % 5 == 2) w.spawnParticle(Particle.DUST, p.getLocation().add(0, .15, 0), 8, .8, .05, .8, 0, new Particle.DustOptions(Color.fromRGB(230, 230, 240), 1.2f));
             return false;
         }, () -> {
             rooted.remove(id, until);
@@ -2401,43 +2501,105 @@ final class ClassSkills implements Listener {
     // ---------------------------------------------------------------- 2026-11-20 skill rework (user's sheet)
 
     /**
-     * 만월의 추억 (m_moon): after the 1 s charge a round full moon (fx_full_moon) appears high above the aimed point and plunges onto
-     * it like a meteor (7 ticks); the impact flashes, throws a pale shockwave and hits everything within 4.5 blocks 3 times (140%).
+     * 만월의 추억 (m_moon): after the 1 s charge a blue moon (fx_moon_blue) gathers above the caster's head (12 ticks), then is
+     * launched along the aim and drifts slowly forward (0.42 blocks a tick, up to 50 ticks), growing with its flight time. It
+     * bursts in moonlight when it touches an enemy or a block, or at the end of its flight: the burst radius (2.5 -> 6.5 blocks)
+     * and the damage (100% -> 180% x 3 hits) grow with how long it flew.
      */
     private void moon(Player p) {
         World w = p.getWorld();
-        Location c = aimPoint(p, 24);
-        Vector back = p.getEyeLocation().getDirection().setY(0);
-        if (back.lengthSquared() < 1e-6) back = new Vector(0, 0, 1);
-        back.normalize().multiply(-6);
-        Location from = c.clone().add(back).add(0, 22, 0), land = c.clone().add(0, 1.6, 0);
-        double dmg = power(p, Job.MAGE) * 1.4;
-        Color pale = Color.fromRGB(255, 244, 200), lav = Color.fromRGB(200, 170, 255);
-        ItemDisplay moon = fx("full_moon", from, new Quaternionf(), vec(.2f), null, 30);
-        if (moon != null) { moon.setGlowing(true); moon.setGlowColorOverride(Color.fromRGB(255, 246, 210)); }
-        tween(moon, 1, 2, new Vector3f(), new Quaternionf(), vec(3.4f));
-        snd(w, c, Sound.BLOCK_BEACON_POWER_SELECT, 1.2f, 1.8f);
-        snd(w, c, Sound.ENTITY_WITHER_SHOOT, .6f, .6f);
-        ring(c.clone().add(0, .1, 0), 4.5, 36, at -> w.spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(lav, 1.2f))); // where it lands
-        Bukkit.getScheduler().runTaskLater(plugin, () -> fall(moon, from, land, 7, at -> {
-            w.spawnParticle(Particle.DUST, at, 6, .9, .9, .9, 0, new Particle.DustOptions(pale, 1.8f));
-            w.spawnParticle(Particle.END_ROD, at, 3, .7, .7, .7, .02);
-            w.spawnParticle(Particle.DUST, at.clone().add(0, 1.5, 0), 4, .5, .8, .5, 0, new Particle.DustOptions(lav, 1.4f));
+        Color blue = Color.fromRGB(120, 180, 255), pale = Color.fromRGB(225, 242, 255), deep = Color.fromRGB(70, 110, 230);
+        Particle.DustOptions dBlue = new Particle.DustOptions(blue, 1.6f), dPale = new Particle.DustOptions(pale, 1.2f), dDeep = new Particle.DustOptions(deep, 1.8f);
+        Location head = p.getLocation().add(0, 3, 0);
+        ItemDisplay orb = fx("moon_blue", head, new Quaternionf(), vec(.1f), null, 120);
+        if (orb == null) orb = fx("full_moon", head, new Quaternionf(), vec(.1f), null, 120);
+        final ItemDisplay moon = orb;
+        if (moon != null) { moon.setGlowing(true); moon.setGlowColorOverride(blue); moon.setTeleportDuration(2); }
+        tween(moon, 1, 10, new Vector3f(), new Quaternionf(), vec(1.1f));
+        snd(w, head, Sound.BLOCK_BEACON_POWER_SELECT, 1.1f, 1.6f);
+        snd(w, head, Sound.BLOCK_AMETHYST_BLOCK_RESONATE, 1.4f, .7f);
+        final double base = power(p, Job.MAGE), speed = .42;
+        final int gather = 12, maxFly = 50;
+        // gather: moonlight spirals in toward the orb that follows the caster's head
+        run(1, gather, i -> {
+            if (!p.isOnline()) { kill(moon); return true; }
+            Location h = p.getLocation().add(0, 3, 0);
+            moveFx(moon, h);
+            double r = 2.6 * (1 - i / (double) gather) + .6;
+            for (int k = 0; k < 3; k++) {
+                double a = i * .55 + k * Math.PI * 2 / 3;
+                w.spawnParticle(Particle.DUST, h.clone().add(Math.cos(a) * r, Math.sin(i * .4 + k) * .6, Math.sin(a) * r), 1, 0, 0, 0, 0, k == 0 ? dPale : dBlue);
+            }
+            if (i % 4 == 0) w.spawnParticle(Particle.END_ROD, h, 2, .3, .3, .3, .01);
+            return false;
         }, () -> {
-            kill(moon);
-            snd(w, c, Sound.ENTITY_GENERIC_EXPLODE, 1.2f, .8f);
-            snd(w, c, Sound.BLOCK_AMETHYST_BLOCK_BREAK, 1.2f, .6f);
-            w.spawnParticle(Particle.EXPLOSION_EMITTER, c.clone().add(0, .5, 0), 1, 0, 0, 0, 0);
-            w.spawnParticle(Particle.DUST, c.clone().add(0, .6, 0), 60, 2.2, .5, 2.2, 0, new Particle.DustOptions(pale, 1.8f));
-            shockwave(c, lav, pale, false);
-            run(3, 3, k -> {
-                for (LivingEntity t : near(p, c.clone().add(0, 1, 0), 4.5)) {
-                    hit(p, t, dmg);
-                    w.spawnParticle(Particle.END_ROD, t.getBoundingBox().getCenter().toLocation(w), 6, .3, .3, .3, .05);
+            if (!p.isOnline()) { kill(moon); return; }
+            Vector dir = p.getEyeLocation().getDirection().normalize();
+            Location pos = p.getLocation().add(0, 3, 0);
+            snd(w, pos, Sound.ENTITY_ILLUSIONER_CAST_SPELL, 1.2f, .7f);
+            snd(w, pos, Sound.ENTITY_WITHER_SHOOT, .5f, 1.6f);
+            final double[] flew = {0};
+            run(1, maxFly, i -> {
+                flew[0] = (i + 1.0) / maxFly;
+                pos.add(dir.clone().multiply(speed));
+                float s = 1.1f + 2.6f * (float) flew[0];
+                moveFx(moon, pos);
+                tween(moon, 1, 2, new Vector3f(), new Quaternionf().rotateY(i * .06f), vec(s));
+                double r = .47 * s;
+                for (int k = 0; k < 2 + (int) (flew[0] * 4); k++) {
+                    Vector off = new Vector(Math.random() - .5, Math.random() - .5, Math.random() - .5).normalize().multiply(r * .9);
+                    w.spawnParticle(Particle.DUST, pos.clone().add(off), 1, 0, 0, 0, 0, k % 3 == 0 ? dPale : k % 3 == 1 ? dBlue : dDeep);
                 }
-                return !p.isOnline();
-            }, null);
-        }), 3);
+                w.spawnParticle(Particle.END_ROD, pos.clone().subtract(dir.clone().multiply(r)), 1 + (int) (flew[0] * 3), r * .3, r * .3, r * .3, .01);
+                if (i % 6 == 0) snd(w, pos, Sound.BLOCK_AMETHYST_BLOCK_CHIME, .9f, 1.4f - (float) flew[0] * .6f);
+                if (!pos.getBlock().isPassable()) return true;
+                return !near(p, pos, r + .3).isEmpty();
+            }, () -> moonBurst(p, moon, pos, flew[0], base));
+        });
+    }
+
+    /** The blue moon bursts: flash, moonlight shards flying out, expanding rings and falling beams; 3 hits in a radius that grew with t. */
+    private void moonBurst(Player p, ItemDisplay moon, Location c, double t, double base) {
+        World w = c.getWorld();
+        double radius = 2.5 + 4 * t, dmg = base * (1 + .8 * t);
+        Color blue = Color.fromRGB(120, 180, 255), pale = Color.fromRGB(225, 242, 255);
+        Particle.DustOptions dBlue = new Particle.DustOptions(blue, 2f), dPale = new Particle.DustOptions(pale, 1.5f);
+        float s = 1.1f + 2.6f * (float) t;
+        tween(moon, 1, 3, new Vector3f(), new Quaternionf(), vec(s * 1.5f));
+        Bukkit.getScheduler().runTaskLater(plugin, () -> kill(moon), 4);
+        snd(w, c, Sound.ENTITY_GENERIC_EXPLODE, 1f, 1.2f);
+        snd(w, c, Sound.BLOCK_AMETHYST_BLOCK_BREAK, 1.6f, .6f);
+        snd(w, c, Sound.BLOCK_BEACON_DEACTIVATE, 1.2f, 1.8f);
+        w.spawnParticle(Particle.FLASH, c, 1, 0, 0, 0, 0);
+        w.spawnParticle(Particle.END_ROD, c, (int) (30 + 40 * t), .3, .3, .3, .25 + .2 * t);
+        w.spawnParticle(Particle.DUST, c, (int) (40 + 60 * t), radius * .4, radius * .4, radius * .4, 0, dBlue);
+        w.spawnParticle(Particle.DUST, c, (int) (20 + 30 * t), radius * .3, radius * .3, radius * .3, 0, dPale);
+        Location ground = c.clone();
+        for (int k = 0; k < 8 && ground.getBlock().isPassable() && ground.getY() > w.getMinHeight(); k++) ground.add(0, -1, 0);
+        ground.setY(ground.getBlockY() + 1.05);
+        shockwave(ground, blue, pale, false);
+        // expanding moonlight rings, then beams of moonlight falling inside the burst
+        run(2, 4, k -> {
+            double r = radius * (k + 1) / 4.0;
+            ring(ground.clone().add(0, .15, 0), r, (int) (14 + r * 6), at -> w.spawnParticle(Particle.DUST, at, 1, 0, .05, 0, 0, k % 2 == 0 ? dBlue : dPale));
+            return false;
+        }, null);
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        run(2, 10, k -> {
+            for (int b = 0; b < 2; b++) {
+                double a = rnd.nextDouble() * Math.PI * 2, r = Math.sqrt(rnd.nextDouble()) * radius;
+                Location top = ground.clone().add(Math.cos(a) * r, 6, Math.sin(a) * r);
+                for (double y = 0; y < 6; y += .5) w.spawnParticle(Particle.END_ROD, top.clone().add(0, -y, 0), 1, 0, 0, 0, 0);
+            }
+            return !p.isOnline();
+        }, null);
+        run(3, 3, k -> {
+            for (LivingEntity e : near(p, c, radius)) {
+                hit(p, e, dmg);
+                w.spawnParticle(Particle.END_ROD, e.getBoundingBox().getCenter().toLocation(w), 6, .3, .3, .3, .05);
+            }
+            return !p.isOnline();
+        }, null);
     }
 
     /** 광속 찌르기 (w_thrust, boss): an instant lunge that rips through everything in a 9 block line (45% x 5). */
@@ -3316,21 +3478,21 @@ final class ClassSkills implements Listener {
     private void clawSlash(Location at, Vector dir, Vector right, float tilt) {
         World w = at.getWorld();
         Quaternionf base = facing(dir, tilt);
-        // slash_red spans ~3 blocks at scale 1 along its width axis: x 3.0 -> ~9 blocks; y/z stay very small so it reads as a blade line
-        ItemDisplay d = fx("slash_red", at, new Quaternionf(base).rotateY(-.35f), new Vector3f(1.3f, .2f, .1f), null, 5);
-        tween(d, 1, 2, new Vector3f(), new Quaternionf(base).rotateY(.1f), new Vector3f(3.0f, .25f, .16f));
-        tween(d, 3, 2, new Vector3f(), new Quaternionf(base).rotateY(.35f), new Vector3f(3.1f, .06f, .08f));
+        // slash_red spans ~3 blocks at scale 1 along its width axis: x 4.5 -> ~13 blocks (맹호참: 1.5x longer and 1.5x thicker than before)
+        ItemDisplay d = fx("slash_red", at, new Quaternionf(base).rotateY(-.35f), new Vector3f(1.95f, .3f, .15f), null, 5);
+        tween(d, 1, 2, new Vector3f(), new Quaternionf(base).rotateY(.1f), new Vector3f(4.5f, .38f, .24f));
+        tween(d, 3, 2, new Vector3f(), new Quaternionf(base).rotateY(.35f), new Vector3f(4.65f, .09f, .12f));
         Vector up = new Vector(0, 1, 0);
-        Particle.DustOptions dark = new Particle.DustOptions(Color.fromRGB(120, 8, 14), .9f);
-        Particle.DustOptions red = new Particle.DustOptions(Color.fromRGB(220, 25, 30), .7f);
+        Particle.DustOptions dark = new Particle.DustOptions(Color.fromRGB(120, 8, 14), 1.35f);
+        Particle.DustOptions red = new Particle.DustOptions(Color.fromRGB(220, 25, 30), 1.05f);
         double ct = Math.cos(tilt), st = Math.sin(tilt);
-        for (int k = -9; k <= 9; k++) {
-            double t = k / 9.0;
-            Location pt = at.clone().add(right.clone().multiply(t * 4.5 * ct)).add(up.clone().multiply(t * 4.5 * st * .6)).add(dir.clone().multiply((1 - t * t) * .6));
+        for (int k = -13; k <= 13; k++) {
+            double t = k / 13.0;
+            Location pt = at.clone().add(right.clone().multiply(t * 6.75 * ct)).add(up.clone().multiply(t * 6.75 * st * .6)).add(dir.clone().multiply((1 - t * t) * .9));
             w.spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, dark);
             w.spawnParticle(Particle.DUST, pt.clone().add(0, .05, 0), 1, 0, 0, 0, 0, red);
             if (k % 4 == 0) w.spawnParticle(Particle.CRIT, pt, 1, .02, .02, .02, .02);
-            if (k % 6 == 0) w.spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(255, 235, 235), .6f));
+            if (k % 6 == 0) w.spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, new Particle.DustOptions(Color.fromRGB(255, 235, 235), .9f));
         }
     }
 

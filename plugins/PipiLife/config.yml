@@ -1,12 +1,100 @@
 village-world: village
 raid:
   sorrow:
+    auction:
+      start: 55
+      solo-start: 1000000
+    rules:
+      blessing-seconds: 60
+      curse-seconds: 5
+      sync-window-ticks: 20
+      vessel-range: 5.0
+      shield-range: 3.5
+      crystal-hp: 12000
+      crystal-seconds: 30
+    mob:
+      hp-per-extra-player-pct: 10
+      hp:
+        wailer: 9000
+        howler: 7000
+        servant: 8000
+        knight: 40000
+        ogre: 70000
+        decoy: 1
+        runner: 6000
+        bomber: 7000
+        acolyte: 9000
+        wizard: 14000
+      damage:
+        wailer: 150
+        howler: 110
+        servant: 120
+        knight: 260
+        ogre: 380
+        decoy: 300
+        runner: 110
+        bomber: 650
+        acolyte: 80
+        wizard: 170
+        knight-cannon: 340
+        keeper: 320
+        ogre-beam: 240
+      knight-front-armor-pct: 60
+    g3:
+      time-limit-minutes: 30
+      blessing-seconds: 60
+      enrage-blessing-seconds: 45
+      enrage-pct: 30
+      curse-seconds: 5
+      sync-window-ticks: 20
+      hp:
+        lord: 360000
+        gem: 20000
+        hand: 20000
+        mob: 9000
+        per-extra-player-pct: 35
+        pillar: 20000
+      mobs:
+        seconds: 60
+        max: 3
+      shield:
+        rounds: 3
+        mobs: 2
+      gate:
+        stun-seconds: 12
+        hand-hits: 3
+        fireball-interval-seconds: 1
+      dps:
+        stagger-seconds: 15
+        seconds: 10
+      hands:
+        seconds: 15
+      pillar:
+        charge-seconds: 20
+        dps-fast: 20
+        dps-mid: 15
+        dps-slow: 10
+      crystal:
+        interval-seconds: 30
+        seconds: 30
+      damage:
+        fireball: 220
+        axe: 500
+      lord-scale: 4.0
+      reward:
+        soul-stone: 1
+        gold: 300000
+        steel: 60
+        level-vouchers: 4
     enabled: true
     min-players: 2
     max-players: 6
     vote-seconds: 15
     recommended-item-level: 170
     g1:
+      phases: 4
+      trickle-max: 3
+      crystal-delay-seconds: 10
       time-limit-minutes: 25
       blessing-seconds: 60
       curse-seconds: 15
@@ -31,6 +119,12 @@ raid:
         steel: 25
         level-vouchers: 2
     g2:
+      decoy:
+        vulnerable-seconds: 8
+        sync-ticks: 60
+      ogre-after-seconds: 25
+      room-ogre-seconds: 15
+      trickle-max: 3
       time-limit-minutes: 30
       blessing-seconds: 60
       enrage-blessing-seconds: 45
@@ -38,6 +132,7 @@ raid:
       curse-seconds: 15
       sync-window-ticks: 20
       hp:
+        decoy-per-player: 30000
         lord: 360000
         gem: 20000
         hand: 20000

@@ -68,7 +68,9 @@ const unit = v => { const m = Math.hypot(...v); return v.map(a => a / m); };
 // Standalone mode: node dev/art/preview-station.mjs --model <model.json> [--out <png>] [--size 800]  -> auto-fit & centred, no ground tile
 function render(name, opt = {}) {
   const model = JSON.parse(fs.readFileSync(opt.model || path.join(root, "models/item", name + ".json"), "utf8"));
-  const texs = {}; for (const [k, v] of Object.entries(model.textures)) if (k !== "particle") texs["#" + k] = decodePng(fs.readFileSync(path.join(root, "textures/item", v.split("/").pop() + ".png")));
+  // texture: next to the model (<pack>/models/item/x.json -> <pack>/textures/item/<t>.png, e.g. an ItemsAdder content folder), else the mod assets
+  const texFile = v => { const b = v.split("/").pop() + ".png", near = opt.model && path.resolve(path.dirname(opt.model), "../../textures/item", b); if (near && fs.existsSync(near)) return near; const sub = v.includes("block/") ? "textures/block" : "textures/item"; return path.join(root, sub, b); };
+  const texs = {}; for (const [k, v] of Object.entries(model.textures)) if (k !== "particle") texs["#" + k] = decodePng(fs.readFileSync(texFile(v)));
   const K = opt.model ? 1 : 0.8; let S = 30, W = 640, H = 560, cx = W / 2, cy = H * 0.7;
   if (opt.model) {   // fit: project at S=1 to get the bounds, then scale/centre to fill ~88% of a square image
     W = H = opt.size || 800;

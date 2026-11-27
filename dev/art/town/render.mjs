@@ -70,7 +70,7 @@ function poly(buf, W, H, pts, c) {
     for (let k = 0; k + 1 < xs.length; k += 2) for (let x = Math.max(0, Math.round(xs[k])); x <= Math.min(W - 1, Math.round(xs[k + 1]) - 1); x++) { const i = (y * W + x) * 3; buf[i] = c[0]; buf[i + 1] = c[1]; buf[i + 2] = c[2]; }
   }
 }
-function iso(w, cx, cz, F, half, hgt, file, a = 9) {
+export function iso(w, cx, cz, F, half, hgt, file, a = 9) {
   const r = { E: 0, W: 2, N: 1, S: 3 }[F], inv = (4 - r) % 4;
   const get = (u, v, y) => { const [dx, dz] = rotVec(u, v, inv); return w.get(cx + dx, y, cz + dz); };
   const gnd = (u, v) => { const [dx, dz] = rotVec(u, v, inv); return { land: w.land(cx + dx, cz + dz), s: w.getSurf(cx + dx, cz + dz) }; };
