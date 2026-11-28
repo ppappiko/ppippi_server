@@ -33,7 +33,10 @@ public final class ArmorIcons {
     }
 
     /** Accessory icons in assets/pipitravel/models/item/accessory/<slot>_<model>.json (made by dev/art/make-accessories.py). */
-    private static final String[] ACCESSORIES = {"necklace_basic", "earring_basic", "bracelet_basic"};
+    private static final String[] ACCESSORIES = {"necklace_basic", "earring_basic", "bracelet_basic",
+        "necklace_deep", "earring_deep", "bracelet_deep",          // 1단계 장신구 (깊은 어둠)
+        "necklace_sorrow", "earring_sorrow", "bracelet_sorrow",    // 2단계 장신구 (통곡의 왕좌)
+        "necklace_lord", "earring_lord", "bracelet_lord"};         // 보스 전용 장신구 (비탄의 군주)
 
     private static ModelResourceLocation accessory(String name) {
         return standalone(ResourceLocation.fromNamespaceAndPath("pipitravel", "item/accessory/" + name));

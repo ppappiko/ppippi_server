@@ -269,6 +269,7 @@ final class CombatStats implements Listener {
                     case "move"->moveFlat+=v;case "move%"->movePct+=v;
                     case "def"->defFlat+=v;case "def%"->defPct+=v;
                     case "crit%"->critP+=v;
+                    case "cdr"->cdr+=v;case "buff"->buff+=v;
                     default->{}
                 }
             }

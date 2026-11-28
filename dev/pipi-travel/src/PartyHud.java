@@ -76,7 +76,9 @@ final class PartyHud {
             int nx = x + 30;
             String name = (m.leader ? "★ " : "") + m.name;
             g.fill(nx - 2, y + 3, nx + 96, y + 23, 0x60000000);
-            g.drawString(font, font.plainSubstrByWidth(name, 94), nx, y + 5, m.online ? 0xfff1f3ff : 0xff7d8597);
+            boolean talking = m.online && VoiceFx.speaking(m.name);
+            g.drawString(font, font.plainSubstrByWidth(name, talking ? 82 : 94), nx, y + 5, m.online ? 0xfff1f3ff : 0xff7d8597);
+            if (talking) VoiceFx.drawHudIcon(g, nx + 84, y + 4);
             int bw = 92, by = y + 15;
             g.fill(nx - 1, by - 1, nx + bw + 1, by + 5, 0xff000000);
             g.fill(nx, by, nx + bw, by + 4, 0xff2a2a30);

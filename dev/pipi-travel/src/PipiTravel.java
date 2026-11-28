@@ -39,6 +39,8 @@ public final class PipiTravel {
         NeoForge.EVENT_BUS.addListener(AuctionScreen::receive);
         NeoForge.EVENT_BUS.addListener(AuctionScreen::clientTick);
         NeoForge.EVENT_BUS.addListener(PartyHud::receive);
+        NeoForge.EVENT_BUS.addListener(VoiceFx::pre);
+        NeoForge.EVENT_BUS.addListener(VoiceFx::post);
         NeoForge.EVENT_BUS.addListener(PartyHud::key);
         NeoForge.EVENT_BUS.addListener(QuestScreen::key);
         NeoForge.EVENT_BUS.addListener(QuestScreen::receive);
