@@ -86,6 +86,10 @@ raid:
         gold: 300000
         steel: 60
         level-vouchers: 4
+        accessory-count-min: 2
+        accessory-count-max: 6
+      auction:
+        accessory-chance: 5.0
     enabled: true
     min-players: 2
     max-players: 6

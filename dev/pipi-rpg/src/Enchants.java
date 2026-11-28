@@ -57,7 +57,10 @@ final class Enchants {
         new Opt(220, "all%", "올스탯 증가", 3, true),
         new Opt(221, "all", "올스탯 증가", 20, false),
         new Opt(222, "all%", "올스탯 증가", 1, true),
-        new Opt(223, "all", "올스탯 증가", 10, false));
+        new Opt(223, "all", "올스탯 증가", 10, false),
+        // 장신구 전용 (큐브 풀 WEAPON_IDS / ARMOR_IDS 에는 없음): 스킬 쿨타임 감소 (최대 60%) / 스킬 지속시간 증가
+        new Opt(224, "cdr", "스킬 쿨타임 감소", 3, true),
+        new Opt(225, "buff", "스킬 지속시간 증가", 3, true));
 
     /** Weapon option ids (공격력/스탯/데미지 계열). */
     static final int[] WEAPON_IDS = {215, 216, 208, 206, 207, 211, 209, 210, 217, 218, 219, 220, 221};

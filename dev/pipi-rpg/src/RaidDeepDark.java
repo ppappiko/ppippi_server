@@ -1116,9 +1116,21 @@ final class RaidDeepDark implements Listener {
 
 
     private void rewards(Session s) {
-        List<Player> on = online(s);
+        for (Player p : online(s)) rewardPlayer(p);
+    }
+
+    /** 관리자 테스트: 클리어 보상 그대로 지급 (loot = 경매품인 영혼석·스킬북도 같이). 클리어 기록은 건드리지 않음. */
+    void adminReward(Player p, boolean loot) {
+        rewardPlayer(p);
+        if (!loot) return;
+        give(p, town.raidItem("soul", Math.max(1, ci("reward.soul-stone"))));
+        give(p, ClassSkills.skillBook(plugin, "deepdark"));
+        say(p, "§6[경매품] §f워든의 영혼석 " + Math.max(1, ci("reward.soul-stone")) + " · 스킬북 · 깊은 어둠");
+    }
+
+    private void rewardPlayer(Player p) {
         long gold = Math.max(0, plugin.getConfig().getLong(P + "reward.gold"));
-        for (Player p : on) {
+        {
             try {
                 var sc = town.gold(p);
                 sc.setScore((int) Math.min(Integer.MAX_VALUE, sc.getScore() + gold));

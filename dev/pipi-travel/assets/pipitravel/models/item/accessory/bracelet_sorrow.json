@@ -1,0 +1,6 @@
+{
+ "parent": "minecraft:item/generated",
+ "textures": {
+  "layer0": "pipitravel:item/accessory/bracelet_sorrow"
+ }
+}

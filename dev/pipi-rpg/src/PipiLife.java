@@ -712,7 +712,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             out.add("mount");
             out.add("escape");
             out.add("accessory");
-            if (sender.isOp()) out.addAll(List.of("petspawn", "petpreview", "spawninfo", "armory", "bossclear"));
+            if (sender.isOp()) out.addAll(List.of("petspawn", "petpreview", "spawninfo", "armory", "bossclear", "bossreward"));
             if (regions != null && (sender.isOp() || sender.hasPermission("pipilife.admin"))) out.add("region");
             if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("dummy");
             if (sender.isOp() || sender.hasPermission("pipilife.admin")) out.add("item");
@@ -739,6 +739,10 @@ public final class PipiLife extends JavaPlugin implements Listener {
                 for (Pet pet : Pet.values()) out.add(pet.cmd());
         } else if (raid != null && args[0].equalsIgnoreCase("raid")) {
             out.addAll(raid.complete(sender, args));
+        } else if (args[0].equalsIgnoreCase("bossreward") && sender.isOp()) {
+            if (args.length == 2) out.addAll(List.of("deepdark", "sorrow"));
+            else if (args.length == 3 && args[1].equalsIgnoreCase("sorrow")) out.addAll(List.of("1", "2", "3"));
+            else if (args.length >= 3) { out.add("loot"); for (Player online : Bukkit.getOnlinePlayers()) out.add(online.getName()); }
         } else if (args[0].equalsIgnoreCase("bossclear") && sender.isOp()) {
             if (args.length == 2) for (Player online : Bukkit.getOnlinePlayers()) out.add(online.getName());
             else if (args.length == 3) out.addAll(TownSystems.BOSSES);
@@ -819,6 +823,7 @@ public final class PipiLife extends JavaPlugin implements Listener {
             return true;
         }
         if (args.length > 0 && args[0].equalsIgnoreCase("bossclear")) return town.bossClearCommand(player, args);
+        if (args.length > 0 && args[0].equalsIgnoreCase("bossreward")) return bossRewardCommand(player, args);
         if (args.length > 0 && args[0].equalsIgnoreCase("quest") && quests != null) return quests.command(player, args);
         if (args.length > 0 && args[0].equalsIgnoreCase("item")) return itemCommand(player, args);
         if (args.length > 0 && args[0].equals("testgive")) return town.testGive(player, args);
@@ -4087,6 +4092,43 @@ public final class PipiLife extends JavaPlugin implements Listener {
     EmergencyEscape escape;
     /** Boss clear record (TownSystems), e.g. for boss skills unlocked by the first warden clear. */
     RaidDeepDark deepDarkRaid() { return raid; }
+
+    /**
+     * 관리자 테스트: 보스 클리어 보상을 바로 지급. 클리어 기록·하루 1회 기록은 남기지 않음.
+     * /pipilife bossreward deepdark [loot] [플레이어]  ·  /pipilife bossreward sorrow <1|2|3> [loot] [플레이어]
+     * loot = 경매품(영혼석·스킬북)도 같이, 플레이어 생략 = 나.
+     */
+    private boolean bossRewardCommand(Player player, String[] args) {
+        if (!player.isOp()) { player.sendMessage("§c관리자 전용 명령어입니다."); return true; }
+        String boss = args.length > 1 ? args[1].toLowerCase(java.util.Locale.ROOT) : "";
+        int gate = 0, i = 2;
+        if (boss.equals("sorrow")) {
+            try { gate = Integer.parseInt(args.length > 2 ? args[2] : ""); } catch (NumberFormatException ex) { gate = 0; }
+            if (gate < 1 || gate > 3) { player.sendMessage("§c/pipilife bossreward sorrow <1|2|3> [loot] [플레이어]"); return true; }
+            i = 3;
+        } else if (!boss.equals("deepdark")) {
+            player.sendMessage("§e/pipilife bossreward deepdark [loot] [플레이어] §7- 깊은 어둠(워든) 클리어 보상");
+            player.sendMessage("§e/pipilife bossreward sorrow <1|2|3> [loot] [플레이어] §7- 통곡의 왕좌 관문 보상");
+            player.sendMessage("§8loot = 경매품(영혼석·스킬북)도 같이 지급 · 클리어 기록은 남지 않습니다.");
+            return true;
+        }
+        boolean loot = false;
+        Player target = player;
+        for (; i < args.length; i++) {
+            if (args[i].equalsIgnoreCase("loot")) { loot = true; continue; }
+            target = Bukkit.getPlayerExact(args[i]);
+            if (target == null) { player.sendMessage("§c접속 중인 플레이어가 아닙니다: " + args[i]); return true; }
+        }
+        if (boss.equals("deepdark")) {
+            if (raid == null) { player.sendMessage("§c레이드(깊은 어둠) 기능을 불러오지 못했습니다."); return true; }
+            raid.adminReward(target, loot);
+        } else {
+            if (sorrow == null) { player.sendMessage("§c레이드(통곡의 왕좌) 기능을 불러오지 못했습니다."); return true; }
+            sorrow.adminReward(target, gate, loot);
+        }
+        if (target != player) player.sendMessage("§a" + target.getName() + "에게 " + (gate > 0 ? "통곡의 왕좌 " + gate + "관문" : "깊은 어둠") + " 보상을 지급했습니다.");
+        return true;
+    }
     boolean bossCleared(UUID id, String boss) { return town != null && town.bossCleared(id, boss); }
     /** 탑승 적성: listed in config mounts.allowed (empty list = every pet). */
     boolean rideable(Pet pet) {

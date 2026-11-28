@@ -240,6 +240,7 @@ final class Accessories implements Listener {
 
     /**
      * 1단계 보스(딥 다크 시티) 보상 장신구: 부위 3종 중 하나, 옵션 1줄 (4종 중 하나, 값 min~max 정수 동일 확률), 레어 등급.
+     * 장신구마다 부위·옵션·수치를 따로 뽑는다 (같은 부위가 몰려 나오는 것도 운).
      * 악세서리 시스템이 아직 준비되지 않았으면 null.
      */
     static ItemStack tier1(String source, int min, int max) {
@@ -249,7 +250,53 @@ final class Accessories implements Listener {
         Slot slot = Slot.values()[r.nextInt(Slot.values().length)];
         int lo = Math.max(1, Math.min(min, max)), hi = Math.max(lo, Math.max(min, max));
         var line = new Enchants.Line(TIER1_OPTS[r.nextInt(TIER1_OPTS.length)], 0, r.nextInt(lo, hi + 1));
-        return a.create(slot, Enchants.COLORS[0] + source + " " + slot.label, "basic", "1단계 장신구", List.of(line), List.of("§8" + source + " 클리어 보상"));
+        return a.create(slot, Enchants.COLORS[0] + source + " " + slot.label, "deep", "1단계 장신구", List.of(line), List.of("§8" + source + " 클리어 보상"));
+    }
+
+    /**
+     * 2단계 장신구 옵션 풀: 장비 옵션 전부 + 스킬 쿨타임 감소 / 스킬 지속시간 증가.
+     * 같은 효과가 무기·방어구 두 개로 나뉜 옵션(치명타%, 올스탯, 올스탯%)은 한 번만 (방어구 쪽 수치).
+     */
+    private static final int[] TIER2_OPTS = {201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 222, 223, 224, 225};
+
+    /**
+     * 2단계 보스(통곡의 왕좌) 보상 장신구: 부위 3종 중 하나, 옵션 2줄 (줄마다 풀에서 독립으로 뽑음, 같은 옵션 중복 가능), 에픽 등급.
+     * 수치는 레어 값 ~ 에픽 값 사이 동일 확률: 고정 수치는 정수, % 옵션은 소수점 한 자리.
+     */
+    static ItemStack tier2(String source) {
+        Accessories a = instance;
+        if (a == null) return null;
+        var r = java.util.concurrent.ThreadLocalRandom.current();
+        Slot slot = Slot.values()[r.nextInt(Slot.values().length)];
+        int first = r.nextInt(TIER2_OPTS.length), second = r.nextInt(TIER2_OPTS.length); // 줄마다 독립 시행 (같은 옵션이 두 줄 나올 수 있음)
+        List<Enchants.Line> lines = List.of(rollLine(TIER2_OPTS[first], 0, 1, r), rollLine(TIER2_OPTS[second], 0, 1, r));
+        return a.create(slot, Enchants.COLORS[1] + source + " " + slot.label, "sorrow", "2단계 장신구", lines, List.of("§8" + source + " 클리어 보상"));
+    }
+
+    /**
+     * 2단계 보스 경매 전용 장신구 옵션 풀: 스킬 쿨타임 감소, 스킬 지속시간 증가, 데미지%, 올스탯%, 공격력%, 보스 데미지%, 치명타 확률%.
+     * 올스탯%·치명타는 무기 쪽 옵션 (에픽 값이 더 높음: 6%, 8%).
+     */
+    private static final int[] TIER2_BOSS_OPTS = {224, 225, 218, 220, 215, 217, 219};
+
+    /** 2단계 보스 경매 전용 장신구: 부위 랜덤, 옵션 2줄 (줄마다 독립으로 뽑음, 중복 가능), 수치는 에픽 최대값 고정. */
+    static ItemStack tier2Boss(String source, String bossName) {
+        Accessories a = instance;
+        if (a == null) return null;
+        var r = java.util.concurrent.ThreadLocalRandom.current();
+        Slot slot = Slot.values()[r.nextInt(Slot.values().length)];
+        int first = r.nextInt(TIER2_BOSS_OPTS.length), second = r.nextInt(TIER2_BOSS_OPTS.length); // 줄마다 독립 시행 (같은 옵션이 두 줄 나올 수 있음)
+        List<Enchants.Line> lines = List.of(new Enchants.Line(TIER2_BOSS_OPTS[first], 1), new Enchants.Line(TIER2_BOSS_OPTS[second], 1));
+        return a.create(slot, "§6" + bossName + "의 " + slot.label, "lord", "보스 전용 장신구", lines, List.of("§8" + source + " 전리품 경매"));
+    }
+
+    /** 옵션 한 줄: lowGrade 값 ~ highGrade 값 사이 (고정 수치 정수, % 소수점 한 자리), 표시 등급은 highGrade. */
+    private static Enchants.Line rollLine(int id, int lowGrade, int highGrade, java.util.Random r) {
+        Enchants.Opt o = Enchants.byId(id);
+        double lo = Enchants.value(o, lowGrade), hi = Enchants.value(o, highGrade);
+        double v = o.pct() ? r.nextInt((int) Math.round(lo * 10), (int) Math.round(hi * 10) + 1) / 10.0
+            : r.nextInt((int) Math.round(lo), (int) Math.round(hi) + 1);
+        return new Enchants.Line(id, highGrade, v);
     }
 
     // ------------------------------------------------------------------ 동기화

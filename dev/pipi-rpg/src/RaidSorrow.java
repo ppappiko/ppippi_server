@@ -203,6 +203,9 @@ final class RaidSorrow implements Listener {
         c.addDefault(P + "g3.reward.steel", 60);
         c.addDefault(P + "g3.reward.level-vouchers", 4);
         c.addDefault(P + "g3.reward.soul-stone", 1);          // 비탄의 군주 영혼석 (3관문만)
+        c.addDefault(P + "g3.reward.accessory-count-min", 2); // 2단계 장신구 개수 (동일 확률, 3관문만)
+        c.addDefault(P + "g3.reward.accessory-count-max", 6);
+        c.addDefault(P + "g3.auction.accessory-chance", 5.0); // 경매에 보스 전용 장신구가 올라올 확률 (%)
         c.addDefault(P + "auction.start", 55);                // 3관문 클리어 전리품 경매(스킬북) 최소 입찰가: 파티
         c.addDefault(P + "auction.solo-start", 1000000);      //   혼자 클리어
         c.addDefault(P + "g1.time-limit-minutes", 25);
@@ -806,7 +809,10 @@ final class RaidSorrow implements Listener {
             List<Player> on = online(s);
             if (dd == null || on.isEmpty()) return;
             long start = Math.max(1, ci(on.size() < 2 ? "auction.solo-start" : "auction.start"));
-            try { dd.startLootAuction(RAID_NAME, on, new ArrayList<>(List.of(new RaidAuction.Lot("스킬북 · 통곡의 왕좌", ClassSkills.skillBook(plugin, "sorrow"), start))), 0); }
+            List<RaidAuction.Lot> lots = new ArrayList<>(List.of(new RaidAuction.Lot("스킬북 · 통곡의 왕좌", ClassSkills.skillBook(plugin, "sorrow"), start)));
+            ItemStack boss = rollBossAccessory();
+            if (boss != null) lots.add(new RaidAuction.Lot("보스 전용 장신구", boss, start));
+            try { dd.startLootAuction(RAID_NAME, on, lots, 0); }
             catch (RuntimeException ex) { plugin.getLogger().severe("sorrow auction start failed: " + ex); }
         }, 70L);
     }
@@ -817,6 +823,33 @@ final class RaidSorrow implements Listener {
             String path = "sorrow." + p.getUniqueId() + ".g" + gate;
             if (day.equals(plugin.data().getString(path))) { say(p, "§7오늘은 이미 " + gate + "관문 보상을 받았습니다. §8(클리어 기록은 유지됩니다)"); continue; }
             if (!plugin.store(path, day)) { say(p, "§c클리어 기록 저장에 실패했습니다. 관리자에게 문의하세요."); continue; }
+            giveGate(p, gate);
+        }
+    }
+
+    /** 관리자 테스트: gate 관문 보상 그대로 지급 (하루 1회 기록은 남기지 않음, loot = 3관문 경매품 스킬북도 같이). */
+    void adminReward(Player p, int gate, boolean loot) {
+        giveGate(p, gate);
+        if (loot && gate == 3) {
+            give(p, ClassSkills.skillBook(plugin, "sorrow"));
+            ItemStack boss = Accessories.tier2Boss(RAID_NAME, BOSS_NAME);
+            give(p, boss);
+            say(p, "§6[경매품] §f스킬북 · 통곡의 왕좌" + (boss != null ? " · " + boss.getItemMeta().getDisplayName() : ""));
+        }
+    }
+
+    private static final String BOSS_NAME = "비탄의 군주";
+
+    /** 3관문 경매: g3.auction.accessory-chance % 확률로 보스 전용 장신구 1개 (아니면 null). */
+    private ItemStack rollBossAccessory() {
+        double chance = plugin.getConfig().getDouble(P + "g3.auction.accessory-chance");
+        if (java.util.concurrent.ThreadLocalRandom.current().nextDouble(100) >= chance) return null;
+        return Accessories.tier2Boss(RAID_NAME, BOSS_NAME);
+    }
+
+    private void giveGate(Player p, int gate) {
+        String g = "g" + gate + ".";
+        {
             try {
                 long gold = Math.max(0, ci(g + "reward.gold"));
                 var sc = town.gold(p);
@@ -831,6 +864,29 @@ final class RaidSorrow implements Listener {
                 plugin.getLogger().severe("sorrow reward failed for " + p.getName() + ": " + ex);
                 say(p, "§c보상 지급 중 오류가 발생했습니다. 관리자에게 문의하세요.");
             }
+            if (gate == 3) try { giveAccessories(p); } catch (RuntimeException ex) {
+                plugin.getLogger().severe("sorrow accessory reward failed for " + p.getName() + ": " + ex);
+                say(p, "§c장신구 지급 중 오류가 발생했습니다. 관리자에게 문의하세요.");
+            }
         }
+    }
+
+    /** 2단계 장신구 count-min~count-max 개 (동일 확률), 각각 부위·옵션 2줄·수치 랜덤. */
+    private void giveAccessories(Player p) {
+        int a = Math.max(1, ci("g3.reward.accessory-count-min")), b = Math.max(1, ci("g3.reward.accessory-count-max"));
+        int n = java.util.concurrent.ThreadLocalRandom.current().nextInt(Math.min(a, b), Math.max(a, b) + 1);
+        List<String> got = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            ItemStack it = Accessories.tier2(RAID_NAME);
+            if (it == null) return;
+            give(p, it);
+            List<String> lore = it.getItemMeta().getLore();
+            StringBuilder opts = new StringBuilder();
+            if (lore != null) for (int j = 1; j < lore.size() && j <= 2; j++)
+                opts.append(j > 1 ? ", " : "").append(lore.get(j).replaceAll("§.", "").replaceFirst("^\\[[^]]+] ", ""));
+            got.add(it.getItemMeta().getDisplayName() + " §7(" + opts + ")");
+        }
+        say(p, "§6[3관문 보상] §f2단계 장신구 " + n + "개");
+        for (String g : got) p.sendMessage("  §8- " + g);
     }
 }
